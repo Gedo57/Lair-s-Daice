@@ -1,0 +1,7 @@
+html[data-device='mobile'] .starter-bg { object-position: center center; }
+html[data-device='mobile'] .starter-logo { left: 72px; top: 74px; width: 576px; height: 280px; }
+html[data-device='mobile'] .starter-cups { left: 158px; top: 590px; width: 405px; }
+html[data-device='mobile'] .starter-button--play { left: 80px; top: 820px; width: 560px; height: 104px; }
+html[data-device='mobile'] .starter-button--login { left: 80px; top: 955px; width: 560px; height: 82px; }
+html[data-device='mobile'] .starter-button--play .image-button__text { font-size: 40px; }
+html[data-device='mobile'] .starter-button--login .image-button__text { font-size: 34px; }

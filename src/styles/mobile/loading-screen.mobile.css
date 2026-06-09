@@ -1,0 +1,8 @@
+html[data-device='mobile'] .loading-bg { object-position: center center; }
+html[data-device='mobile'] .loading-logo { left: 76px; top: 92px; width: 568px; height: 274px; }
+html[data-device='mobile'] .loading-cups { left: 121px; top: 544px; width: 480px; }
+html[data-device='mobile'] .loading-panel { left: 40px; top: 748px; width: 640px; height: 180px; }
+html[data-device='mobile'] .loading-title { top: 23px; font-size: 30px; }
+html[data-device='mobile'] .loading-bar { left: 78px; top: 86px; width: 484px; height: 52px; }
+html[data-device='mobile'] .loading-bar__empty, html[data-device='mobile'] .loading-bar__fill { width: 484px; height: 52px; }
+html[data-device='mobile'] .loading-bar__fill-mask { height: 52px; }

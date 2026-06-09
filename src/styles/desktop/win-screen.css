@@ -1,0 +1,65 @@
+html[data-device='desktop'] .win-screen { color:#2a1603; }
+html[data-device='desktop'] .win-profile { position:absolute; left:110px; top:20px; width:380px; height:128px; z-index:30; }
+html[data-device='desktop'] .win-profile__avatar { position:absolute; left:0; top:-10px; width:190px; height:122px; object-fit:contain; z-index:3; }
+html[data-device='desktop'] .win-profile__plate { position:absolute; left:118px; top:5px; width:330px; height:94px; border-radius:18px; background:linear-gradient(#fff3d2,#e6c390); border:3px solid #b67725; box-shadow:0 5px 12px rgba(0,0,0,.35); }
+html[data-device='desktop'] .win-profile__name { position:absolute; left:34px; top:2px; font:900 30px Arial,sans-serif; color:#2b1705; }
+html[data-device='desktop'] .win-profile__badge { position:absolute; left:18px; top:38px; width:62px; height:52px; object-fit:fill; z-index:2; }
+html[data-device='desktop'] .win-profile__badgeValue { position:absolute; left:18px; top:42px; width:62px; height:42px; display:grid; place-items:center; font:900 26px Arial,sans-serif; color:#fff; z-index:3; text-shadow:0 2px 3px #000; }
+html[data-device='desktop'] .win-profile__progressBar { position:absolute; left:75px; top:51px; width:205px; height:30px; border-radius:16px; overflow:hidden; background:#7a4d1a; }
+html[data-device='desktop'] .win-profile__progressFill { position:absolute; inset:0 auto 0 0; width:58%; background:linear-gradient(#ffb833,#f49011); }
+html[data-device='desktop'] .win-profile__progressText { position:absolute; left:75px; top:54px; width:205px; height:26px; display:grid; place-items:center; color:#fff; font:900 19px Arial,sans-serif; text-shadow:0 2px 3px #000; }
+html[data-device='desktop'] .win-currency { position:absolute; top:36px; width:226px; height:58px; z-index:30; border-radius:16px; border:3px solid #c78b35; background:linear-gradient(#fff5cf,#e0b877); box-shadow:0 5px 12px rgba(0,0,0,.4); }
+html[data-device='desktop'] .win-currency--coins { left:1240px; }
+html[data-device='desktop'] .win-currency--gems { left:1500px; }
+html[data-device='desktop'] .win-currency__icon { position:absolute; left:12px; top:8px; width:42px; height:42px; object-fit:contain; }
+html[data-device='desktop'] .win-currency__value { position:absolute; left:55px; top:10px; font:900 27px Arial,sans-serif; color:#1b1206; }
+html[data-device='desktop'] .win-currency__plus { position:absolute; right:9px; top:11px; width:35px; height:35px; object-fit:contain; }
+html[data-device='desktop'] .win-title { position:absolute; left:530px; top:24px; width:640px; height:auto; z-index:28; filter:drop-shadow(0 7px 8px rgba(0,0,0,.45)); }
+html[data-device='desktop'] .win-main-panel { position:absolute; left:105px; top:210px; width:1545px; height:630px; z-index:10; }
+html[data-device='desktop'] .win-main-panel__skin { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+html[data-device='desktop'] .win-treasure { position:absolute; left:-62px; top:10px; width:535px; height:auto; object-fit:contain; z-index:3; }
+html[data-device='desktop'] .win-winner { position:absolute; left:420px; top:-28px; width:280px; height:440px; z-index:5; text-align:center; }
+html[data-device='desktop'] .win-winner__avatar { position:absolute; left:-33px; top:0; width:310px; height:310px; object-fit:contain; }
+html[data-device='desktop'] .win-winner__ribbon { position:absolute; left:50px; top:272px; width:190px; height:48px; display:grid; place-items:center; border-radius:8px; background:linear-gradient(#0f7415,#07460a); border:3px solid #bf8b24; color:#fff7d7; font:900 31px Arial,sans-serif; text-shadow:0 2px 4px #000; }
+html[data-device='desktop'] .win-winner__name { position:absolute; left:0; right:0; top:328px; font:900 38px Arial,sans-serif; color:#2b1704; }
+html[data-device='desktop'] .win-complete { position:absolute; left:700px; top:30px; width:420px; text-align:center; z-index:4; }
+html[data-device='desktop'] .win-complete__title { display:block; font:900 26px Arial,sans-serif; color:#2b1704; }
+html[data-device='desktop'] .win-complete__copy { display:block; margin-top:10px; font:700 25px Arial,sans-serif; color:#2b1704; }
+html[data-device='desktop'] .win-rewards { position:absolute; left:676px; top:122px; width:430px; height:280px; z-index:4; border:2px solid rgba(172,112,32,.45); border-radius:16px; background:rgba(255,231,181,.44); }
+html[data-device='desktop'] .win-rewards__title { position:absolute; top:10px; left:0; right:0; text-align:center; font:900 26px Arial,sans-serif; color:#2a1604; }
+html[data-device='desktop'] .win-reward { position:absolute; left:30px; width:360px; height:90px; border-radius:13px; background:rgba(236,197,137,.38); }
+html[data-device='desktop'] .win-reward--chips { top:58px; } html[data-device='desktop'] .win-reward--xp { top:160px; }
+html[data-device='desktop'] .win-reward img { position:absolute; left:16px; top:13px; width:62px; height:62px; object-fit:contain; }
+html[data-device='desktop'] .win-reward__label { position:absolute; left:95px; top:14px; font:800 17px Arial,sans-serif; color:#2b1704; }
+html[data-device='desktop'] .win-reward__value { position:absolute; left:95px; top:42px; font:900 34px Arial,sans-serif; color:#1c1003; }
+html[data-device='desktop'] .win-rank-bonus { position:absolute; left:675px; top:422px; width:430px; height:58px; display:flex; align-items:center; gap:16px; z-index:4; font:900 24px Arial,sans-serif; color:#2b1704; }
+html[data-device='desktop'] .win-rank-bonus img { width:42px; height:42px; object-fit:contain; } html[data-device='desktop'] .win-rank-bonus strong { margin-left:auto; font-size:30px; }
+html[data-device='desktop'] .win-summary { position:absolute; right:38px; top:22px; width:410px; height:430px; z-index:4; border:3px solid #b87926; border-radius:18px; background:rgba(255,224,171,.72); overflow:hidden; }
+html[data-device='desktop'] .win-summary__header { display:grid; place-items:center; width:100%; height:64px; background:linear-gradient(#0f7315,#073e09); color:#fff8d7; font:900 28px Arial,sans-serif; text-shadow:0 2px 3px #000; }
+html[data-device='desktop'] .win-summary__row { position:relative; height:50px; margin:0 16px; border-bottom:1px solid rgba(120,77,23,.28); }
+html[data-device='desktop'] .win-summary__row img { position:absolute; left:0; top:9px; width:32px; height:32px; object-fit:contain; }
+html[data-device='desktop'] .win-summary__label { position:absolute; left:55px; top:15px; font:800 17px Arial,sans-serif; color:#2b1704; }
+html[data-device='desktop'] .win-summary__value { position:absolute; right:0; top:13px; font:900 22px Arial,sans-serif; color:#1c1003; }
+html[data-device='desktop'] .win-players { position:absolute; left:45px; right:45px; bottom:28px; height:118px; display:flex; gap:34px; z-index:4; }
+html[data-device='desktop'] .win-player { position:relative; flex:1; border:2px solid rgba(172,112,32,.65); border-radius:15px; background:rgba(255,226,177,.72); overflow:hidden; }
+html[data-device='desktop'] .win-player__avatar { position:absolute; left:20px; bottom:-8px; width:150px; height:130px; object-fit:contain; }
+html[data-device='desktop'] .win-player__name { position:absolute; left:180px; top:18px; font:900 24px Arial,sans-serif; color:#2b1704; }
+html[data-device='desktop'] .win-player__place { position:absolute; left:180px; top:55px; width:150px; height:27px; display:grid; place-items:center; background:linear-gradient(90deg,#6b3d15,#3b1d08); color:#fff; font:800 15px Arial,sans-serif; border-radius:4px; }
+html[data-device='desktop'] .win-player__cup { position:absolute; left:185px; top:85px; width:28px; height:28px; object-fit:contain; }
+html[data-device='desktop'] .win-player__score { position:absolute; left:220px; top:83px; font:900 26px Arial,sans-serif; color:#1c1003; }
+html[data-device='desktop'] .win-action { position:absolute; bottom:23px; height:95px; z-index:25; transition:transform .16s ease,filter .16s ease; }
+html[data-device='desktop'] .win-action:hover { transform:translateY(-3px) scale(1.01); filter:brightness(1.08); }
+html[data-device='desktop'] .win-action--again { left:200px; width:410px; }
+html[data-device='desktop'] .win-action--share { left:650px; width:410px; }
+html[data-device='desktop'] .win-action--lobby { left:1090px; width:425px; }
+html[data-device='desktop'] .win-action__skin { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+html[data-device='desktop'] .win-action__title { position:absolute; left:0; right:0; top:15px; text-align:center; font:900 30px Arial,sans-serif; color:#fff8ef; text-shadow:0 3px 4px rgba(0,0,0,.7); }
+html[data-device='desktop'] .win-action__subtitle { position:absolute; left:0; right:0; top:57px; text-align:center; font:700 20px Arial,sans-serif; color:#f5e8cf; text-shadow:0 2px 3px rgba(0,0,0,.5); }
+
+/* 1280x720 fit correction: the Win layout was authored against 1728x972 assets. */
+html[data-device='desktop'] .win-screen {
+  width: 1728px;
+  height: 972px;
+  transform: scale(0.7407407407);
+  transform-origin: top left;
+}

@@ -1,0 +1,104 @@
+html[data-device='mobile'] .matchmaking-screen { color: #fff8de; }
+html[data-device='mobile'] .matchmaking-profile { position:absolute; left:24px; top:22px; width:250px; height:74px; z-index:30; }
+html[data-device='mobile'] .matchmaking-profile__avatar { position:absolute; left:-18px; top:-14px; width:96px; height:96px; object-fit:contain; z-index:3; }
+html[data-device='mobile'] .matchmaking-profile__plate { position:absolute; left:58px; top:22px; width:158px; height:36px; border-radius:8px; border:2px solid #ba7a28; background:linear-gradient(180deg,#fff5da 0%,#f2dfb7 52%,#deb276 100%); color:#2e1905; }
+html[data-device='mobile'] .matchmaking-profile__name { position:absolute; left:36px; top:3px; font-family:Arial,sans-serif; font-size:14px; font-weight:900; color:#221306; }
+html[data-device='mobile'] .matchmaking-profile__progressRow { position:absolute; inset:0; }
+html[data-device='mobile'] .matchmaking-profile__badge { position:absolute; left:4px; top:13px; width:34px; height:29px; object-fit:fill; z-index:2; }
+html[data-device='mobile'] .matchmaking-profile__badgeValue { position:absolute; left:4px; top:14px; width:34px; height:24px; display:grid; place-items:center; font-family:Arial,sans-serif; font-size:13px; font-weight:900; color:#fff7e7; z-index:3; }
+html[data-device='mobile'] .matchmaking-profile__progressBar { position:absolute; left:36px; top:20px; width:104px; height:13px; overflow:hidden; border-radius:9px; background:linear-gradient(180deg,#8b5d27 0%,#7a4b18 100%); }
+html[data-device='mobile'] .matchmaking-profile__progressFill { position:absolute; inset:0 auto 0 0; width:58%; border-radius:9px; background:linear-gradient(180deg,#fcb329 0%,#f28f11 100%); }
+html[data-device='mobile'] .matchmaking-profile__progressText { position:absolute; left:36px; top:19px; width:104px; height:13px; display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-size:9px; font-weight:900; }
+html[data-device='mobile'] .matchmaking-profile__progressCurrent, html[data-device='mobile'] .matchmaking-profile__progressRest { color:#fff5e5; }
+html[data-device='mobile'] .matchmaking-currency { position:absolute; width:145px; height:36px; top:28px; z-index:30; border-radius:10px; border:2px solid #c78b35; background:linear-gradient(#fff5cf,#e0b877); color:#16110a; }
+html[data-device='mobile'] .matchmaking-currency--coins { left:392px; }
+html[data-device='mobile'] .matchmaking-currency--gems { left:548px; }
+html[data-device='mobile'] .matchmaking-currency__icon { position:absolute; left:8px; top:4px; width:24px; height:24px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-currency__value { position:absolute; left:41px; top:7px; width:74px; font-family:Arial,sans-serif; font-size:16px; font-weight:900; }
+html[data-device='mobile'] .matchmaking-currency__plus { position:absolute; right:6px; top:6px; width:21px; height:21px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-panel { position:absolute; left:15px; top:86px; width:690px; height:615px; z-index:15; }
+html[data-device='mobile'] .matchmaking-panel__skin { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+html[data-device='mobile'] .matchmaking-filters { position:absolute; left:18px; top:28px; width:180px; z-index:3; }
+html[data-device='mobile'] .matchmaking-filter { position:relative; width:172px; height:42px; margin-bottom:8px; border-radius:20px; background:rgba(255,241,204,.72); box-shadow: inset 0 0 0 1px rgba(201,147,66,.35); }
+html[data-device='mobile'] .matchmaking-filter__icon { position:absolute; left:7px; top:6px; width:30px; height:30px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-filter__label { position:absolute; left:42px; top:6px; font-family:Arial,sans-serif; font-size:9px; font-weight:900; color:#523109; }
+html[data-device='mobile'] .matchmaking-filter__value { position:absolute; left:42px; top:18px; font-family:Arial,sans-serif; font-size:13px; font-weight:900; color:#241302; }
+html[data-device='mobile'] .matchmaking-signal { position:relative; width:170px; height:34px; margin-top:12px; display:flex; align-items:center; gap:8px; }
+html[data-device='mobile'] .matchmaking-signal__icon { width:28px; height:28px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-signal__title { font-family:Arial,sans-serif; font-size:14px; font-weight:900; color:#21570c; }
+html[data-device='mobile'] .matchmaking-signal__sub { font-family:Arial,sans-serif; font-size:12px; font-weight:800; color:#7d5a21; }
+html[data-device='mobile'] .matchmaking-center { position:absolute; left:202px; top:26px; width:286px; text-align:center; z-index:4; }
+html[data-device='mobile'] .matchmaking-center__ringWrap { position:relative; width:200px; height:200px; margin:0 auto; }
+html[data-device='mobile'] .matchmaking-center__ring { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-center__cup { position:absolute; left:34px; top:28px; width:132px; height:132px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-center__title { display:block; margin-top:4px; font-family:Arial,sans-serif; font-size:21px; font-weight:900; color:#2c1704; }
+html[data-device='mobile'] .matchmaking-center__copy { display:block; width:250px; margin:4px auto 0; font-family:Arial,sans-serif; font-size:11px; line-height:1.2; font-weight:700; color:#5b3a15; }
+html[data-device='mobile'] .matchmaking-links { display:none; }
+html[data-device='mobile'] .matchmaking-slot { position:absolute; width:118px; height:132px; z-index:4; }
+html[data-device='mobile'] .matchmaking-slot__skin { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+html[data-device='mobile'] .matchmaking-slot__inner { position:absolute; inset:0; }
+html[data-device='mobile'] .matchmaking-slot__avatar { position:absolute; left:14px; top:7px; width:90px; height:68px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-slot__title { position:absolute; left:0; right:0; top:82px; text-align:center; font-family:Arial,sans-serif; font-size:15px; font-weight:900; color:#2b1604; }
+html[data-device='mobile'] .matchmaking-slot__subtitle { position:absolute; left:0; right:0; top:102px; text-align:center; font-family:Arial,sans-serif; font-size:10px; font-weight:800; color:#2c6b13; }
+html[data-device='mobile'] .matchmaking-slot__caption { position:absolute; left:0; right:0; top:102px; text-align:center; font-family:Arial,sans-serif; font-size:14px; font-weight:900; color:#5a3717; }
+html[data-device='mobile'] .matchmaking-slot--left-top { left:208px; top:68px; }
+html[data-device='mobile'] .matchmaking-slot--left-bottom { left:208px; top:215px; }
+html[data-device='mobile'] .matchmaking-slot--right-top { left:498px; top:68px; }
+html[data-device='mobile'] .matchmaking-slot--right-bottom { left:498px; top:215px; }
+html[data-device='mobile'] .matchmaking-slot--left-bottom .matchmaking-slot__avatar, html[data-device='mobile'] .matchmaking-slot--right-bottom .matchmaking-slot__avatar { left:16px; top:12px; width:82px; height:60px; opacity:.75; }
+html[data-device='mobile'] .matchmaking-slot--right-top .matchmaking-slot__avatar { left:10px; top:11px; width:98px; height:72px; }
+html[data-device='mobile'] .matchmaking-metrics { position:absolute; left:510px; top:32px; width:158px; z-index:4; }
+html[data-device='mobile'] .matchmaking-metric { margin-bottom:12px; color:#2e1905; }
+html[data-device='mobile'] .matchmaking-metric__head { display:flex; align-items:center; gap:6px; }
+html[data-device='mobile'] .matchmaking-metric__icon { width:21px; height:21px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-metric__label { font-family:Arial,sans-serif; font-size:8px; font-weight:900; color:#5a3717; }
+html[data-device='mobile'] .matchmaking-metric__value { display:block; margin-left:27px; margin-top:2px; font-family:Arial,sans-serif; font-size:14px; font-weight:900; color:#261405; }
+html[data-device='mobile'] .matchmaking-metric--fair .matchmaking-metric__value, html[data-device='mobile'] .matchmaking-metric--skill .matchmaking-metric__value { font-size:10px; }
+html[data-device='mobile'] .matchmaking-stars { display:flex; gap:2px; margin:4px 0 0 27px; }
+html[data-device='mobile'] .matchmaking-stars img { width:12px; height:12px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-steps { position:absolute; left:26px; right:26px; bottom:18px; height:42px; display:flex; justify-content:space-between; align-items:center; z-index:4; }
+html[data-device='mobile'] .matchmaking-step { position:relative; width:204px; height:42px; border-radius:22px; background:linear-gradient(180deg,#f7e3b9,#efd39f); box-shadow: inset 0 0 0 2px rgba(188,136,53,.55); }
+html[data-device='mobile'] .matchmaking-step__badge { position:absolute; left:7px; top:5px; width:30px; height:30px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-step__text { position:absolute; left:42px; top:8px; font-family:Arial,sans-serif; font-size:10px; font-weight:900; color:#5b3816; }
+html[data-device='mobile'] .matchmaking-step__sub { position:absolute; left:42px; top:22px; font-family:Arial,sans-serif; font-size:11px; font-weight:900; color:#3c250d; }
+html[data-device='mobile'] .matchmaking-step__line { display:none; }
+html[data-device='mobile'] .matchmaking-action { position:absolute; z-index:20; }
+html[data-device='mobile'] .matchmaking-action--keep { left:18px; bottom:554px; width:318px; height:76px; }
+html[data-device='mobile'] .matchmaking-action--cancel { right:18px; bottom:554px; width:290px; height:74px; }
+html[data-device='mobile'] .matchmaking-action__skin { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+html[data-device='mobile'] .matchmaking-action__title { position:absolute; left:0; right:0; top:19px; text-align:center; font-family:Arial,sans-serif; font-size:21px; font-weight:900; color:#fff8ef; text-shadow:0 3px 4px rgba(0,0,0,.7); }
+html[data-device='mobile'] .matchmaking-action--keep .matchmaking-action__subtitle { position:absolute; left:0; right:0; top:46px; text-align:center; font-family:Arial,sans-serif; font-size:10px; font-weight:700; color:#f4e5c6; }
+
+/* Reference alignment fix */
+html[data-device='mobile'] .matchmaking-currency__icon { width: 25px; height: 25px; }
+html[data-device='mobile'] .matchmaking-currency__plus { width: 23px; height: 23px; }
+html[data-device='mobile'] .matchmaking-panel { top: 104px; height: 500px; }
+html[data-device='mobile'] .matchmaking-center__stars { display:flex; justify-content:center; gap:3px; margin-top:5px; }
+html[data-device='mobile'] .matchmaking-center__stars img { width:17px; height:17px; object-fit:contain; }
+html[data-device='mobile'] .matchmaking-link { display:none; }
+html[data-device='mobile'] .matchmaking-metric__iconGap { display:inline-block; width:0; height:0; }
+
+/* Mobile compact pass to mirror desktop reference proportions */
+html[data-device='mobile'] .matchmaking-panel { left: 18px; top: 112px; width: 684px; height: 500px; }
+html[data-device='mobile'] .matchmaking-filters { left: 18px; top: 28px; }
+html[data-device='mobile'] .matchmaking-filter { width: 168px; height: 39px; margin-bottom: 7px; }
+html[data-device='mobile'] .matchmaking-center { left: 214px; top: 30px; width: 260px; }
+html[data-device='mobile'] .matchmaking-center__ringWrap { width: 178px; height: 178px; }
+html[data-device='mobile'] .matchmaking-center__cup { left: 31px; top: 26px; width: 118px; height: 118px; }
+html[data-device='mobile'] .matchmaking-slot { width: 108px; height: 120px; }
+html[data-device='mobile'] .matchmaking-slot--left-top { left: 202px; top: 66px; }
+html[data-device='mobile'] .matchmaking-slot--left-bottom { left: 202px; top: 202px; }
+html[data-device='mobile'] .matchmaking-slot--right-top { left: 488px; top: 66px; }
+html[data-device='mobile'] .matchmaking-slot--right-bottom { left: 488px; top: 202px; }
+html[data-device='mobile'] .matchmaking-metrics { left: 505px; top: 26px; width: 156px; }
+html[data-device='mobile'] .matchmaking-steps { left: 24px; right: 24px; bottom: 14px; }
+html[data-device='mobile'] .matchmaking-step { width: 202px; height: 40px; }
+html[data-device='mobile'] .matchmaking-action--keep { left: 32px; bottom: 618px; width: 295px; height: 70px; }
+html[data-device='mobile'] .matchmaking-action--cancel { right: 32px; bottom: 618px; width: 270px; height: 70px; }
+
+/* User request: scale the complete left matchmaking info block x1.25 */
+html[data-device='mobile'] .matchmaking-filters {
+  transform: scale(1.25);
+  transform-origin: top left;
+  z-index: 40;
+}

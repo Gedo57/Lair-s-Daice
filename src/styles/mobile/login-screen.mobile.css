@@ -1,0 +1,17 @@
+html[data-device='mobile'] .login-bg { object-position: center center; }
+html[data-device='mobile'] .login-logo { left: 100px; top: 35px; width: 520px; height: 245px; }
+html[data-device='mobile'] .login-panel { left: 28px; top: 300px; width: 664px; height: 720px; }
+html[data-device='mobile'] .login-character { left: 115px; top: 320px; width: 250px; height: 312px; }
+html[data-device='mobile'] .login-subtitle { left: 243px; top: 610px; font-size: 22px; }
+html[data-device='mobile'] .login-field { width: 474px; height: 80px; }
+html[data-device='mobile'] .login-field--email { left: 123px; top: 662px; }
+html[data-device='mobile'] .login-field--password { left: 123px; top: 762px; }
+html[data-device='mobile'] .login-field__input { font-size: 21px; padding-left: 70px; padding-right: 70px; }
+html[data-device='mobile'] .login-forgot { left: 410px; top: 850px; font-size: 17px; }
+html[data-device='mobile'] .login-button--login { left: 123px; top: 886px; width: 474px; height: 82px; }
+html[data-device='mobile'] .login-button--guest { left: 123px; top: 1032px; width: 474px; height: 80px; }
+html[data-device='mobile'] .login-button--back { left: 232px; top: 1148px; width: 255px; height: 78px; }
+html[data-device='mobile'] .login-button--login .image-button__text { font-size: 32px; }
+html[data-device='mobile'] .login-button--guest .image-button__text { font-size: 25px; }
+html[data-device='mobile'] .login-button__back-text { font-size: 27px; }
+html[data-device='mobile'] .login-or { left: 192px; top: 988px; width: 335px; font-size: 25px; }
