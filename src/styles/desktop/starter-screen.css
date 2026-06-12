@@ -294,3 +294,28 @@ html[data-device='desktop'] .starter-button:active {
   0% { opacity: 0; transform: translateY(20px) scale(.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+html[data-device='desktop'] .starter-language-toggle {
+  position: absolute;
+  left: 1010px;
+  top: 34px;
+  z-index: 30;
+  min-width: 132px;
+  height: 46px;
+  padding: 0 18px;
+  border: 2px solid rgba(255, 226, 132, .82);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(79, 30, 108, .94) 0%, rgba(34, 13, 68, .96) 100%);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .18);
+  color: #fff4ce;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, .72);
+  cursor: pointer;
+}
+
+html[data-device='desktop'] .starter-language-toggle:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}

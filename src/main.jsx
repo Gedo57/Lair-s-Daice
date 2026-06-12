@@ -20,6 +20,9 @@ import './styles/desktop/room-select.css';
 import './styles/desktop/win-screen.css';
 import './styles/desktop/help-screen.css';
 import './styles/desktop/profile-screen.css';
+import './styles/desktop/special-event.css';
+import './styles/desktop/daily-reward.css';
+import './styles/desktop/tournament-pass.css';
 import './styles/mobile/main-menu.mobile.css';
 import './styles/mobile/create-room.mobile.css';
 import './styles/mobile/gameplay.mobile.css';
@@ -27,6 +30,10 @@ import './styles/mobile/matchmaking.mobile.css';
 import './styles/mobile/room-select.mobile.css';
 import './styles/mobile/win-screen.mobile.css';
 import './styles/mobile/help-screen.mobile.css';
+import './styles/mobile/profile-screen.mobile.css';
+import './styles/mobile/special-event.mobile.css';
+import './styles/mobile/daily-reward.mobile.css';
+import './styles/mobile/tournament-pass.mobile.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

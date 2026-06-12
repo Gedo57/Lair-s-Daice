@@ -34,12 +34,31 @@
   background-image: url('/assets/liars-dice/main-menu/BG1.png');
 }
 
+.app-shell--specialevent {
+  background-image: url('/assets/liars-dice/special-event/BG.png');
+}
+
+.app-shell--dailyreward {
+  background-image: url('/assets/liars-dice/daily-reward/BG.png');
+}
+
+.app-shell--tournamentpass {
+  background-image: url('/assets/liars-dice/tournament-pass/BG.png');
+}
+
 .app-shell--roomselect {
   background-image: url('/assets/liars-dice/room-select/BG.png');
 }
 
 .app-shell--help {
   background-image: url('/assets/liars-dice/help/BGH.png');
+}
+
+
+html[data-language='zh'] .app-shell--help {
+  background-image: url('/assets/liars-dice/localized/zh/help-background.png');
+  background-size: cover;
+  background-position: center center;
 }
 
 .app-shell--win {
@@ -68,7 +87,10 @@
 .app-shell--matchmaking .game-frame,
 .app-shell--gameplay .game-frame,
 .app-shell--createroom .game-frame,
-.app-shell--profile .game-frame {
+.app-shell--profile .game-frame,
+.app-shell--specialevent .game-frame,
+.app-shell--dailyreward .game-frame,
+.app-shell--tournamentpass .game-frame {
   background: transparent;
 }
 
@@ -139,4 +161,57 @@
   background: linear-gradient(#115a12, #063e0d);
   font-size: 28px;
   letter-spacing: 2px;
+}
+
+/* Mobile modern-wide layout:
+   Keep the UI/game canvas fixed at 1280x720, centered and scaled once.
+   The background belongs to the full viewport so 19.5:9 phones such as
+   2532x1170 are covered without stretching the UI. */
+html[data-device='mobile'] .app-shell {
+  width: 100vw;
+  height: 100vh;
+  min-width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #203f43;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+html[data-device='mobile'] .game-frame {
+  width: 1280px !important;
+  height: 720px !important;
+  min-width: 1280px;
+  min-height: 720px;
+  max-width: 1280px;
+  max-height: 720px;
+  flex: 0 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: transparent !important;
+  background-image: none !important;
+
+  transform: translateY(-12px) scale(var(--ui-scale));
+  transform-origin: center center;
+}
+
+html[data-device='mobile'] .screen {
+  position: absolute;
+  inset: 0 !important;
+  width: 1280px !important;
+  height: 720px !important;
+  min-width: 1280px;
+  min-height: 720px;
+  max-width: 1280px;
+  max-height: 720px;
+  overflow: hidden;
+}
+
+/* Chinese help screen: use the same full-frame fitting as the English help background. */
+html[data-language='zh'] .app-shell--help {
+  background-size: 100% 100%;
+  background-position: center center;
 }

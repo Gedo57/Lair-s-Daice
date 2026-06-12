@@ -1,3 +1,4 @@
+import ProfileHud from '../components/ProfileHud.jsx';
 const asset = '/assets/liars-dice/win/';
 
 const players = [
@@ -16,32 +17,27 @@ const summary = [
   { icon: '12312452312.png', label: 'STATUS', value: 'WINNER' },
 ];
 
-export default function WinScreen({ navigation }) {
+export default function WinScreen({ navigation, data, i18n }) {
+  const tx = i18n?.tx || ((value) => value);
+  const user = data?.user || {};
+  const wallet = data?.wallet || {};
+
   return (
-    <section className="screen win-screen" aria-label="Victory Screen">
-      <div className="win-profile">
-        <img className="win-profile__avatar" src={`${asset}2.png`} alt="" draggable="false" />
-        <div className="win-profile__plate">
-          <span className="win-profile__name">Emma</span>
-          <img className="win-profile__badge" src={'/assets/liars-dice/room-select/563.png'} alt="" draggable="false" />
-          <span className="win-profile__badgeValue">23</span>
-          <div className="win-profile__progressBar"><div className="win-profile__progressFill" /></div>
-          <span className="win-profile__progressText">11,450 / 2,500</span>
-        </div>
-      </div>
+    <section className="screen win-screen" aria-label={tx('Victory Screen')}>
+      <ProfileHud className="win-profile" user={user} name={user.displayName || user.username || 'Emma'} />
 
       <div className="win-currency win-currency--coins">
         <img className="win-currency__icon" src={`${asset}6.png`} alt="" draggable="false" />
-        <span className="win-currency__value">125,680</span>
+        <span className="win-currency__value">{wallet.coins || '125,680'}</span>
         <img className="win-currency__plus" src={`${asset}8.png`} alt="" draggable="false" />
       </div>
       <div className="win-currency win-currency--gems">
         <img className="win-currency__icon" src={`${asset}7.png`} alt="" draggable="false" />
-        <span className="win-currency__value">2,350</span>
+        <span className="win-currency__value">{wallet.gems || '2,350'}</span>
         <img className="win-currency__plus" src={`${asset}8.png`} alt="" draggable="false" />
       </div>
 
-      <img className="win-title" src={`${asset}vic.png`} alt="Victory You Win" draggable="false" />
+      <img className="win-title" src={`${asset}vic.png`} alt={tx('Victory You Win')} draggable="false" />
 
       <div className="win-main-panel">
         <img className="win-main-panel__skin" src={`${asset}Pannal.png`} alt="" draggable="false" />
@@ -50,43 +46,43 @@ export default function WinScreen({ navigation }) {
 
         <div className="win-winner">
           <img className="win-winner__avatar" src={`${asset}B2.png`} alt="" draggable="false" />
-          <span className="win-winner__ribbon">WINNER</span>
-          <span className="win-winner__name">Emma</span>
+          <span className="win-winner__ribbon">{tx('WINNER')}</span>
+          <span className="win-winner__name">{user.displayName || 'Emma'}</span>
         </div>
 
         <div className="win-complete">
-          <span className="win-complete__title">Quick Match Complete</span>
-          <span className="win-complete__copy">You outplayed the table!</span>
+          <span className="win-complete__title">{tx('Quick Match Complete')}</span>
+          <span className="win-complete__copy">{tx('You outplayed the table!')}</span>
         </div>
 
         <div className="win-rewards">
-          <span className="win-rewards__title">YOUR REWARDS</span>
+          <span className="win-rewards__title">{tx('YOUR REWARDS')}</span>
           <div className="win-reward win-reward--chips">
             <img src={`${asset}6.png`} alt="" draggable="false" />
-            <span className="win-reward__label">CHIPS</span>
+            <span className="win-reward__label">{tx('CHIPS')}</span>
             <span className="win-reward__value">+ 25,000</span>
           </div>
           <div className="win-reward win-reward--xp">
             <img src={`${asset}10.png`} alt="" draggable="false" />
-            <span className="win-reward__label">XP GAINED</span>
+            <span className="win-reward__label">{tx('XP GAINED')}</span>
             <span className="win-reward__value">+ 350 XP</span>
           </div>
         </div>
 
         <div className="win-rank-bonus">
           <img src={`${asset}1232132131.png`} alt="" draggable="false" />
-          <span>RANK POINTS BONUS</span>
+          <span>{tx('RANK POINTS BONUS')}</span>
           <strong>+15</strong>
           <img src={`${asset}23423423432.png`} alt="" draggable="false" />
         </div>
 
         <div className="win-summary">
-          <span className="win-summary__header">MATCH SUMMARY</span>
+          <span className="win-summary__header">{tx('MATCH SUMMARY')}</span>
           {summary.map((item) => (
-            <div className="win-summary__row" key={item.label}>
+            <div className="win-summary__row" key={tx(item.label)}>
               <img src={`${asset}${item.icon}`} alt="" draggable="false" />
-              <span className="win-summary__label">{item.label}</span>
-              <strong className="win-summary__value">{item.value}</strong>
+              <span className="win-summary__label">{tx(item.label)}</span>
+              <strong className="win-summary__value">{tx(item.value)}</strong>
             </div>
           ))}
         </div>
@@ -106,18 +102,18 @@ export default function WinScreen({ navigation }) {
 
       <button className="win-action win-action--again" type="button" onClick={navigation.goMatchmaking}>
         <img className="win-action__skin" src={`${asset}B1.png`} alt="" draggable="false" />
-        <span className="win-action__title">PLAY AGAIN</span>
-        <span className="win-action__subtitle">Play another match</span>
+        <span className="win-action__title">{tx('PLAY AGAIN')}</span>
+        <span className="win-action__subtitle">{tx('Play another match')}</span>
       </button>
       <button className="win-action win-action--share" type="button">
         <img className="win-action__skin" src={`${asset}bt1.png`} alt="" draggable="false" />
-        <span className="win-action__title">SHARE</span>
-        <span className="win-action__subtitle">Share with friends!</span>
+        <span className="win-action__title">{tx('SHARE')}</span>
+        <span className="win-action__subtitle">{tx('Share with friends!')}</span>
       </button>
       <button className="win-action win-action--lobby" type="button" onClick={navigation.goMainMenu}>
         <img className="win-action__skin" src={`${asset}bt2.png`} alt="" draggable="false" />
-        <span className="win-action__title">BACK TO LOBBY</span>
-        <span className="win-action__subtitle">Return to main menu</span>
+        <span className="win-action__title">{tx('BACK TO LOBBY')}</span>
+        <span className="win-action__subtitle">{tx('Return to main menu')}</span>
       </button>
     </section>
   );

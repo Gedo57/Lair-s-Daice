@@ -1,3 +1,6 @@
+import ProfileHud from '../components/ProfileHud.jsx';
+import { useEffect, useState } from 'react';
+
 const asset = '/assets/liars-dice/profile/';
 const mainMenuAsset = '/assets/liars-dice/main-menu/';
 
@@ -33,38 +36,72 @@ const matches = [
   { state: 'WIN', icon: 'ic2.png', room: 'VIP', coins: '+40,000' },
 ];
 
-export default function ProfileScreen({ navigation }) {
-  return (
-    <section className="screen profile-screen" aria-label="Profile Screen">
-      <div className="profile-mini">
-        <img className="profile-mini__avatar" src={`${mainMenuAsset}2.png`} alt="" draggable="false" />
-        <div className="profile-mini__plate">
-          <span className="profile-mini__name">EMMA</span>
-          <div className="profile-mini__progressRow">
-            <img className="profile-mini__badge" src={`${mainMenuAsset}563.png`} alt="" draggable="false" />
-            <span className="profile-mini__level">23</span>
-            <div className="profile-mini__progressBar">
-              <div className="profile-mini__progressFill" />
-            </div>
-            <span className="profile-mini__xpText">
-              <span className="profile-mini__xpCurrent">1,450</span>
-              <span className="profile-mini__xpRest">/ 2,500</span>
-            </span>
-          </div>
-        </div>
-      </div>
+export default function ProfileScreen({ navigation, data, backendActions, i18n }) {
+  const tx = i18n?.tx || ((value) => value);
+  const user = data?.user || {};
+  const wallet = data?.wallet || {};
+  const [displayName, setDisplayName] = useState(user.username || 'EMMA');
+  const [draftName, setDraftName] = useState(user.username || 'EMMA');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [nameError, setNameError] = useState('');
 
-      <img className="profile-logo" src={`${asset}logo.png`} alt="PROFILE" draggable="false" />
+  useEffect(() => {
+    const nextName = user.username || 'EMMA';
+    setDisplayName(nextName);
+    setDraftName(nextName);
+  }, [user.username]);
+
+  const startEditName = () => {
+    setDraftName(displayName);
+    setNameError('');
+    setIsEditingName(true);
+  };
+
+  const cancelEditName = () => {
+    setDraftName(displayName);
+    setNameError('');
+    setIsEditingName(false);
+  };
+
+  const saveProfileName = async () => {
+    const nextName = draftName.trim();
+
+    if (!nextName) {
+      setNameError(tx('Name is required'));
+      return;
+    }
+
+    setIsSavingName(true);
+    setNameError('');
+
+    try {
+      await backendActions?.updateProfile?.({ username: nextName });
+      setDisplayName(nextName);
+      setDraftName(nextName);
+      setIsEditingName(false);
+    } catch (error) {
+      setNameError(error?.message || tx('Failed to update name'));
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  return (
+    <section className="screen profile-screen" aria-label={tx('Profile Screen')}>
+      <ProfileHud className="profile-mini" user={user} name={displayName} />
+
+      <img className="profile-logo" src={`${asset}logo.png`} alt={tx('PROFILE')} draggable="false" />
 
       <div className="profile-wallet profile-wallet--coins">
         <img className="profile-wallet__icon profile-wallet__icon--coin" src={`${mainMenuAsset}6.png`} alt="" draggable="false" />
-        <span className="profile-wallet__value">125,680</span>
+        <span className="profile-wallet__value">{wallet.coins || '125,680'}</span>
         <img className="profile-wallet__plus" src={`${mainMenuAsset}8.png`} alt="" draggable="false" />
       </div>
 
       <div className="profile-wallet profile-wallet--diamonds">
         <img className="profile-wallet__icon profile-wallet__icon--diamond" src={`${mainMenuAsset}7.png`} alt="" draggable="false" />
-        <span className="profile-wallet__value">2,350</span>
+        <span className="profile-wallet__value">{wallet.gems || '2,350'}</span>
         <img className="profile-wallet__plus" src={`${mainMenuAsset}8.png`} alt="" draggable="false" />
       </div>
 
@@ -73,18 +110,43 @@ export default function ProfileScreen({ navigation }) {
       <img className="profile-player-art" src={`${asset}ll.png`} alt="" draggable="false" />
 
       <div className="profile-name-card">
-        <span className="profile-name-card__name">EMMA</span>
+        {isEditingName ? (
+          <div className="profile-name-editor">
+            <input
+              className="profile-name-editor__input"
+              value={draftName}
+              onChange={(event) => setDraftName(event.target.value)}
+              maxLength={18}
+              aria-label={tx('Avatar name')}
+              autoFocus
+            />
+            <button className="profile-name-editor__save" type="button" onClick={saveProfileName} disabled={isSavingName}>
+              {tx(isSavingName ? 'SAVING...' : 'SAVE')}
+            </button>
+            <button className="profile-name-editor__cancel" type="button" onClick={cancelEditName} disabled={isSavingName}>
+              {tx('CANCEL')}
+            </button>
+          </div>
+        ) : (
+          <>
+            <span className="profile-name-card__name">{displayName}</span>
+            <button className="profile-edit-name-button" type="button" onClick={startEditName}>
+              {tx('EDIT NAME')}
+            </button>
+          </>
+        )}
+        {nameError ? <span className="profile-name-editor__error" role="alert">{nameError}</span> : null}
         <img className="profile-name-card__crown" src={`${asset}ic16.png`} alt="" draggable="false" />
-        <span className="profile-name-card__rank">High Roller</span>
-        <span className="profile-name-card__bio">Long Player · Joined since<br />Aug 16, 2024</span>
+        <span className="profile-name-card__rank">{tx('High Roller')}</span>
+        <span className="profile-name-card__bio">{tx('Long Player · Joined since')}<br />{tx('Aug 16, 2024')}</span>
       </div>
 
       <div className="profile-stats">
         {stats.map((item) => (
           <div className={`profile-stat profile-stat--${item.mod}`} key={item.mod}>
             <img className="profile-stat__icon" src={`${asset}${item.icon}`} alt="" draggable="false" />
-            <span className="profile-stat__label">{item.label}</span>
-            <span className="profile-stat__value">{item.value}</span>
+            <span className="profile-stat__label">{tx(item.label)}</span>
+            <span className="profile-stat__value">{tx(item.value)}</span>
           </div>
         ))}
       </div>
@@ -92,32 +154,32 @@ export default function ProfileScreen({ navigation }) {
       <div className="profile-seasons">
         {seasons.map((item, index) => (
           <div className={`profile-season profile-season--${index + 1}`} key={item.name}>
-            <span className="profile-season__name">{item.name}</span>
+            <span className="profile-season__name">{tx(item.name)}</span>
             <img className="profile-season__icon" src={`${asset}ic7.png`} alt="" draggable="false" />
-            <span className="profile-season__rank">{item.rank}</span>
+            <span className="profile-season__rank">{tx(item.rank)}</span>
           </div>
         ))}
       </div>
 
       <div className="profile-bottom profile-bottom--achievements">
         <img className="profile-bottom__panel profile-bottom__panel--achievements" src={`${asset}panel3.png`} alt="" draggable="false" />
-        <span className="profile-bottom__title">ACHIEVEMENTS</span>
+        <span className="profile-bottom__title">{tx('ACHIEVEMENTS')}</span>
         {achievements.map((item, index) => (
           <div className={`profile-achievement profile-achievement--${index + 1}`} key={item.label}>
             <img className="profile-achievement__icon" src={`${asset}${item.icon}`} alt="" draggable="false" />
-            <span className="profile-achievement__label">{item.label}</span>
+            <span className="profile-achievement__label">{tx(item.label)}</span>
           </div>
         ))}
       </div>
 
       <div className="profile-bottom profile-bottom--recent">
         <img className="profile-bottom__panel profile-bottom__panel--recent" src={`${asset}panel 1.png`} alt="" draggable="false" />
-        <span className="profile-bottom__title">RECENT MATCHES</span>
+        <span className="profile-bottom__title">{tx('RECENT MATCHES')}</span>
         {matches.map((item, index) => (
           <div className={`profile-match profile-match--${index + 1}`} key={`${item.state}-${item.room}`}>
-            <span className={`profile-match__state profile-match__state--${item.state.toLowerCase()}`}>{item.state}</span>
+            <span className={`profile-match__state profile-match__state--${item.state.toLowerCase()}`}>{tx(item.state)}</span>
             <img className="profile-match__roomIcon" src={`${asset}${item.icon}`} alt="" draggable="false" />
-            <span className="profile-match__room">{item.room}</span>
+            <span className="profile-match__room">{tx(item.room)}</span>
             <img className="profile-match__coin" src={`${asset}ic1.png`} alt="" draggable="false" />
             <span className="profile-match__coins">{item.coins}</span>
           </div>
@@ -126,18 +188,18 @@ export default function ProfileScreen({ navigation }) {
 
       <div className="profile-bottom profile-bottom--favorite">
         <img className="profile-bottom__panel profile-bottom__panel--favorite" src={`${asset}panel3.png`} alt="" draggable="false" />
-        <span className="profile-bottom__title">MY FAVORITE</span>
-        <span className="profile-favorite__label profile-favorite__label--cup">FAVORITE CUP</span>
-        <span className="profile-favorite__label profile-favorite__label--dice">FAVORITE DICE</span>
+        <span className="profile-bottom__title">{tx('MY FAVORITE')}</span>
+        <span className="profile-favorite__label profile-favorite__label--cup">{tx('FAVORITE CUP')}</span>
+        <span className="profile-favorite__label profile-favorite__label--dice">{tx('FAVORITE DICE')}</span>
         <img className="profile-favorite__cup" src={`${asset}ic9.png`} alt="" draggable="false" />
         <img className="profile-favorite__dice" src={`${asset}ic10.png`} alt="" draggable="false" />
-        <span className="profile-favorite__name profile-favorite__name--cup">Royal Red</span>
-        <span className="profile-favorite__name profile-favorite__name--dice">Classic Ivory</span>
+        <span className="profile-favorite__name profile-favorite__name--cup">{tx('Royal Red')}</span>
+        <span className="profile-favorite__name profile-favorite__name--dice">{tx('Classic Ivory')}</span>
       </div>
 
       <button className="profile-back" type="button" onClick={navigation.goMainMenu}>
         <img className="profile-back__skin" src={`${asset}B2.png`} alt="" draggable="false" />
-        <span className="profile-back__text">BACK</span>
+        <span className="profile-back__text">{tx('BACK')}</span>
       </button>
     </section>
   );

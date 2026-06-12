@@ -494,3 +494,87 @@ html[data-device='desktop'] .login-forgot:hover {
   0% { opacity: 0; transform: translateY(10px) scale(.992); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+
+/* Auth register mode */
+html[data-device='desktop'] .login-field--username {
+  left: 571.1px;
+  top: 253px;
+}
+
+html[data-device='desktop'] .login-screen--register .login-field--email {
+  top: 318px;
+}
+
+html[data-device='desktop'] .login-screen--register .login-field--password {
+  top: 383px;
+}
+
+html[data-device='desktop'] .login-screen--register .login-button--login {
+  top: 456px;
+}
+
+html[data-device='desktop'] .login-screen--register .login-or {
+  top: 534px;
+}
+
+html[data-device='desktop'] .login-screen--register .login-button--guest {
+  top: 562px;
+}
+
+html[data-device='desktop'] .login-register-toggle {
+  position: absolute;
+  z-index: 16;
+  left: 572.63px;
+  top: 403.5px;
+  width: 215px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #6a320c;
+  font: 900 15px Arial, sans-serif;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+html[data-device='desktop'] .login-screen--register .login-register-toggle {
+  left: 770px;
+  top: 427px;
+  width: 235px;
+  text-align: right;
+}
+
+html[data-device='desktop'] .login-auth-message {
+  position: absolute;
+  z-index: 18;
+  left: 572.63px;
+  top: 427px;
+  width: 430.24px;
+  margin: 0;
+  font: 900 14px Arial, sans-serif;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 0 1px 1px rgba(255, 239, 186, 0.28);
+}
+
+html[data-device='desktop'] .login-auth-message--error {
+  color: #8b1e1e;
+}
+
+html[data-device='desktop'] .login-auth-message--success {
+  color: #1f6a25;
+}
+
+html[data-device='desktop'] .login-screen--register .login-auth-message {
+  top: 427px;
+  text-align: left;
+}
+
+html[data-device='desktop'] .login-button:disabled,
+html[data-device='desktop'] .login-register-toggle:disabled {
+  cursor: progress;
+  filter: grayscale(0.25) brightness(0.9);
+  opacity: 0.72;
+}

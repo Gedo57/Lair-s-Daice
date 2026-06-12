@@ -30,22 +30,27 @@ function PlayerPanel({ className, skin, avatar, name, count, dice }) {
   );
 }
 
-function ActionButton({ className, skin, title, subtitle, navigation }) {
-  const click = title === 'CONFIRM' ? navigation.goWin : undefined;
+function ActionButton({ className, skin, title, subtitle, onAction, tx }) {
+  const actionType = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const click = () => onAction?.({ type: actionType || 'gameplay_action' });
+
   return (
     <button className={`gameplay-action ${className}`} type="button" onClick={click}>
       <img className="gameplay-action__skin" src={`${asset}${skin}`} alt="" draggable="false" />
-      <span className="gameplay-action__title">{title}</span>
-      <span className="gameplay-action__subtitle">{subtitle}</span>
+      <span className="gameplay-action__title">{tx(title)}</span>
+      <span className="gameplay-action__subtitle">{tx(subtitle)}</span>
     </button>
   );
 }
 
-export default function Gameplay({ navigation }) {
+export default function Gameplay({ navigation, backendActions, i18n }) {
+  const tx = i18n?.tx || ((value) => value);
+  const isChinese = i18n?.language === 'zh';
+  const bidSelectorSkin = isChinese ? '/assets/liars-dice/localized/zh/gameplay-bid-panel.png' : `${asset}234.png`;
   const [selectedQuantity, setSelectedQuantity] = useState(4);
 
   return (
-    <section className="screen gameplay-screen" aria-label="Gameplay">
+    <section className="screen gameplay-screen" aria-label={tx('Gameplay')}>
       <PlayerPanel className="gameplay-player--sophie" skin="bb3.png" avatar="c3.png" name="Sophie" count="4" dice={sophieDice} />
       <PlayerPanel className="gameplay-player--you" skin="bb2.png" avatar="c1.png" name="You" count="5" dice={youDice} />
       <PlayerPanel className="gameplay-player--dragon" skin="bb1.png" avatar="Dragon.png" name="Dragon" count="4" dice={dragonDice} />
@@ -54,7 +59,7 @@ export default function Gameplay({ navigation }) {
         <img className="gameplay-turnbar__skin" src={`${asset}11.png`} alt="" draggable="false" />
         <img className="gameplay-turnbar__avatarBg" src={`${asset}BGBB.png`} alt="" draggable="false" />
         <img className="gameplay-turnbar__avatar" src={`${asset}22.png`} alt="" draggable="false" />
-        <span className="gameplay-turnbar__title">LUCA’S TURN</span>
+        <span className="gameplay-turnbar__title">{tx('LUCA’S TURN')}</span>
         <div className="gameplay-turnbar__countRow">
           <Die value={4} className="gameplay-turnbar__countDie" />
           <span className="gameplay-turnbar__countValue">4</span>
@@ -72,14 +77,14 @@ export default function Gameplay({ navigation }) {
 
       <div className="gameplay-current-bid">
         <img className="gameplay-current-bid__skin" src={`${asset}4.png`} alt="" draggable="false" />
-        <div className="gameplay-current-bid__header">CURRENT BID</div>
+        <div className="gameplay-current-bid__header">{tx('CURRENT BID')}</div>
         <div className="gameplay-current-bid__main">
           <span>5 x</span>
           <Die value={1} className="gameplay-current-bid__die" />
         </div>
-        <span className="gameplay-current-bid__total">TOTAL DICE IN PLAY: 17</span>
-        <span className="gameplay-current-bid__label">LAST ACTION</span>
-        <span className="gameplay-current-bid__copy">Luca raised the bid</span>
+        <span className="gameplay-current-bid__total">{tx('TOTAL DICE IN PLAY: 17')}</span>
+        <span className="gameplay-current-bid__label">{tx('LAST ACTION')}</span>
+        <span className="gameplay-current-bid__copy">{tx('Luca raised the bid')}</span>
         <div className="gameplay-current-bid__last">
           <span>4 x</span>
           <Die value={1} className="gameplay-current-bid__lastDie" />
@@ -91,7 +96,7 @@ export default function Gameplay({ navigation }) {
       </div>
 
       <div className="gameplay-bid-selector">
-        <img className="gameplay-bid-selector__skin" src={`${asset}234.png`} alt="" draggable="false" />
+        <img className="gameplay-bid-selector__skin" src={bidSelectorSkin} alt="" draggable="false" />
         <div className="gameplay-bid-selector__quantityRow">
           {quantityOptions.map((value) => (
             <button
@@ -119,7 +124,7 @@ export default function Gameplay({ navigation }) {
 
       <button className="gameplay-reroll" type="button">
         <img className="gameplay-reroll__skin" src={`${asset}1234.png`} alt="" draggable="false" />
-        <span className="gameplay-reroll__title">RE-ROLL</span>
+        <span className="gameplay-reroll__title">{tx('RE-ROLL')}</span>
         <span className="gameplay-reroll__count">3</span>
       </button>
 
@@ -127,10 +132,10 @@ export default function Gameplay({ navigation }) {
         <img className="gameplay-action-tray__skin" src={`${asset}Panal.png`} alt="" draggable="false" />
       </div>
 
-      <ActionButton className="gameplay-action--raise" skin="B!.png" title="RAISE BID" subtitle="Increase the bid" navigation={navigation} />
-      <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIRA" subtitle="Challenge the bet" navigation={navigation} />
-      <ActionButton className="gameplay-action--slam" skin="B3.png" title="SLAM" subtitle="Call liar for double penalty" navigation={navigation} />
-      <ActionButton className="gameplay-action--confirm" skin="B4.png" title="CONFIRM" subtitle="Submit your bid" navigation={navigation} />
+      <ActionButton className="gameplay-action--raise" skin="B!.png" title="RAISE BID" subtitle="Increase the bid" onAction={backendActions?.finishMockWin || navigation.goWin} tx={tx} />
+      <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIRA" subtitle="Challenge the bet" onAction={backendActions?.finishMockWin || navigation.goWin} tx={tx} />
+      <ActionButton className="gameplay-action--slam" skin="B3.png" title="SLAM" subtitle="Call liar for double penalty" onAction={backendActions?.finishMockWin || navigation.goWin} tx={tx} />
+      <ActionButton className="gameplay-action--confirm" skin="B4.png" title="CONFIRM" subtitle="Submit your bid" onAction={backendActions?.finishMockWin || navigation.goWin} tx={tx} />
     </section>
   );
 }

@@ -4,7 +4,8 @@ const starterAsset = '/assets/liars-dice/starter/';
 const loadingAsset = '/assets/liars-dice/loading/';
 const sparkles = Array.from({ length: 16 }, (_, index) => index + 1);
 
-export default function LoadingScreen({ navigation }) {
+export default function LoadingScreen({ navigation, i18n }) {
+  const tx = i18n?.tx || ((value) => value);
   const [progress, setProgress] = useState(1);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function LoadingScreen({ navigation }) {
   }, [navigation]);
 
   return (
-    <section className="screen loading-screen" aria-label="Loading Screen">
+    <section className="screen loading-screen" aria-label={tx('Loading Screen')}>
       <div className="loading-vfx loading-vfx--vignette" aria-hidden="true" />
       <div className="loading-vfx loading-vfx--logoShine" aria-hidden="true" />
       <div className="loading-vfx loading-vfx--cupsSpark" aria-hidden="true" />
@@ -37,7 +38,7 @@ export default function LoadingScreen({ navigation }) {
       <div className="loading-panel">
         <img className="loading-panel__skin" src={`${loadingAsset}1.png`} alt="" draggable="false" />
         <div className="loading-title">
-          <span className="loading-title__word">LOADING</span>
+          <span className="loading-title__word">{tx('LOADING')}</span>
           <span className="loading-title__dots" aria-hidden="true" />
           <span className="loading-title__percent">{progress}%</span>
         </div>
