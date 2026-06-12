@@ -1,0 +1,45 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.jsx';
+
+import './styles/base/reset.css';
+import './styles/base/layout.css';
+import './styles/base/orientation-guard.css';
+import './styles/base/components.css';
+import './styles/desktop/starter-screen.css';
+import './styles/desktop/login-screen.css';
+import './styles/desktop/loading-screen.css';
+import './styles/mobile/starter-screen.mobile.css';
+import './styles/mobile/login-screen.mobile.css';
+import './styles/mobile/loading-screen.mobile.css';
+
+import './styles/desktop/main-menu.css';
+import './styles/desktop/create-room.css';
+import './styles/desktop/join-room.css';
+import './styles/desktop/gameplay.css';
+import './styles/desktop/matchmaking.css';
+import './styles/desktop/room-select.css';
+import './styles/desktop/win-screen.css';
+import './styles/desktop/help-screen.css';
+import './styles/desktop/profile-screen.css';
+import './styles/desktop/special-event.css';
+import './styles/desktop/daily-reward.css';
+import './styles/desktop/tournament-pass.css';
+import './styles/mobile/main-menu.mobile.css';
+import './styles/mobile/create-room.mobile.css';
+import './styles/mobile/join-room.mobile.css';
+import './styles/mobile/gameplay.mobile.css';
+import './styles/mobile/matchmaking.mobile.css';
+import './styles/mobile/room-select.mobile.css';
+import './styles/mobile/win-screen.mobile.css';
+import './styles/mobile/help-screen.mobile.css';
+import './styles/mobile/profile-screen.mobile.css';
+import './styles/mobile/special-event.mobile.css';
+import './styles/mobile/daily-reward.mobile.css';
+import './styles/mobile/tournament-pass.mobile.css';
+
+createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
