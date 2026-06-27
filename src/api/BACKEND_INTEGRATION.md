@@ -3,7 +3,7 @@
 ## Environment
 
 ```env
-VITE_API_BASE_URL=http://localhost:3000
+VITE_API_BASE_URL=https://liars-dice-backend.onrender.com
 VITE_USE_MOCK_BACKEND=false
 ```
 
