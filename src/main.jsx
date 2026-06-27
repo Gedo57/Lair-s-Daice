@@ -42,6 +42,7 @@ import './styles/mobile/tournament-pass.mobile.css';
 import './styles/mobile/portrait-main.mobile.css';
 import './styles/mobile/portrait-rooms.mobile.css';
 import './styles/mobile/portrait-gameplay.mobile.css';
+import './styles/mobile/portrait-mainmenu-reference.mobile.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
