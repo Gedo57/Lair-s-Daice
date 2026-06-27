@@ -1,6 +1,13 @@
+:root {
+  --app-viewport-width: 100vw;
+  --app-viewport-height: 100vh;
+}
+
 .app-shell {
   width: 100vw;
+  width: var(--app-viewport-width, 100vw);
   height: 100vh;
+  height: var(--app-viewport-height, 100vh);
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -176,9 +183,13 @@ html[data-language='zh'] .app-shell--help {
    2532x1170 are covered without stretching the UI. */
 html[data-device='mobile'] .app-shell {
   width: 100vw;
+  width: var(--app-viewport-width, 100vw);
   height: 100vh;
+  height: var(--app-viewport-height, 100vh);
   min-width: 100vw;
+  min-width: var(--app-viewport-width, 100vw);
   min-height: 100vh;
+  min-height: var(--app-viewport-height, 100vh);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -221,4 +232,28 @@ html[data-device='mobile'] .screen {
 html[data-language='zh'] .app-shell--help {
   background-size: 100% 100%;
   background-position: center center;
+}
+
+
+/* Safari-only viewport correction.
+   iOS/iPadOS Safari can include the browser toolbars in 100vh/innerHeight.
+   The JS hook writes --app-viewport-* from visualViewport only for Safari, so
+   Chrome keeps the existing layout path unchanged. */
+html[data-browser='safari'] .app-shell {
+  position: fixed;
+  inset: 0;
+  width: var(--app-viewport-width, 100vw);
+  height: var(--app-viewport-height, 100vh);
+  min-width: var(--app-viewport-width, 100vw);
+  min-height: var(--app-viewport-height, 100vh);
+  max-width: var(--app-viewport-width, 100vw);
+  max-height: var(--app-viewport-height, 100vh);
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+html[data-browser='safari'][data-device='mobile'] .game-frame {
+  transform: scale(var(--ui-scale));
+  transform-origin: center center;
 }
