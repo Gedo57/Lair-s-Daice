@@ -415,7 +415,7 @@ html[data-device='mobile'][data-orientation='portrait'] .join-room-helper {
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .join-room-actions {
-  left: 20 !important;
+  left: 60px !important;
   top: 620px !important;
   bottom: auto !important;
   width: 540px !important;
