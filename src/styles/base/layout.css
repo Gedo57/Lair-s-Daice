@@ -1,6 +1,15 @@
 .app-shell {
+  position: fixed;
+  inset: 0;
   width: 100vw;
+  width: 100dvw;
+  width: var(--app-viewport-width, 100dvw);
   height: 100vh;
+  height: 100svh;
+  height: 100dvh;
+  height: var(--app-viewport-height, 100dvh);
+  max-width: 100vw;
+  max-height: 100vh;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -114,6 +123,7 @@ html[data-language='zh'] .app-shell--help {
   transform: scale(var(--ui-scale));
   transform-origin: center center;
   overflow: hidden;
+  will-change: transform;
   background: transparent;
 }
 
@@ -176,9 +186,14 @@ html[data-language='zh'] .app-shell--help {
    2532x1170 are covered without stretching the UI. */
 html[data-device='mobile'] .app-shell {
   width: 100vw;
+  width: 100dvw;
+  width: var(--app-viewport-width, 100dvw);
   height: 100vh;
-  min-width: 100vw;
-  min-height: 100vh;
+  height: 100svh;
+  height: 100dvh;
+  height: var(--app-viewport-height, 100dvh);
+  min-width: 0;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -201,7 +216,7 @@ html[data-device='mobile'] .game-frame {
   background: transparent !important;
   background-image: none !important;
 
-  transform: translateY(-12px) scale(var(--ui-scale));
+  transform: translate3d(0, 0, 0) scale(var(--ui-scale));
   transform-origin: center center;
 }
 

@@ -1245,6 +1245,8 @@ export default function App() {
   const appStyle = useMemo(() => ({
     '--design-width': `${layout.resolution.width}px`,
     '--design-height': `${layout.resolution.height}px`,
+    '--app-viewport-width': `${layout.viewport.width}px`,
+    '--app-viewport-height': `${layout.viewport.height}px`,
     '--ui-scale': layout.scale,
   }), [layout]);
 
