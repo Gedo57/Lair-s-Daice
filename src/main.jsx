@@ -46,6 +46,8 @@ import './styles/mobile/portrait-mainmenu-reference.mobile.css';
 import './styles/mobile/portrait-backgrounds.mobile.css';
 import './styles/mobile/portrait-chrome-starter.mobile.css';
 import './styles/mobile/portrait-chrome-mainmenu.mobile.css';
+import './styles/mobile/portrait-login-no-avatar.mobile.css';
+import './styles/mobile/portrait-secondary-pages-fix.mobile.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
