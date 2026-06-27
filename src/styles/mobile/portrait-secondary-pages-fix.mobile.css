@@ -47,7 +47,7 @@ html[data-device='mobile'][data-orientation='portrait'] .room-select-cards {
 
 html[data-device='mobile'][data-orientation='portrait'] .room-select-card {
   width: 286px !important;
-  height: 510px !important;
+  height: 515px !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .room-select-card__title {
@@ -68,14 +68,14 @@ html[data-device='mobile'][data-orientation='portrait'] .room-select-card__art--
 html[data-device='mobile'][data-orientation='portrait'] .room-select-card__art--vip,
 html[data-device='mobile'][data-orientation='portrait'] .room-select-card__art--private {
   left: 66px !important;
-  top: 78px !important;
-  width: 154px !important;
+  top: 60px !important;
+  width: 180x !important;
   height: 112px !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .room-select-card__stats {
   left: 30px !important;
-  top: 214px !important;
+  top: 240px !important;
   width: 226px !important;
   gap: 3px !important;
 }
@@ -101,7 +101,7 @@ html[data-device='mobile'][data-orientation='portrait'] .room-select-card__statL
 
 html[data-device='mobile'][data-orientation='portrait'] .room-select-card__rules {
   left: 32px !important;
-  top: 344px !important;
+  top: 360px !important;
   width: 220px !important;
   gap: 4px !important;
 }
@@ -236,14 +236,27 @@ html[data-device='mobile'][data-orientation='portrait'] .room-lobby-panel {
   height: 720px !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .create-room-character,
-html[data-device='mobile'][data-orientation='portrait'] .join-room-character,
-html[data-device='mobile'][data-orientation='portrait'] .room-lobby-character {
-  left: -28px !important;
-  bottom: 34px !important;
+html[data-device='mobile'][data-orientation='portrait'] .create-room-character
+{
+  left: 90px !important;
+  bottom: 180px !important;
   width: 210px !important;
   height: auto !important;
-  opacity: .28 !important;
+  opacity: .99 !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .join-room-character{
+  left: -20px !important;
+  bottom: 650px !important;
+  width: 210px !important;
+  height: auto !important;
+  opacity: .99 !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .room-lobby-character {
+  left: 0px !important;
+  bottom: 650px !important;
+  width: 210px !important;
+  height: auto !important;
+  opacity: .99 !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .create-room-label,
@@ -304,7 +317,7 @@ html[data-device='mobile'][data-orientation='portrait'] .create-room-invite {
 
 html[data-device='mobile'][data-orientation='portrait'] .create-room-rules {
   left: 18px !important;
-  top: 460px !important;
+  top: 700px !important;
   width: 504px !important;
   font-size: 15px !important;
   line-height: 1.22 !important;
@@ -369,7 +382,7 @@ html[data-device='mobile'][data-orientation='portrait'] .join-room-recentList {
 
 html[data-device='mobile'][data-orientation='portrait'] .join-room-recent {
   height: 40px !important;
-  margin-bottom: 7px !important;
+  margin-bottom: 14px !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .join-room-recent__code {
@@ -378,7 +391,7 @@ html[data-device='mobile'][data-orientation='portrait'] .join-room-recent__code 
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .join-room-recent__name {
-  top: 23px !important;
+  top: 30px !important;
   font-size: 11px !important;
 }
 
@@ -402,8 +415,8 @@ html[data-device='mobile'][data-orientation='portrait'] .join-room-helper {
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .join-room-actions {
-  left: 0 !important;
-  top: 604px !important;
+  left: 20 !important;
+  top: 620px !important;
   bottom: auto !important;
   width: 540px !important;
   height: 130px !important;
@@ -446,7 +459,7 @@ html[data-device='mobile'][data-orientation='portrait'] .room-lobby-codeBlock {
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .room-lobby-refresh {
-  right: 20px !important;
+  right: -40px !important;
   top: 132px !important;
   width: 104px !important;
   height: 32px !important;
