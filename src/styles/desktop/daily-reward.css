@@ -280,7 +280,7 @@ html[data-device='desktop'] .daily-reward-transactions {
 
 html[data-device='desktop'] .daily-reward-status {
   left: 376px;
-  top: 96px;
+  top: 70px;
   width: 528px;
   min-height: 40px;
   display: grid;

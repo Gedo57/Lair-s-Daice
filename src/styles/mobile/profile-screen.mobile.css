@@ -452,7 +452,7 @@ html[data-device='mobile'] .profile-bottom__panel {
 html[data-device='mobile'] .profile-bottom__title {
   position: absolute;
   left: 0;
-  top: 13px;
+  top: 14px;
   width: 100%;
   text-align: center;
   font-size: 21px;
@@ -497,14 +497,15 @@ html[data-device='mobile'] .profile-achievement__label {
 
 html[data-device='mobile'] .profile-match {
   position: absolute;
-  left: 35px;
+  left: 40px;
+  top: 55px;
   width: 315px;
   height: 22px;
 }
 
-html[data-device='mobile'] .profile-match--1 { top: 55px; }
-html[data-device='mobile'] .profile-match--2 { top: 82px; }
-html[data-device='mobile'] .profile-match--3 { top: 109px; }
+html[data-device='mobile'] .profile-match--1 { top: 48px; }
+html[data-device='mobile'] .profile-match--2 { top: 78px; }
+html[data-device='mobile'] .profile-match--3 { top: 108px; }
 
 html[data-device='mobile'] .profile-match__state {
   position: absolute;

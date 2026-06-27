@@ -498,9 +498,9 @@ html[data-device='desktop'] .profile-match {
   height: 22px;
 }
 
-html[data-device='desktop'] .profile-match--1 { top: 55px; }
-html[data-device='desktop'] .profile-match--2 { top: 82px; }
-html[data-device='desktop'] .profile-match--3 { top: 109px; }
+html[data-device='desktop'] .profile-match--1 { top: 48px; }
+html[data-device='desktop'] .profile-match--2 { top: 78px; }
+html[data-device='desktop'] .profile-match--3 { top: 108px; }
 
 html[data-device='desktop'] .profile-match__state {
   position: absolute;
