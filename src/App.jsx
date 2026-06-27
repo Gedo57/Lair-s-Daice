@@ -352,29 +352,6 @@ function getSelectedTableLabel(selection = {}) {
 }
 
 
-function getBuyInLabel(selection = {}, server = {}) {
-  const serverPricing = server.pricing && typeof server.pricing === 'object' ? server.pricing : {};
-  const selectionPricing = selection.pricing && typeof selection.pricing === 'object' ? selection.pricing : {};
-
-  return displayValue(
-    serverPricing.buyIn ||
-    serverPricing.buyInRange ||
-    server.buyIn ||
-    server.buyInLabel ||
-    server.entryFeeLabel ||
-    selectionPricing.buyIn ||
-    selectionPricing.buyInRange ||
-    selection.buyIn ||
-    selection.buyInLabel ||
-    selection.entryFeeLabel ||
-    formatBackendRange(
-      serverPricing.minBuyIn ?? server.minBuyIn ?? selectionPricing.minBuyIn ?? selection.minBuyIn,
-      serverPricing.maxBuyIn ?? server.maxBuyIn ?? selectionPricing.maxBuyIn ?? selection.maxBuyIn,
-    ) ||
-    formatCurrency(serverPricing.entryFee ?? server.entryFee ?? selectionPricing.entryFee ?? selection.entryFee ?? selection.fee),
-  );
-}
-
 function getPlayersLabel(selection = {}, server = {}, match = null) {
   const matchPlayers = Array.isArray(match?.players) ? match.players.length : null;
   const found = server.playersFound ?? server.playerCount ?? server.currentPlayers ?? matchPlayers;
@@ -432,7 +409,6 @@ function getModeLabel(selection = {}, server = {}) {
 
 function buildMatchmakingUi(selection = {}, server = {}, match = null, currentMatchId = null) {
   const modeLabel = getModeLabel(selection, server);
-  const buyInLabel = getBuyInLabel(selection, server);
   const playersLabel = getPlayersLabel(selection, server, match);
   const regionLabel = displayValue(server.region || selection.region || selection.serverRegion, 'GLOBAL').toUpperCase();
   const waitLabel = displayValue(server.estimatedWait || server.estimatedWaitTime || server.waitTime || selection.estimatedWait, '7s');
@@ -454,7 +430,6 @@ function buildMatchmakingUi(selection = {}, server = {}, match = null, currentMa
   return {
     filters: [
       { icon: '1.png', label: 'SELECTED MODE', value: modeLabel },
-      { icon: '4.png', label: 'BUY-IN RANGE', value: buyInLabel },
       { icon: '5.png', label: 'REGION', value: regionLabel },
       { icon: '5.png', label: 'EST. WAIT TIME', value: countdownLabel || waitLabel },
     ],

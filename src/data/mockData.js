@@ -185,7 +185,6 @@ export const mockJoinRoom = {
 export const mockMatchmaking = {
   filters: [
     { icon: '1.png', label: 'SELECTED MODE', value: 'QUICK MATCH' },
-    { icon: '4.png', label: 'BUY-IN RANGE', value: '5K - 20K' },
     { icon: '4.png', label: 'REGION', value: 'GLOBAL' },
     { icon: '5.png', label: 'EST. WAIT TIME', value: '7s' },
   ],
