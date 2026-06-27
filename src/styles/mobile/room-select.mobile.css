@@ -362,7 +362,7 @@ html[data-device='mobile'] .room-select-card__rule img {
 html[data-device='mobile'] .room-select-card__playSkinWrap {
   position: absolute;
   left: 34.45px;
-  bottom: 21.42px;
+  bottom: 15.42px;
   width: 165.36px;
   height: 44.38px;
 }
@@ -855,7 +855,7 @@ html[data-device='mobile'] .room-select-card__stat {
 html[data-device='mobile'] .room-select-card__statLabel {
   flex: 1 1 auto;
   text-align: left;
-  font-size: 10.74px;
+  font-size: 12.74px;
   line-height: 1;
   font-weight: 900;
   letter-spacing: .01em;
