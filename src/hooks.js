@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { getDesignResolution, getDeviceMode } from './utils/resolution.js';
 
 const SAFARI_EXCLUSION_PATTERN = /CriOS|FxiOS|EdgiOS|OPiOS|Chrome|Chromium|Edg|OPR|SamsungBrowser/i;
+const CHROME_PATTERN = /CriOS|Chrome|Chromium/i;
+const CHROME_EXCLUSION_PATTERN = /FxiOS|EdgiOS|OPiOS|Edg|OPR|SamsungBrowser/i;
 
 function isSafariBrowser() {
   const userAgent = window.navigator.userAgent || '';
@@ -9,6 +11,18 @@ function isSafariBrowser() {
   return /Safari/i.test(userAgent)
     && /Apple/i.test(vendor)
     && !SAFARI_EXCLUSION_PATTERN.test(userAgent);
+}
+
+function isChromeBrowser() {
+  const userAgent = window.navigator.userAgent || '';
+  return CHROME_PATTERN.test(userAgent)
+    && !CHROME_EXCLUSION_PATTERN.test(userAgent);
+}
+
+function getBrowserName() {
+  if (isSafariBrowser()) return 'safari';
+  if (isChromeBrowser()) return 'chrome';
+  return '';
 }
 
 function getBaseViewportSize() {
@@ -39,19 +53,21 @@ function getViewportSize(isSafari) {
   return isSafari ? getSafariViewportSize() : getBaseViewportSize();
 }
 
-function applyViewportCssVariables(viewport, isSafari) {
+function applyViewportCssVariables(viewport, browserName) {
   const root = document.documentElement;
 
-  if (isSafari) {
-    root.dataset.browser = 'safari';
+  if (browserName) {
+    root.dataset.browser = browserName;
+  } else {
+    delete root.dataset.browser;
+  }
+
+  if (browserName === 'safari') {
     root.style.setProperty('--app-viewport-width', `${viewport.width}px`);
     root.style.setProperty('--app-viewport-height', `${viewport.height}px`);
     return;
   }
 
-  if (root.dataset.browser === 'safari') {
-    delete root.dataset.browser;
-  }
   root.style.removeProperty('--app-viewport-width');
   root.style.removeProperty('--app-viewport-height');
 }
@@ -59,12 +75,13 @@ function applyViewportCssVariables(viewport, isSafari) {
 function computeLayout() {
   const mode = getDeviceMode();
   const resolution = getDesignResolution(mode);
-  const isSafari = isSafariBrowser();
+  const browserName = getBrowserName();
+  const isSafari = browserName === 'safari';
   const viewport = getViewportSize(isSafari);
   const scale = Math.min(viewport.width / resolution.width, viewport.height / resolution.height);
   const orientation = viewport.width >= viewport.height ? 'landscape' : 'portrait';
 
-  return { mode, resolution, viewport, scale, orientation, isSafari };
+  return { mode, resolution, viewport, scale, orientation, isSafari, browserName };
 }
 
 export function useFixedViewport() {
@@ -73,7 +90,7 @@ export function useFixedViewport() {
   useEffect(() => {
     const update = () => {
       const nextLayout = computeLayout();
-      applyViewportCssVariables(nextLayout.viewport, nextLayout.isSafari);
+      applyViewportCssVariables(nextLayout.viewport, nextLayout.browserName);
       setLayout(nextLayout);
     };
 
@@ -93,9 +110,7 @@ export function useFixedViewport() {
       visualViewport?.removeEventListener('scroll', update);
       document.documentElement.style.removeProperty('--app-viewport-width');
       document.documentElement.style.removeProperty('--app-viewport-height');
-      if (document.documentElement.dataset.browser === 'safari') {
-        delete document.documentElement.dataset.browser;
-      }
+      delete document.documentElement.dataset.browser;
     };
   }, []);
 
