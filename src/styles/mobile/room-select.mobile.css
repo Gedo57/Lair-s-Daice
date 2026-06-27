@@ -855,7 +855,7 @@ html[data-device='mobile'] .room-select-card__stat {
 html[data-device='mobile'] .room-select-card__statLabel {
   flex: 1 1 auto;
   text-align: left;
-  font-size: 12.74px;
+  font-size: 15px;
   line-height: 1;
   font-weight: 900;
   letter-spacing: .01em;
@@ -865,7 +865,7 @@ html[data-device='mobile'] .room-select-card__statLabel {
 html[data-device='mobile'] .room-select-card__statValue {
   flex: 0 0 auto;
   text-align: right;
-  font-size: 13.78px;
+  font-size: 15px;
   line-height: 1;
   font-weight: 900;
   color: #1d0f03;
