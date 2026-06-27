@@ -110,22 +110,22 @@ html[data-device='mobile'] .app-shell--mainmenu .main-menu-action:active {
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action--play {
   left: 36px !important;
-  top: 718px !important;
+  top: 754px !important;
 }
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action--create {
   left: 366px !important;
-  top: 718px !important;
+  top: 754px !important;
 }
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action--join {
   left: 36px !important;
-  top: 842px !important;
+  top: 878px !important;
 }
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action--help {
   left: 366px !important;
-  top: 842px !important;
+  top: 878px !important;
 }
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action__skin,
