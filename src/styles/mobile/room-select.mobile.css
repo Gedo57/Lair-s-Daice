@@ -338,17 +338,17 @@ html[data-device='mobile'] .room-select-card__rules {
   top: 347.38px;
   width: 160.77px;
   display: grid;
-  gap: 4.59px;
+  gap: 5.5px;
 }
 
 html[data-device='mobile'] .room-select-card__rule {
   display: flex;
   align-items: center;
   gap: 5.36px;
-  min-height: 13px;
+  min-height: 16px;
   color: #1e1104;
   font-family: Arial, sans-serif;
-  font-size: 10.71px;
+  font-size: 12.85px;
   font-weight: 900;
   text-align: left;
 }
@@ -837,12 +837,12 @@ html[data-device='mobile'] .room-select-card__stats {
   top: 224px;
   width: 172px;
   display: grid;
-  gap: 3.2px;
+  gap: 4px;
   z-index: 3;
 }
 
 html[data-device='mobile'] .room-select-card__stat {
-  min-height: 16px;
+  min-height: 19px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -855,7 +855,7 @@ html[data-device='mobile'] .room-select-card__stat {
 html[data-device='mobile'] .room-select-card__statLabel {
   flex: 1 1 auto;
   text-align: left;
-  font-size: 8.95px;
+  font-size: 10.74px;
   line-height: 1;
   font-weight: 900;
   letter-spacing: .01em;
@@ -865,7 +865,7 @@ html[data-device='mobile'] .room-select-card__statLabel {
 html[data-device='mobile'] .room-select-card__statValue {
   flex: 0 0 auto;
   text-align: right;
-  font-size: 11.48px;
+  font-size: 13.78px;
   line-height: 1;
   font-weight: 900;
   color: #1d0f03;
