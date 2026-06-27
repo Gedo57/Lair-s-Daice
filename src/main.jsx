@@ -22,6 +22,7 @@ import './styles/desktop/matchmaking.css';
 import './styles/desktop/room-select.css';
 import './styles/desktop/win-screen.css';
 import './styles/desktop/help-screen.css';
+import './styles/base/help-poster.css';
 import './styles/desktop/profile-screen.css';
 import './styles/desktop/special-event.css';
 import './styles/desktop/daily-reward.css';

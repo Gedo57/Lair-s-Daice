@@ -1,0 +1,59 @@
+.help-screen {
+  overflow: hidden;
+  background: #130704;
+}
+
+.help-rules-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.help-back-button {
+  z-index: 5;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .help-rules-poster {
+  object-fit: cover;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .help-back-button {
+  left: 252px;
+  top: 1184px;
+  width: 216px;
+  height: 68px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .help-back-button__text {
+  left: 62px;
+  top: 18px;
+  width: 130px;
+  font-size: 23px;
+  text-align: center;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .help-rules-poster {
+  object-fit: contain;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .help-back-button {
+  left: 1048px;
+  top: 626px;
+  width: 205px;
+  height: 64px;
+}
+
+html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .help-back-button {
+  top: 1144px;
+}
+
+html[data-device='desktop'] .help-rules-poster {
+  object-fit: contain;
+}

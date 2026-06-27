@@ -3,6 +3,7 @@ const roomSelectAsset = '/assets/liars-dice/room-select/';
 const profileAsset = '/assets/liars-dice/profile/';
 const loadingAsset = '/assets/liars-dice/loading/';
 const portraitAsset = '/assets/liars-dice/mobile-portrait/';
+const helpAsset = '/assets/liars-dice/help/';
 
 export const CRITICAL_ASSETS = {
   loading: [
@@ -33,6 +34,11 @@ export const CRITICAL_ASSETS = {
     `${mainMenuAsset}B2.png`,
     `${mainMenuAsset}B3.png`,
     `${mainMenuAsset}B4.png`,
+  ],
+
+  help: [
+    `${helpAsset}how-to-play-en.png`,
+    `${helpAsset}how-to-play-zh.png`,
   ],
 
   roomselect: [
