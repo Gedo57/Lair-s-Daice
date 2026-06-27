@@ -109,23 +109,23 @@ html[data-device='mobile'] .app-shell--mainmenu .main-menu-action:active {
 }
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action--play {
-  left: 36px !important;
-  top: 754px !important;
+  left: 40px !important;
+  top: 780px !important;
 }
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action--create {
-  left: 366px !important;
-  top: 754px !important;
+  left: 360px !important;
+  top: 780px !important;
 }
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action--join {
-  left: 36px !important;
-  top: 878px !important;
+  left: 40px !important;
+  top: 890px !important;
 }
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action--help {
-  left: 366px !important;
-  top: 878px !important;
+  left: 360px !important;
+  top: 890px !important;
 }
 
 html[data-device='mobile'] .app-shell--mainmenu .main-menu-action__skin,
