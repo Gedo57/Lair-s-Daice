@@ -57,4 +57,12 @@ export const initialGameData = {
   },
   serverMatchmaking: null,
   selectedTable: null,
+  assetLoading: {
+    active: false,
+    screen: null,
+    destinationLabel: '',
+    progress: 0,
+    loaded: 0,
+    total: 0,
+  },
 };

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useFixedViewport } from './hooks.js';
 import { useLanguage } from './i18n/useLanguage.js';
 import { initialGameData } from './data/initialGameData.js';
+import { getPreloadAssetsForScreen } from './data/criticalAssets.js';
+import { preloadImages } from './utils/preloadImages.js';
 import { backendBridge } from './services/backendBridge.js';
 import {
   cancelSocketMatchmaking,
@@ -118,6 +120,14 @@ function getScreenFromPathname(pathname) {
 function getPathForScreen(screenName) {
   return SCREEN_TO_PATH[screenName] || '/';
 }
+
+const PRELOAD_SCREEN_LABELS = {
+  mainmenu: 'main menu',
+  roomselect: 'room select',
+  loading: 'loading screen',
+};
+
+const preloadedCriticalScreens = new Set();
 
 
 
@@ -1124,6 +1134,7 @@ export default function App() {
   });
   const [gameData, setGameData] = useState(initialGameData);
   const [backendStatus, setBackendStatus] = useState({ loading: false, error: null, lastAction: null });
+  const [assetNavigationId, setAssetNavigationId] = useState(0);
   const layout = useFixedViewport();
   const i18n = useLanguage();
   const ScreenComponent = SCREENS[screen] || StarterScreen;
@@ -1247,12 +1258,84 @@ export default function App() {
     }
   };
 
+  const setAssetLoadingState = (statePatch) => {
+    setGameData((current) => ({
+      ...current,
+      assetLoading: {
+        ...(current.assetLoading || {}),
+        ...statePatch,
+      },
+    }));
+  };
+
+  const preloadAndNavigate = async (nextScreen, options = {}) => {
+    const safeScreen = SCREENS[nextScreen] ? nextScreen : 'starter';
+    const assets = getPreloadAssetsForScreen(safeScreen);
+    const shouldGate = assets.length > 0 && !preloadedCriticalScreens.has(safeScreen);
+
+    if (!shouldGate) {
+      navigateToScreen(safeScreen);
+      return;
+    }
+
+    const navId = assetNavigationId + 1;
+    setAssetNavigationId(navId);
+    const destinationLabel = options.destinationLabel || PRELOAD_SCREEN_LABELS[safeScreen] || 'assets';
+
+    setAssetLoadingState({
+      active: true,
+      screen: safeScreen,
+      destinationLabel,
+      progress: 1,
+      loaded: 0,
+      total: assets.length,
+    });
+    navigateToScreen('loading');
+
+    const startedAt = Date.now();
+
+    try {
+      await preloadImages(assets, ({ loaded, total, percent }) => {
+        setAssetLoadingState({
+          active: true,
+          screen: safeScreen,
+          destinationLabel,
+          progress: Math.max(1, Math.min(100, percent || 1)),
+          loaded,
+          total,
+        });
+      });
+    } catch {
+      // Do not block the player forever if one critical image fails.
+    }
+
+    const elapsed = Date.now() - startedAt;
+    const minVisibleMs = options.minVisibleMs ?? 350;
+    if (elapsed < minVisibleMs) {
+      await new Promise((resolve) => window.setTimeout(resolve, minVisibleMs - elapsed));
+    }
+
+    preloadedCriticalScreens.add(safeScreen);
+    if (safeScreen === 'mainmenu') {
+      preloadedCriticalScreens.add('roomselect');
+    }
+    setAssetLoadingState({
+      active: false,
+      screen: safeScreen,
+      destinationLabel,
+      progress: 100,
+      loaded: assets.length,
+      total: assets.length,
+    });
+    navigateToScreen(safeScreen);
+  };
+
   const navigation = {
     goStarter: () => navigateToScreen('starter'),
     goLogin: () => navigateToScreen('login'),
-    goLoading: () => navigateToScreen('loading'),
-    goMainMenu: () => navigateToScreen('mainmenu'),
-    goRoomSelect: () => navigateToScreen('roomselect'),
+    goLoading: () => preloadAndNavigate('mainmenu', { destinationLabel: 'main menu' }),
+    goMainMenu: () => preloadAndNavigate('mainmenu', { destinationLabel: 'main menu' }),
+    goRoomSelect: () => preloadAndNavigate('roomselect', { destinationLabel: 'room select' }),
     goCreateRoom: () => navigateToScreen('createroom'),
     goJoinRoom: () => navigateToScreen('joinroom'),
     goRoomLobby: () => navigateToScreen('roomlobby'),
