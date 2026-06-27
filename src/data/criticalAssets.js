@@ -2,9 +2,11 @@ const mainMenuAsset = '/assets/liars-dice/main-menu/';
 const roomSelectAsset = '/assets/liars-dice/room-select/';
 const profileAsset = '/assets/liars-dice/profile/';
 const loadingAsset = '/assets/liars-dice/loading/';
+const portraitAsset = '/assets/liars-dice/mobile-portrait/';
 
 export const CRITICAL_ASSETS = {
   loading: [
+    `${portraitAsset}starter-mainmenu-bg.png`,
     '/assets/liars-dice/starter/BG.png',
     `${loadingAsset}1.png`,
     `${loadingAsset}2.png`,
@@ -12,6 +14,7 @@ export const CRITICAL_ASSETS = {
   ],
 
   mainmenu: [
+    `${portraitAsset}starter-mainmenu-bg.png`,
     '/assets/liars-dice/main-menu/BG1.png',
     `${profileAsset}P1.png`,
     `${profileAsset}profile.png`,
