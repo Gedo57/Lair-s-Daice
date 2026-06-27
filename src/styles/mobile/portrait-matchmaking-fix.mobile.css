@@ -48,7 +48,7 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--matchmaking 
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--matchmaking .matchmaking-signal {
-  grid-column: 1 / 2 !important;
+  grid-column: 2 / 2 !important;
   padding: 0 12px !important;
 }
 
