@@ -124,7 +124,6 @@ export default function TournamentPass({ navigation, data, backendActions, backe
   const wallet = data?.wallet || {};
   const tournaments = data?.tournaments || [];
   const pass = data?.tournamentPass || {};
-  const passColumns = pass.levels?.length ? pass.levels : ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
   const premiumRewards = pass.premiumRewards || [];
   const freeRewards = pass.freeRewards || [];
   const passActionLoading = Boolean(backendStatus?.loading && String(backendStatus?.lastAction || '').startsWith('pass.'));
@@ -155,14 +154,10 @@ export default function TournamentPass({ navigation, data, backendActions, backe
       <section className="tournament-pass-lucky" aria-label={tx('LUCKY PASS')}>
         <img className="tournament-pass-lucky__panel" src={`${asset}Ppanel.png`} alt="" draggable="false" />
         <div className="tournament-pass-xp-label">
-          <span>{tx(pass.xpLabel || 'PASS XP')}</span>
           <b>{xpText}</b>
         </div>
         <div className="tournament-pass-xp-bar" aria-label={`${tx(pass.xpLabel || 'PASS XP')} ${xpText}`}>
           <span style={{ width: `${Math.max(0, Math.min(100, Number(pass.xpPercent || 0)))}%` }} />
-        </div>
-        <div className="tournament-pass-levels">
-          {passColumns.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
         </div>
         <div className="tournament-pass-rewards tournament-pass-rewards--premium">
           {premiumRewards.map((reward, index) => (
