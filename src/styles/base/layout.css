@@ -257,3 +257,15 @@ html[data-browser='safari'][data-device='mobile'] .game-frame {
   transform: scale(var(--ui-scale));
   transform-origin: center center;
 }
+
+/* Safari-only gutter color fix.
+   When Safari's visible viewport is wider than the fixed 16:9 game frame,
+   the uncovered area must stay neutral instead of showing the old mobile teal fallback. */
+html[data-browser='safari'],
+html[data-browser='safari'] body {
+  background-color: #050200;
+}
+
+html[data-browser='safari'][data-device='mobile'] .app-shell {
+  background-color: #050200;
+}
