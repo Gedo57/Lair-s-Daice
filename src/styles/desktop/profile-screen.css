@@ -1005,3 +1005,122 @@ html[data-device='desktop'] .profile-back {
   width: 170px;
   height: 59px;
 }
+
+
+/* Patch 2: live achievements and recent match data. */
+html[data-device='desktop'] .profile-achievement {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+  font-family: Arial, sans-serif;
+}
+
+html[data-device='desktop'] .profile-achievement--claimable {
+  cursor: pointer;
+  filter: drop-shadow(0 0 6px rgba(255, 213, 79, .75));
+}
+
+html[data-device='desktop'] .profile-achievement--locked {
+  opacity: .62;
+}
+
+html[data-device='desktop'] .profile-achievement__icon {
+  left: 11px;
+  top: 0;
+  width: 38px;
+  height: 38px;
+}
+
+html[data-device='desktop'] .profile-achievement__label {
+  left: -9px;
+  top: 40px;
+  width: 78px;
+  height: 18px;
+  overflow: hidden;
+  font-size: 7px;
+  line-height: .95;
+}
+
+html[data-device='desktop'] .profile-achievement__progress {
+  position: absolute;
+  left: -4px;
+  top: 58px;
+  width: 68px;
+  text-align: center;
+  font-size: 7px;
+  line-height: 1;
+  font-weight: 900;
+  color: #5b3511;
+  text-shadow: none;
+}
+
+html[data-device='desktop'] .profile-achievement__reward {
+  position: absolute;
+  left: -7px;
+  top: 68px;
+  width: 74px;
+  text-align: center;
+  font-size: 6.5px;
+  line-height: 1;
+  font-weight: 900;
+  color: #8a4b05;
+  text-shadow: none;
+}
+
+html[data-device='desktop'] .profile-achievement__status {
+  position: absolute;
+  left: 2px;
+  top: 78px;
+  width: 56px;
+  height: 13px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: rgba(80, 49, 13, .2);
+  color: #351b06;
+  font-size: 6.5px;
+  line-height: 1;
+  font-weight: 900;
+  text-shadow: none;
+}
+
+html[data-device='desktop'] .profile-achievement--claimable .profile-achievement__status {
+  background: linear-gradient(#ffeaa2, #c67513);
+  color: #fff8db;
+  text-shadow: 0 1px 1px rgba(0,0,0,.55);
+}
+
+html[data-device='desktop'] .profile-achievement--claimed .profile-achievement__status {
+  background: linear-gradient(#56bd4d, #176f1b);
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0,0,0,.55);
+}
+
+html[data-device='desktop'] .profile-match__room {
+  left: 112px;
+  width: 94px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-device='desktop'] .profile-match__coin {
+  left: 210px;
+}
+
+html[data-device='desktop'] .profile-match__coins {
+  left: 236px;
+  width: 54px;
+}
+
+html[data-device='desktop'] .profile-match__xp {
+  position: absolute;
+  left: 290px;
+  top: 5px;
+  width: 52px;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 900;
+  color: #5b3511;
+}

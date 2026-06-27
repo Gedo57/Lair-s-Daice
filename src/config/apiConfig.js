@@ -47,6 +47,10 @@ export const API_ENDPOINTS = {
     daily: '/api/rewards/daily',
     claimDaily: (rewardId) => `/api/rewards/daily/${encodePath(rewardId)}/claim`,
   },
+  achievements: {
+    list: '/api/achievements',
+    claim: (achievementId) => `/api/achievements/claim/${encodePath(achievementId)}`,
+  },
   rooms: {
     list: '/api/rooms',
     active: '/api/rooms/active',

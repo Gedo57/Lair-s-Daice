@@ -83,12 +83,45 @@ function translateText(tx, value, fallback = '—') {
   return tx(formatProfileValue(value, fallback));
 }
 
+function formatRewardLabel(reward = {}) {
+  if (!reward || typeof reward !== 'object') return '';
+  const amount = reward.amount ?? reward.value ?? reward.quantity ?? reward.coins ?? reward.gems ?? reward.diamonds;
+  const type = reward.type || reward.currency || (reward.gems || reward.diamonds ? 'gems' : 'coins');
+  if (amount === undefined || amount === null || amount === '') return '';
+  const typeLabel = String(type).toLowerCase().includes('gem') || String(type).toLowerCase().includes('diamond') ? 'Gems' : 'Coins';
+  return `${formatNumber(amount)} ${typeLabel}`;
+}
+
 function normalizeAchievements(list = []) {
   if (!Array.isArray(list)) return [];
-  return list.slice(0, 5).map((item, index) => ({
-    icon: item.icon || item.iconAsset || achievementIconFallbacks[index] || achievementIconFallbacks[0],
-    label: formatProfileValue(item.label || item.name || item.title || `Achievement ${index + 1}`),
-  }));
+
+  return list.slice(0, 5).map((item, index) => {
+    const target = numberValue(item.target ?? item.goal ?? item.required, 1) || 1;
+    const progress = Math.min(target, numberValue(item.progress ?? item.current ?? item.count, 0));
+    const claimed = Boolean(item.claimed || item.isClaimed);
+    const claimable = Boolean(item.claimable || item.canClaim || (progress >= target && !claimed));
+    const unlocked = Boolean(item.unlocked || item.completed || claimable || claimed || progress >= target);
+    const locked = Boolean(item.locked || (!unlocked && !claimable && !claimed));
+    const progressLabel = item.progressLabel || `${formatNumber(progress)}/${formatNumber(target)}`;
+    const rewardLabel = item.rewardLabel || formatRewardLabel(item.reward);
+
+    return {
+      ...item,
+      id: item.id || item.achievementId || item._id || item.key || `achievement-${index + 1}`,
+      icon: item.icon || item.iconAsset || achievementIconFallbacks[index] || achievementIconFallbacks[0],
+      label: formatProfileValue(item.label || item.name || item.title || `Achievement ${index + 1}`),
+      description: formatProfileValue(item.description || item.copy || '', ''),
+      progress,
+      target,
+      progressLabel,
+      rewardLabel,
+      unlocked,
+      locked,
+      claimed,
+      claimable,
+      statusLabel: claimed ? 'CLAIMED' : claimable ? 'CLAIM' : locked ? 'LOCKED' : progressLabel,
+    };
+  });
 }
 
 function normalizeSeasons(list = []) {
@@ -102,15 +135,19 @@ function normalizeSeasons(list = []) {
 function normalizeRecentMatches(list = []) {
   if (!Array.isArray(list)) return [];
   return list.slice(0, 3).map((item) => {
-    const state = String(item.state || item.result || item.outcome || '').toUpperCase() === 'WIN' ? 'WIN' : 'LOSE';
-    const delta = item.coins ?? item.coinDelta ?? item.reward ?? item.amount ?? 0;
+    const rawState = String(item.state || item.result || item.outcome || item.viewerResult || '').toUpperCase();
+    const state = rawState === 'WIN' || rawState === 'WON' || rawState === 'VICTORY' ? 'WIN' : 'LOSE';
+    const delta = item.coins ?? item.coinDelta ?? item.coinsDelta ?? item.walletDelta ?? item.reward ?? item.amount ?? 0;
     const signedDelta = typeof delta === 'string' ? delta : `${Number(delta) >= 0 ? '+' : ''}${formatNumber(delta)}`;
+    const xpValue = item.xpEarned ?? item.xp ?? item.experience ?? null;
 
     return {
       state,
       icon: item.icon || item.iconAsset || (state === 'WIN' ? 'ic16.png' : 'ic4.png'),
-      room: formatProfileValue(item.room || item.table || item.mode || item.tier || '—'),
+      room: formatProfileValue(item.room || item.table || item.tableName || item.mode || item.tier || item.tierName || '—'),
       coins: signedDelta,
+      xp: xpValue === null || xpValue === undefined || xpValue === '' ? '' : `XP ${Number(xpValue) >= 0 ? '+' : ''}${formatNumber(xpValue)}`,
+      playedAt: formatDate(item.playedAt || item.createdAt || item.finishedAt),
     };
   });
 }
@@ -119,7 +156,7 @@ function findAvatarOption(avatar) {
   return findProfileAvatarOption(avatar);
 }
 
-export default function ProfileScreen({ navigation, data, backendActions, i18n }) {
+export default function ProfileScreen({ navigation, data, backendActions, backendStatus, i18n }) {
   const tx = i18n?.tx || ((value) => value);
   const user = data?.user || {};
   const wallet = data?.wallet || {};
@@ -350,12 +387,26 @@ export default function ProfileScreen({ navigation, data, backendActions, i18n }
       <div className="profile-bottom profile-bottom--achievements">
         <img className="profile-bottom__panel profile-bottom__panel--achievements" src={`${asset}panel3.png`} alt="" draggable="false" />
         <span className="profile-bottom__title">{tx('ACHIEVEMENTS')}</span>
-        {achievements.length ? achievements.map((item, index) => (
-          <div className={`profile-achievement profile-achievement--${index + 1}`} key={`${formatProfileValue(item.label)}-${index}`}>
-            <img className="profile-achievement__icon" src={`${asset}${item.icon}`} alt="" draggable="false" />
-            <span className="profile-achievement__label">{translateText(tx, item.label)}</span>
-          </div>
-        )) : <span className="profile-empty profile-empty--achievements">{tx('Play matches to unlock achievements')}</span>}
+        {achievements.length ? achievements.map((item, index) => {
+          const disabled = !item.claimable || backendStatus?.loading;
+          return (
+            <button
+              className={`profile-achievement profile-achievement--${index + 1} ${item.claimed ? 'profile-achievement--claimed' : ''} ${item.claimable ? 'profile-achievement--claimable' : ''} ${item.locked ? 'profile-achievement--locked' : ''}`}
+              key={`${formatProfileValue(item.label)}-${index}`}
+              type="button"
+              onClick={() => backendActions?.claimAchievement?.(item)}
+              disabled={disabled}
+              aria-disabled={disabled}
+              title={item.description || item.label}
+            >
+              <img className="profile-achievement__icon" src={`${asset}${item.icon}`} alt="" draggable="false" />
+              <span className="profile-achievement__label">{translateText(tx, item.label)}</span>
+              <span className="profile-achievement__progress">{item.progressLabel}</span>
+              {item.rewardLabel ? <span className="profile-achievement__reward">{translateText(tx, item.rewardLabel)}</span> : null}
+              <span className="profile-achievement__status">{tx(item.statusLabel)}</span>
+            </button>
+          );
+        }) : <span className="profile-empty profile-empty--achievements">{tx('Play matches to unlock achievements')}</span>}
       </div>
 
       <div className="profile-bottom profile-bottom--recent">
@@ -368,6 +419,7 @@ export default function ProfileScreen({ navigation, data, backendActions, i18n }
             <span className="profile-match__room">{translateText(tx, item.room)}</span>
             <img className="profile-match__coin" src={`${asset}ic1.png`} alt="" draggable="false" />
             <span className="profile-match__coins">{item.coins}</span>
+            {item.xp ? <span className="profile-match__xp">{item.xp}</span> : null}
           </div>
         )) : <span className="profile-empty profile-empty--matches">{tx('Your recent matches will appear here')}</span>}
       </div>

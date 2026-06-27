@@ -4,6 +4,7 @@ import {
   roomsApi,
   matchmakingApi,
   rewardsApi,
+  achievementsApi,
   economyApi,
   tournamentsApi,
   passApi,
@@ -59,6 +60,7 @@ async function loadGameData() {
     () => roomsApi.getActiveRooms(),
     () => roomsApi.getMyRoom(),
     () => rewardsApi.getDailyRewards(),
+    () => achievementsApi.getAchievements(),
     () => tournamentsApi.getTournaments(),
     () => passApi.getPass(),
     () => tournamentsApi.getTournamentPass(),
@@ -153,6 +155,13 @@ export const backendBridge = {
   getQueueStatus: (queueId) => withFreshGameData(() => matchmakingApi.getQueueStatus(queueId)),
 
   cancelMatchmaking: () => withFreshGameData(() => matchmakingApi.cancelMatchmaking()),
+
+  getAchievements: () => withFreshGameData(() => achievementsApi.getAchievements()),
+
+  claimAchievement: (achievement) => {
+    const achievementId = getEntityId(achievement, ['achievementId', 'id', '_id', 'key']);
+    return withFreshGameData(() => achievementsApi.claimAchievement(achievementId));
+  },
 
   claimDailyReward: (reward) => {
     const rewardId = getEntityId(reward, ['id', 'key', 'rewardId']);

@@ -943,11 +943,27 @@ function extractGameDataPatch(payload = {}) {
   const missionList = source.missions || source.eventMissions;
   if (Array.isArray(missionList)) patch.eventMissions = normalizeEventMissions(missionList);
 
+  const summarySource = source.summary && typeof source.summary === 'object' ? source.summary : null;
+  const profileSummarySource = source.profileSummary && typeof source.profileSummary === 'object' ? source.profileSummary : null;
+
   if (Array.isArray(source.achievements)) patch.achievements = source.achievements;
+  if (!patch.achievements && Array.isArray(summarySource?.achievements)) patch.achievements = summarySource.achievements;
+  if (!patch.achievements && Array.isArray(profileSummarySource?.achievements)) patch.achievements = profileSummarySource.achievements;
+
   if (Array.isArray(source.recentMatches)) patch.recentMatches = source.recentMatches;
   if (Array.isArray(source.matchHistory)) patch.recentMatches = source.matchHistory;
+  if (!patch.recentMatches && Array.isArray(summarySource?.recentMatches)) patch.recentMatches = summarySource.recentMatches;
+  if (!patch.recentMatches && Array.isArray(summarySource?.matchHistory)) patch.recentMatches = summarySource.matchHistory;
+  if (!patch.recentMatches && Array.isArray(profileSummarySource?.recentMatches)) patch.recentMatches = profileSummarySource.recentMatches;
+  if (!patch.recentMatches && Array.isArray(profileSummarySource?.matchHistory)) patch.recentMatches = profileSummarySource.matchHistory;
+
   if (Array.isArray(source.seasons)) patch.seasons = source.seasons;
+  if (!patch.seasons && Array.isArray(summarySource?.seasons)) patch.seasons = summarySource.seasons;
+  if (!patch.seasons && Array.isArray(profileSummarySource?.seasons)) patch.seasons = profileSummarySource.seasons;
+
   if (source.favorites && typeof source.favorites === 'object') patch.favorites = source.favorites;
+  if (!patch.favorites && summarySource?.favorites && typeof summarySource.favorites === 'object') patch.favorites = summarySource.favorites;
+  if (!patch.favorites && profileSummarySource?.favorites && typeof profileSummarySource.favorites === 'object') patch.favorites = profileSummarySource.favorites;
   if (Array.isArray(source.transactions)) patch.transactions = source.transactions.map(normalizeTransaction);
   if (Array.isArray(source.transactionLedger)) patch.transactions = source.transactionLedger.map(normalizeTransaction);
 
@@ -1447,8 +1463,16 @@ export default function App() {
         const actionName = result?.matchId ? 'matchmaking.match_found' : 'matchmaking.queue_update';
         return applySocketMatchmakingPayload(result, actionName);
       } catch (error) {
-        setBackendStatus({ loading: false, error: getErrorMessage(error), lastAction: 'matchmaking.start' });
-        return null;
+        try {
+          const result = await backendBridge.startMatchmaking(payload);
+          applyBackendPayloads(result);
+          setBackendStatus({ loading: false, error: null, lastAction: 'matchmaking.start.rest_fallback' });
+          navigation.goMatchmaking();
+          return result;
+        } catch (restError) {
+          setBackendStatus({ loading: false, error: getErrorMessage(restError) || getErrorMessage(error), lastAction: 'matchmaking.start' });
+          return null;
+        }
       }
     },
     getMatchmakingStatus: () => runBackendAction('matchmaking.status', () => backendBridge.getMatchmakingStatus()),
@@ -1464,12 +1488,23 @@ export default function App() {
         navigation.goRoomSelect();
         return result;
       } catch (error) {
-        clearSocketMatchmakingState();
-        setBackendStatus({ loading: false, error: getErrorMessage(error), lastAction: 'matchmaking.cancel' });
-        navigation.goRoomSelect();
-        return null;
+        try {
+          const result = await backendBridge.cancelMatchmaking();
+          applyBackendPayloads(result);
+          clearSocketMatchmakingState();
+          setBackendStatus({ loading: false, error: null, lastAction: 'matchmaking.cancel.rest_fallback' });
+          navigation.goRoomSelect();
+          return result;
+        } catch (restError) {
+          clearSocketMatchmakingState();
+          setBackendStatus({ loading: false, error: getErrorMessage(restError) || getErrorMessage(error), lastAction: 'matchmaking.cancel' });
+          navigation.goRoomSelect();
+          return null;
+        }
       }
     },
+    claimAchievement: (achievement) => runBackendAction('achievements.claim', () => backendBridge.claimAchievement(achievement)),
+    getAchievements: () => runBackendAction('achievements.list', () => backendBridge.getAchievements()),
     claimDailyReward: (reward) => runBackendAction('rewards.claimDaily', () => backendBridge.claimDailyReward(reward)),
     refreshEconomy: () => runBackendAction('economy.refresh', () => backendBridge.refreshEconomy()),
     enterTournament: (tournament) => runBackendAction('tournaments.enter', () => backendBridge.enterTournament(tournament), navigation.goMatchmaking),
