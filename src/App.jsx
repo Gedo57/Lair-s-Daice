@@ -577,23 +577,34 @@ function normalizeTournament(tournament = {}, index = 0) {
   const id = tournament.id || tournament.tournamentId || tournament.key || TOURNAMENT_DECOR_SEQUENCE[index] || `tournament-${index + 1}`;
   const key = slugifyRoomKey(tournament.key || id, `tournament-${index + 1}`);
   const decor = TOURNAMENT_DECOR[key] || TOURNAMENT_DECOR[TOURNAMENT_DECOR_SEQUENCE[index]] || TOURNAMENT_DECOR.bronze;
-  const currentPlayers = getFirstValue(tournament, ['currentPlayers', 'playerCount', 'playersCount', 'participants']);
-  const maxPlayers = getFirstValue(tournament, ['maxPlayers', 'capacity', 'playerLimit']);
+  const playerProgress = tournament.playerProgress && typeof tournament.playerProgress === 'object' ? tournament.playerProgress : {};
+  const currentPlayers = getFirstValue(tournament, ['currentPlayers', 'playerCount', 'playersCount', 'participants']) ?? playerProgress.current;
+  const maxPlayers = getFirstValue(tournament, ['maxPlayers', 'capacity', 'playerLimit']) ?? playerProgress.max;
+  const status = String(tournament.status || '').toLowerCase();
+  const entered = Boolean(tournament.entered || tournament.userEntry);
+  const isFull = Boolean(tournament.isFull || status === 'full' || (hasValue(currentPlayers) && hasValue(maxPlayers) && Number(currentPlayers) >= Number(maxPlayers)));
 
   return {
     ...tournament,
     id,
+    tournamentId: tournament.tournamentId || id,
     key,
     card: tournament.card || tournament.cardAsset || tournament.image || decor.card,
     button: tournament.button || tournament.buttonAsset || decor.button,
     entry: displayValue(tournament.entry || tournament.entryLabel || formatCurrency(tournament.entryFee ?? tournament.fee), '0'),
     prize: displayValue(tournament.prize || tournament.prizeLabel || formatCurrency(tournament.prizePool ?? tournament.rewardPool ?? tournament.maxPrize), '0'),
     time: formatTimerValue(tournament),
-    players: tournament.players || tournament.playersLabel || (
+    players: tournament.players || tournament.playersLabel || playerProgress.label || (
       hasValue(currentPlayers) || hasValue(maxPlayers)
         ? `${currentPlayers || 0} / ${maxPlayers || '∞'}`
         : '—'
     ),
+    currentPlayers: numberOrZero(currentPlayers),
+    maxPlayers: hasValue(maxPlayers) ? numberOrZero(maxPlayers) : undefined,
+    entered,
+    isFull,
+    canEnter: Boolean(tournament.canEnter ?? (!entered && !isFull && status !== 'closed' && status !== 'ended')),
+    status: tournament.status || (isFull ? 'full' : 'open'),
   };
 }
 
@@ -602,36 +613,69 @@ function normalizeTournaments(list = []) {
   return list.map(normalizeTournament).filter(Boolean);
 }
 
-function normalizePassReward(reward = {}, index = 0) {
+function normalizePassReward(reward = {}, index = 0, track = 'free', pass = {}) {
   if (typeof reward === 'string' || typeof reward === 'number') {
-    return { icon: 'ic1.png', value: String(reward) };
+    const level = index + 1;
+    const unlocked = Number(pass.passLevel || 1) >= level;
+    return {
+      track,
+      level,
+      icon: track === 'premium' ? 'ic1.png' : 'ic1.png',
+      value: String(reward),
+      claimed: false,
+      unlocked,
+      locked: !unlocked || (track === 'premium' && !pass.premiumUnlocked),
+      premiumLocked: track === 'premium' && !pass.premiumUnlocked,
+      claimable: track === 'free' && unlocked,
+    };
   }
 
   const rewardSource = reward.reward && typeof reward.reward === 'object' ? reward.reward : reward;
   const type = String(getFirstValue(rewardSource, ['type', 'currency', 'rewardType']) || 'coins').toLowerCase();
+  const level = Number(getFirstValue(reward, ['level', 'passLevel', 'requiredLevel']) || index + 1);
+  const rawStatus = String(reward.status || reward.state || '').toLowerCase();
+  const premiumUnlocked = Boolean(pass.premiumUnlocked);
+  const unlocked = Boolean(reward.unlocked ?? reward.available ?? reward.isUnlocked ?? Number(pass.passLevel || 1) >= level);
+  const claimed = Boolean(reward.claimed || reward.isClaimed || rawStatus === 'claimed');
+  const requiresPremium = Boolean(reward.requiresPremium ?? track === 'premium');
+  const premiumLocked = Boolean(reward.premiumLocked ?? (requiresPremium && !premiumUnlocked));
+  const locked = Boolean(reward.locked ?? !unlocked ?? false) || premiumLocked;
+  const claimable = Boolean(reward.claimable ?? reward.canClaim ?? rawStatus === 'claimable') && !claimed && !locked;
   const iconByType = {
     coins: 'ic1.png',
     coin: 'ic1.png',
     gems: 'ic3.png',
     gem: 'ic3.png',
     diamonds: 'ic3.png',
+    diamond: 'ic3.png',
     chest: 'ic2.png',
+    box: 'ic2.png',
     dice: 'ic7.png',
   };
 
   return {
     ...reward,
+    track,
+    level,
+    type,
     icon: reward.icon || reward.iconAsset || iconByType[type] || `ic${Math.min(index + 1, 8)}.png`,
     value: reward.value || reward.label || formatShortCurrency(getFirstValue(rewardSource, ['amount', 'quantity', 'count']) ?? 1),
+    claimed,
+    unlocked,
+    locked,
+    requiresPremium,
+    premiumLocked,
+    claimable,
   };
 }
 
 function normalizeTournamentPass(pass = {}) {
   const source = pass.pass && typeof pass.pass === 'object' ? pass.pass : pass;
   const rawLevels = Array.isArray(source.levels) ? source.levels : [];
+  const premiumUnlocked = Boolean(source.premiumUnlocked || source.isPremium || source.premium || source.passUpgraded);
   const levelLabels = rawLevels.length
     ? rawLevels.map((level, index) => level.label || level.level || level.number || index + 1)
-    : ['+', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+    : ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
   const premiumRewards = Array.isArray(source.premiumRewards)
     ? source.premiumRewards
@@ -640,24 +684,44 @@ function normalizeTournamentPass(pass = {}) {
     ? source.freeRewards
     : rawLevels.map((level) => level.freeReward || level.free).filter(Boolean);
 
-  const currentXp = numberOrZero(source.passXp ?? source.xp ?? source.currentXp);
-  const xpForLevel = numberOrZero(source.nextLevelXp ?? source.xpToNextLevel ?? source.levelXpRequired);
+  const progress = source.xpProgress || source.progress || {};
+  const currentXp = numberOrZero(source.passXp ?? source.xp ?? source.currentXp ?? progress.total);
+  const levelProgressXp = numberOrZero(source.levelProgressXp ?? progress.current ?? currentXp);
+  const xpForLevel = numberOrZero(source.levelTargetXp ?? source.xpToNextLevel ?? source.levelXpRequired ?? progress.required);
   const xpPercent = hasValue(source.xpPercent)
     ? numberOrZero(source.xpPercent)
-    : xpForLevel > 0
-      ? Math.max(0, Math.min(100, (currentXp / xpForLevel) * 100))
-      : 0;
-
-  return {
+    : hasValue(progress.percent)
+      ? numberOrZero(progress.percent)
+      : xpForLevel > 0
+        ? Math.max(0, Math.min(100, (levelProgressXp / xpForLevel) * 100))
+        : 0;
+  const xpValueLabel = source.xpValueLabel || source.xpText || progress.label || `${levelProgressXp}/${xpForLevel || 0}`;
+  const normalizedPass = {
     ...source,
     xpLabel: source.xpLabel || 'PASS XP',
     passXp: currentXp,
-    passLevel: source.passLevel || source.level || 1,
-    premiumUnlocked: Boolean(source.premiumUnlocked || source.isPremium || source.premium),
+    passLevel: Number(source.passLevel || source.level || source.currentLevel || 1),
+    premiumUnlocked,
+    premiumLocked: Boolean(source.premiumLocked ?? !premiumUnlocked),
     levels: levelLabels.slice(0, 10),
+    levelProgressXp,
+    levelTargetXp: xpForLevel,
     xpPercent,
-    premiumRewards: premiumRewards.map(normalizePassReward).slice(0, 10),
-    freeRewards: freeRewards.map(normalizePassReward).slice(0, 10),
+    xpValueLabel,
+    xpText: xpValueLabel,
+    xpProgress: {
+      current: levelProgressXp,
+      required: xpForLevel || 0,
+      total: currentXp,
+      percent: xpPercent,
+      label: xpValueLabel,
+    },
+  };
+
+  return {
+    ...normalizedPass,
+    premiumRewards: premiumRewards.map((reward, index) => normalizePassReward(reward, index, 'premium', normalizedPass)).slice(0, 10),
+    freeRewards: freeRewards.map((reward, index) => normalizePassReward(reward, index, 'free', normalizedPass)).slice(0, 10),
   };
 }
 
