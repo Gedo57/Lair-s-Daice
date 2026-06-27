@@ -45,6 +45,7 @@ import './styles/mobile/portrait-gameplay.mobile.css';
 import './styles/mobile/portrait-mainmenu-reference.mobile.css';
 import './styles/mobile/portrait-backgrounds.mobile.css';
 import './styles/mobile/portrait-chrome-starter.mobile.css';
+import './styles/mobile/portrait-chrome-mainmenu.mobile.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

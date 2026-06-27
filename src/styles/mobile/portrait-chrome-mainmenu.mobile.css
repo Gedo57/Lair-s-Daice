@@ -1,0 +1,17 @@
+/* Chrome-only Main Menu portrait correction.
+   Chrome/iOS can expose less vertical space because the bottom toolbar overlays the page.
+   Keep the header/background untouched and lift only the interactive panels. */
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--mainmenu .main-menu-action--play,
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--mainmenu .main-menu-action--create {
+  top: 708px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--mainmenu .main-menu-action--join,
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--mainmenu .main-menu-action--help {
+  top: 818px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--mainmenu .main-menu-card {
+  top: 928px !important;
+}
