@@ -62,8 +62,9 @@ function computeLayout() {
   const isSafari = isSafariBrowser();
   const viewport = getViewportSize(isSafari);
   const scale = Math.min(viewport.width / resolution.width, viewport.height / resolution.height);
+  const orientation = viewport.width >= viewport.height ? 'landscape' : 'portrait';
 
-  return { mode, resolution, viewport, scale, isSafari };
+  return { mode, resolution, viewport, scale, orientation, isSafari };
 }
 
 export function useFixedViewport() {

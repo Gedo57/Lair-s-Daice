@@ -39,6 +39,9 @@ import './styles/mobile/profile-screen.mobile.css';
 import './styles/mobile/special-event.mobile.css';
 import './styles/mobile/daily-reward.mobile.css';
 import './styles/mobile/tournament-pass.mobile.css';
+import './styles/mobile/portrait-main.mobile.css';
+import './styles/mobile/portrait-rooms.mobile.css';
+import './styles/mobile/portrait-gameplay.mobile.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

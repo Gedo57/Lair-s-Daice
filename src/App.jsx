@@ -1112,17 +1112,6 @@ function mergeGameData(current, patch) {
   return next;
 }
 
-async function tryLockLandscapeOrientation() {
-  try {
-    if (screen.orientation?.lock) {
-      await screen.orientation.lock('landscape');
-    }
-  } catch (error) {
-    // Browser support is inconsistent, especially on iOS/Safari.
-    // The CSS orientation guard remains the reliable fallback.
-  }
-}
-
 export default function App() {
   const [screen, setScreen] = useState(() => {
     const initialScreen = getScreenFromPathname(window.location.pathname);
@@ -1141,7 +1130,8 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.device = layout.mode;
-  }, [layout.mode]);
+    document.documentElement.dataset.orientation = layout.orientation;
+  }, [layout.mode, layout.orientation]);
 
   useEffect(() => {
     document.documentElement.dataset.language = i18n.language;
@@ -1694,15 +1684,14 @@ export default function App() {
       className={`app-shell app-shell--${layout.mode} app-shell--${screen}`}
       style={appStyle}
       data-backend-action={backendStatus.lastAction || undefined}
-      onPointerDown={tryLockLandscapeOrientation}
     >
       <div className="orientation-guard" aria-hidden="true">
         <div className="orientation-guard__card">
           <div className="orientation-guard__phone">
             <span className="orientation-guard__arrow">↻</span>
           </div>
-          <div className="orientation-guard__title">Rotate your device</div>
-          <div className="orientation-guard__text">Please turn your phone to landscape mode to continue playing.</div>
+          <div className="orientation-guard__title">Portrait mode ready</div>
+          <div className="orientation-guard__text">The mobile layout now uses a portrait-safe frame.</div>
         </div>
       </div>
 

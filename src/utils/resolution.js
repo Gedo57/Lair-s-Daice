@@ -1,5 +1,5 @@
 export const DESKTOP_RESOLUTION = { width: 1280, height: 720 };
-export const MOBILE_RESOLUTION = { width: 1280, height: 720 };
+export const MOBILE_RESOLUTION = { width: 720, height: 1280 };
 
 export function getDeviceMode() {
   const isMobile = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
