@@ -1130,8 +1130,9 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.device = layout.mode;
+    document.documentElement.dataset.physicalDevice = layout.deviceMode || layout.mode;
     document.documentElement.dataset.orientation = layout.orientation;
-  }, [layout.mode, layout.orientation]);
+  }, [layout.mode, layout.deviceMode, layout.orientation]);
 
   useEffect(() => {
     document.documentElement.dataset.language = i18n.language;

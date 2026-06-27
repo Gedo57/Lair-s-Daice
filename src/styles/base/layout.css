@@ -178,9 +178,8 @@ html[data-language='zh'] .app-shell--help {
 }
 
 /* Mobile portrait shell:
-   Desktop keeps the existing 1280x720 landscape frame.
-   Mobile now uses a 720x1280 portrait design frame, centered and scaled once.
-   Individual screen layouts are intentionally left for the next portrait patches. */
+   Desktop and landscape phones use the existing 1280x720 landscape frame.
+   Upright mobile devices use a 720x1280 portrait design frame, centered and scaled once. */
 html[data-device='mobile'] .app-shell {
   width: 100vw;
   width: var(--app-viewport-width, 100vw);
@@ -234,8 +233,8 @@ html[data-device='mobile'] .screen {
   overflow: hidden;
 }
 
-html[data-device='mobile'][data-orientation='landscape'] .app-shell {
-  /* Landscape phones still render the portrait frame instead of showing a rotate blocker. */
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell {
+  /* Rotated phones render the landscape 1280x720 UI instead of being blocked. */
   background-position: center center;
 }
 

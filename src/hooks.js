@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getDesignResolution, getDeviceMode } from './utils/resolution.js';
+import { getDesignResolution, getDeviceMode, getEffectiveLayoutMode, getViewportOrientation } from './utils/resolution.js';
 
 const SAFARI_EXCLUSION_PATTERN = /CriOS|FxiOS|EdgiOS|OPiOS|Chrome|Chromium|Edg|OPR|SamsungBrowser/i;
 const CHROME_PATTERN = /CriOS|Chrome|Chromium/i;
@@ -73,15 +73,16 @@ function applyViewportCssVariables(viewport, browserName) {
 }
 
 function computeLayout() {
-  const mode = getDeviceMode();
-  const resolution = getDesignResolution(mode);
+  const deviceMode = getDeviceMode();
   const browserName = getBrowserName();
   const isSafari = browserName === 'safari';
   const viewport = getViewportSize(isSafari);
+  const orientation = getViewportOrientation(viewport);
+  const mode = getEffectiveLayoutMode(deviceMode, orientation);
+  const resolution = getDesignResolution(mode, orientation);
   const scale = Math.min(viewport.width / resolution.width, viewport.height / resolution.height);
-  const orientation = viewport.width >= viewport.height ? 'landscape' : 'portrait';
 
-  return { mode, resolution, viewport, scale, orientation, isSafari, browserName };
+  return { mode, deviceMode, resolution, viewport, scale, orientation, isSafari, browserName };
 }
 
 export function useFixedViewport() {

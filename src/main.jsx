@@ -49,6 +49,7 @@ import './styles/mobile/portrait-chrome-mainmenu.mobile.css';
 import './styles/mobile/portrait-login-no-avatar.mobile.css';
 import './styles/mobile/portrait-secondary-pages-fix.mobile.css';
 import './styles/mobile/portrait-daily-reward-uncompressed.mobile.css';
+import './styles/mobile/portrait-matchmaking-fix.mobile.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
