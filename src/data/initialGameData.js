@@ -8,6 +8,9 @@ export const defaultCreateRoomSettings = {
   selectedTimer: '15s',
   bidStyles: ['Classic', 'Wild Ones'],
   selectedBidStyle: 'Classic',
+  roomModes: ['normal', 'bots'],
+  selectedRoomMode: 'normal',
+  roomMode: 'normal',
   isPrivate: true,
   roomCode: '',
   rulesCopy: '',
@@ -57,6 +60,8 @@ export const initialGameData = {
   },
   serverMatchmaking: null,
   selectedTable: null,
+  chatMessages: [],
+  chatStatus: { loading: false, sending: false, error: null },
   assetLoading: {
     active: false,
     screen: null,

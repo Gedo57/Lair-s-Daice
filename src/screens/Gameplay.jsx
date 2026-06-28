@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveProfileAvatarSrc as resolveAvatarSrc } from '../utils/profileAvatars.js';
 
 const asset = '/assets/liars-dice/gameplay/';
@@ -94,14 +94,26 @@ function renderDice(player, className, max = 6) {
   ));
 }
 
+function isBotPlayer(player) {
+  if (!player || typeof player !== 'object') return false;
+  return Boolean(player.isBot || player.bot || player.cpu || player.isCpu || player.isAI || String(player.type || player.playerType || '').toLowerCase() === 'bot');
+}
+
+function isBotsMatch(match) {
+  if (!match || typeof match !== 'object') return false;
+  const mode = String(match.roomMode || match.gameMode || match.playMode || match.mode || '').toLowerCase();
+  return mode === 'bots' || Boolean(match.botsEnabled || match.playWithBots || match.withBots) || (Array.isArray(match.players) && match.players.some(isBotPlayer));
+}
+
 function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = false }) {
   if (!player) return null;
 
   const count = toNumber(player?.diceCount ?? player?.lives ?? player?.dice?.length, 0);
   const isEliminated = Boolean(player?.eliminated || player?.active === false || count <= 0);
+  const botClass = isBotPlayer(player) ? 'gameplay-player--bot' : '';
 
   return (
-    <div className={`gameplay-player ${className} ${isTurnPlayer ? 'is-active' : ''} ${isEliminated ? 'is-eliminated' : ''}`}>
+    <div className={`gameplay-player ${className} ${botClass} ${isTurnPlayer ? 'is-active' : ''} ${isEliminated ? 'is-eliminated' : ''}`}>
       <img className="gameplay-player__skin" src={`${asset}${skin}`} alt="" draggable="false" />
       <img className="gameplay-player__avatar" src={resolveAvatarSrc(player)} alt="" draggable="false" />
       <span className="gameplay-player__name">{playerName(player, fallbackName)}</span>
@@ -111,6 +123,71 @@ function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = fal
       </div>
       <div className="gameplay-player__diceRow">
         {renderDice(player, 'gameplay-player__miniDie', 5)}
+      </div>
+    </div>
+  );
+}
+
+
+function chatMessageText(message = {}) {
+  return String(message.text ?? message.message ?? message.body ?? '').trim();
+}
+
+function chatMessageName(message = {}) {
+  return message.displayName || message.username || message.senderName || message.name || 'Player';
+}
+
+function chatMessageAvatar(message = {}) {
+  return resolveAvatarSrc({
+    avatar: message.avatar,
+    avatarId: message.avatarId || message.avatar,
+    avatarUrl: message.avatarUrl,
+    username: chatMessageName(message),
+  });
+}
+
+function formatChatTime(value) {
+  const date = value ? new Date(value) : new Date();
+  if (!Number.isFinite(date.getTime())) return '';
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function isOwnChatMessage(message = {}, user = {}, viewerPlayer = null) {
+  const messageRefs = [
+    message.userId,
+    message.playerId,
+    message.senderId,
+    message.accountId,
+  ].filter(Boolean).map(String);
+
+  const viewerRefs = [
+    user.id,
+    user.userId,
+    user.playerId,
+    user._id,
+    viewerPlayer?.id,
+    viewerPlayer?.userId,
+    viewerPlayer?.playerId,
+    viewerPlayer?._id,
+  ].filter(Boolean).map(String);
+
+  return messageRefs.length > 0 && messageRefs.some((id) => viewerRefs.includes(id));
+}
+
+function ChatMessage({ message, user, viewerPlayer }) {
+  const text = chatMessageText(message);
+  if (!text) return null;
+
+  const ownMessage = isOwnChatMessage(message, user, viewerPlayer);
+  return (
+    <div className={`gameplay-chat-message ${ownMessage ? 'gameplay-chat-message--own' : ''}`}>
+      <img className="gameplay-chat-message__avatar" src={chatMessageAvatar(message)} alt="" draggable="false" />
+      <div className="gameplay-chat-message__body">
+        <div className="gameplay-chat-message__meta">
+          <span className="gameplay-chat-message__name">{chatMessageName(message)}</span>
+          <span className="gameplay-chat-message__time">{formatChatTime(message.createdAt || message.timestamp)}</span>
+        </div>
+        <div className="gameplay-chat-message__text">{text}</div>
       </div>
     </div>
   );
@@ -252,6 +329,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const user = data?.user || {};
   const activePlayer = getActivePlayer(match);
   const panelItems = getPanelItems(match, user);
+  const botsMatch = isBotsMatch(match);
   const totalDice = toNumber(match?.totalDiceInPlay, (match?.players || []).reduce((sum, player) => sum + toNumber(player?.diceCount || player?.dice?.length, 0), 0));
   const currentBid = match?.currentBid || null;
   const previousBid = match?.previousBid || null;
@@ -272,6 +350,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const revealedRows = revealedDiceRows(roundResult);
   const [clockTick, setClockTick] = useState(() => Date.now());
   const liveTurnSeconds = getLiveTurnSeconds(match, clockTick);
+  const chatMessages = Array.isArray(data?.chatMessages) ? data.chatMessages : [];
+  const chatStatus = data?.chatStatus || {};
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatDraft, setChatDraft] = useState('');
+  const chatListRef = useRef(null);
+  const canUseChat = Boolean(currentMatchId && !botsMatch);
 
   useEffect(() => {
     if (!match || match.status !== 'active') return undefined;
@@ -306,6 +390,22 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   }, [defaultBid.quantity, defaultBid.face]);
 
   useEffect(() => {
+    if (!canUseChat) {
+      setChatOpen(false);
+      return;
+    }
+
+    backendActions?.loadChatHistory?.(currentMatchId);
+    // Only reload history when the match id or mode changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMatchId, canUseChat]);
+
+  useEffect(() => {
+    if (!chatOpen || !chatListRef.current) return;
+    chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+  }, [chatOpen, chatMessages.length]);
+
+  useEffect(() => {
     if (isFinished) navigation?.goWin?.();
   }, [isFinished, navigation]);
 
@@ -324,6 +424,15 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     if (!confirmed) return;
     backendActions?.leaveMatch?.(currentMatchId);
   };
+  const submitChatMessage = async (event) => {
+    event?.preventDefault?.();
+    const text = chatDraft.trim().slice(0, 200);
+    if (!text || !canUseChat || chatStatus.sending) return;
+
+    const result = await backendActions?.sendChatMessage?.({ matchId: currentMatchId, text });
+    if (result !== null) setChatDraft('');
+  };
+
   const bidIsValid = isValidBid(currentBid, selectedQuantity, selectedFace);
   const challengeDisabled = !canCallLiar;
   const bidDisabled = !canSubmitBid || !bidIsValid;
@@ -332,7 +441,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const turnName = playerName(activePlayer, myTurn ? 'You' : 'Player');
 
   return (
-    <section className={`screen gameplay-screen gameplay-screen--players-${panelItems.length}`} aria-label={tx('Gameplay')}>
+    <section className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'}`} aria-label={tx('Gameplay')}>
       {panelItems.map((item) => (
         <PlayerPanel
           key={`${item.slot}-${playerId(item.player) || playerName(item.player, item.fallbackName)}`}
@@ -369,6 +478,19 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         <span className="gameplay-leave__title">{tx('LEAVE')}</span>
         <span className="gameplay-leave__subtitle">{tx('Forfeit match')}</span>
       </button>
+
+      {canUseChat ? (
+        <button
+          className={`gameplay-chat-button ${chatOpen ? 'is-open' : ''}`}
+          type="button"
+          onClick={() => setChatOpen((open) => !open)}
+          aria-expanded={chatOpen}
+          aria-controls="gameplay-chat-drawer"
+        >
+          <span className="gameplay-chat-button__title">{tx('CHAT')}</span>
+          <span className="gameplay-chat-button__count">{chatMessages.length}</span>
+        </button>
+      ) : null}
 
       <div className="gameplay-current-bid">
         <img className="gameplay-current-bid__skin" src={`${asset}4.png`} alt="" draggable="false" />
@@ -476,6 +598,47 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIRA" subtitle="Challenge the bet" onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
       <ActionButton className="gameplay-action--slam" skin="B3.png" title="SLAM" subtitle="Disabled in Classic" onClick={() => submitSimpleAction('slam')} disabled={slamDisabled} tx={tx} />
       <ActionButton className="gameplay-action--confirm" skin="B4.png" title="CONFIRM" subtitle="Submit your bid" onClick={submitBid} disabled={bidDisabled} tx={tx} />
+
+      {canUseChat && chatOpen ? (
+        <aside id="gameplay-chat-drawer" className="gameplay-chat-drawer" aria-label={tx('Match Chat')}>
+          <div className="gameplay-chat-drawer__header">
+            <div>
+              <div className="gameplay-chat-drawer__title">{tx('MATCH CHAT')}</div>
+              <div className="gameplay-chat-drawer__subtitle">{tx('Normal mode only')}</div>
+            </div>
+            <button className="gameplay-chat-drawer__close" type="button" onClick={() => setChatOpen(false)} aria-label={tx('Close chat')}>×</button>
+          </div>
+
+          <div className="gameplay-chat-drawer__messages" ref={chatListRef}>
+            {chatStatus.loading ? (
+              <div className="gameplay-chat-drawer__empty">{tx('Loading chat...')}</div>
+            ) : chatMessages.length ? (
+              chatMessages.map((message) => (
+                <ChatMessage key={message.id || message.messageId || `${message.createdAt}-${chatMessageText(message)}`} message={message} user={user} viewerPlayer={viewerPlayer} />
+              ))
+            ) : (
+              <div className="gameplay-chat-drawer__empty">{tx('No messages yet')}</div>
+            )}
+          </div>
+
+          {chatStatus.error ? <div className="gameplay-chat-drawer__error">{chatStatus.error}</div> : null}
+
+          <form className="gameplay-chat-drawer__form" onSubmit={submitChatMessage}>
+            <input
+              className="gameplay-chat-drawer__input"
+              type="text"
+              value={chatDraft}
+              maxLength={200}
+              placeholder={tx('Type a message')}
+              onChange={(event) => setChatDraft(event.target.value.slice(0, 200))}
+              disabled={chatStatus.sending}
+            />
+            <button className="gameplay-chat-drawer__send" type="submit" disabled={!chatDraft.trim() || chatStatus.sending}>
+              {chatStatus.sending ? tx('SENDING...') : tx('SEND')}
+            </button>
+          </form>
+        </aside>
+      ) : null}
 
       {!currentMatchId ? (
         <div className="gameplay-status gameplay-status--warning">{tx('No active match. Start matchmaking first.')}</div>

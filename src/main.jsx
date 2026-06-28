@@ -57,6 +57,8 @@ import './styles/mobile/portrait-win-screen-fix.mobile.css';
 import './styles/mobile/portrait-tournament-pass-fix.mobile.css';
 
 import './styles/mobile/mobile-landscape-browser-fix.css';
+import './styles/base/gameplay-chat.css';
+import './styles/base/bots-mode.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

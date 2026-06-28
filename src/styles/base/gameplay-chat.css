@@ -1,0 +1,348 @@
+.gameplay-chat-button {
+  --chat-button-right: 42px;
+  --chat-button-top: 104px;
+  --chat-button-width: 184px;
+  --chat-button-height: 64px;
+  --chat-button-x: 0px;
+  --chat-button-y: 0px;
+  --chat-button-scale: 1;
+
+  position: absolute;
+  right: var(--chat-button-right);
+  top: var(--chat-button-top);
+  z-index: 80;
+  width: var(--chat-button-width);
+  height: var(--chat-button-height);
+  padding: 0 24px;
+  border: 0;
+  border-radius: 18px;
+  background: url('/assets/liars-dice/gameplay/chat-button-red.png') center / 100% 100% no-repeat;
+  box-shadow: none;
+  color: #fff2c8;
+  cursor: pointer;
+  font-family: inherit;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transform: translate(var(--chat-button-x), var(--chat-button-y)) scale(var(--chat-button-scale));
+  transform-origin: center center;
+}
+
+.gameplay-chat-button:disabled {
+  opacity: .55;
+  pointer-events: none;
+}
+
+.gameplay-chat-button.is-open {
+  transform: translate(var(--chat-button-x), calc(var(--chat-button-y) + 2px)) scale(var(--chat-button-scale));
+}
+
+.gameplay-chat-button__title {
+  position: relative;
+  z-index: 2;
+  display: block;
+  font-size: 22px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  line-height: 1;
+  color: #fff7d2;
+  text-shadow: 0 3px 0 rgba(70, 0, 0, .65), 0 0 8px rgba(255, 226, 156, .28);
+}
+
+.gameplay-chat-button__count {
+  position: absolute;
+  right: 5px;
+  top: -6px;
+  z-index: 3;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 7px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #d9342a;
+  color: #fff;
+  border: 2px solid #ffe9a8;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.gameplay-chat-drawer {
+  --chat-drawer-right: 42px;
+  --chat-drawer-top: 174px;
+  --chat-drawer-width: 356px;
+  --chat-drawer-height: 438px;
+  --chat-drawer-x: 0px;
+  --chat-drawer-y: 0px;
+
+  position: absolute;
+  right: var(--chat-drawer-right);
+  top: var(--chat-drawer-top);
+  z-index: 140;
+  width: var(--chat-drawer-width);
+  height: var(--chat-drawer-height);
+  display: flex;
+  flex-direction: column;
+  border: 3px solid rgba(255, 221, 139, .95);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(60, 24, 15, .98), rgba(24, 10, 7, .98));
+  box-shadow: 0 22px 42px rgba(0, 0, 0, .48), inset 0 2px 0 rgba(255, 255, 255, .14);
+  overflow: hidden;
+  color: #fff5d9;
+  transform: translate(var(--chat-drawer-x), var(--chat-drawer-y));
+  transform-origin: top right;
+}
+
+.gameplay-chat-drawer__header {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255, 221, 139, .2);
+  background: rgba(122, 45, 24, .52);
+}
+
+.gameplay-chat-drawer__title {
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  line-height: 1;
+}
+
+.gameplay-chat-drawer__subtitle {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: rgba(255, 242, 204, .72);
+  text-transform: uppercase;
+}
+
+.gameplay-chat-drawer__close {
+  width: 38px;
+  height: 38px;
+  border: 2px solid rgba(255, 221, 139, .72);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .24);
+  color: #fff2c8;
+  cursor: pointer;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.gameplay-chat-drawer__messages {
+  flex: 1;
+  min-height: 0;
+  padding: 14px 14px 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gameplay-chat-drawer__empty {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: rgba(255, 242, 204, .68);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.gameplay-chat-message {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.gameplay-chat-message--own {
+  flex-direction: row-reverse;
+}
+
+.gameplay-chat-message__avatar {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, .08);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, .25);
+}
+
+.gameplay-chat-message__body {
+  max-width: 240px;
+  padding: 9px 11px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .10);
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.gameplay-chat-message--own .gameplay-chat-message__body {
+  background: rgba(211, 88, 40, .28);
+  border-color: rgba(255, 221, 139, .22);
+}
+
+.gameplay-chat-message__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.gameplay-chat-message__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ffe4a4;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gameplay-chat-message__time {
+  color: rgba(255, 242, 204, .55);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.gameplay-chat-message__text {
+  color: #fff9e8;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.24;
+  overflow-wrap: anywhere;
+}
+
+.gameplay-chat-drawer__error {
+  margin: 0 14px 8px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: rgba(203, 40, 28, .24);
+  color: #ffd2c9;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gameplay-chat-drawer__form {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(255, 221, 139, .18);
+  background: rgba(0, 0, 0, .18);
+}
+
+.gameplay-chat-drawer__input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 2px solid rgba(255, 221, 139, .36);
+  border-radius: 13px;
+  background: rgba(0, 0, 0, .28);
+  color: #fff9e8;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  outline: none;
+}
+
+.gameplay-chat-drawer__input::placeholder {
+  color: rgba(255, 242, 204, .48);
+}
+
+.gameplay-chat-drawer__send {
+  width: 86px;
+  height: 42px;
+  border: 2px solid rgba(255, 221, 139, .72);
+  border-radius: 13px;
+  background: linear-gradient(180deg, #d25425, #8f271a);
+  color: #fff6d5;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: .03em;
+}
+
+.gameplay-chat-drawer__send:disabled,
+.gameplay-chat-drawer__input:disabled {
+  opacity: .58;
+  cursor: not-allowed;
+}
+
+/*
+  Chat position tuning blocks.
+  Edit these variables only. Positive X moves left because the button is right-anchored.
+*/
+html[data-device='desktop'] .app-shell--gameplay .gameplay-chat-button {
+  --chat-button-right: 42px;
+  --chat-button-top: 104px;
+  --chat-button-width: 184px;
+  --chat-button-height: 64px;
+  --chat-button-x: 0px;
+  --chat-button-y: 0px;
+  --chat-button-scale: 1;
+}
+
+html[data-device='desktop'] .app-shell--gameplay .gameplay-chat-drawer {
+  --chat-drawer-right: 42px;
+  --chat-drawer-top: 174px;
+  --chat-drawer-width: 356px;
+  --chat-drawer-height: 438px;
+  --chat-drawer-x: 0px;
+  --chat-drawer-y: 0px;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-chat-button {
+  --chat-button-right: 24px;
+  --chat-button-top: 92px;
+  --chat-button-width: 160px;
+  --chat-button-height: 56px;
+  --chat-button-x: 0px;
+  --chat-button-y: 0px;
+  --chat-button-scale: 1;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-chat-button__title {
+  font-size: 19px;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-chat-drawer {
+  --chat-drawer-right: 24px;
+  --chat-drawer-top: 150px;
+  --chat-drawer-width: 328px;
+  --chat-drawer-height: 390px;
+  --chat-drawer-x: 0px;
+  --chat-drawer-y: 0px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-chat-button {
+  --chat-button-right: 304px;
+  --chat-button-top: 44px;
+  --chat-button-width: 154px;
+  --chat-button-height: 54px;
+  --chat-button-x: 0px;
+  --chat-button-y: 0px;
+  --chat-button-scale: 1;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-chat-button__title {
+  font-size: 18px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-chat-drawer {
+  --chat-drawer-right: 24px;
+  --chat-drawer-top: 210px;
+  --chat-drawer-width: 360px;
+  --chat-drawer-height: 520px;
+  --chat-drawer-x: 0px;
+  --chat-drawer-y: 0px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-chat-drawer {
+  --chat-drawer-height: 500px;
+}

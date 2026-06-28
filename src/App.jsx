@@ -13,6 +13,8 @@ import {
   isGameSocketConnected,
   joinSocketMatch,
   leaveSocketMatch,
+  loadSocketChatHistory,
+  sendSocketChatMessage,
   sendSocketMatchAction,
   startSocketMatchmaking,
 } from './services/socketService.js';
@@ -828,6 +830,114 @@ function unwrapBackendPayload(payload = {}) {
   return nested ? { ...payload, ...nested } : payload;
 }
 
+
+
+function getChatMessageId(message = {}) {
+  return String(
+    message.id ||
+    message.messageId ||
+    message.chatId ||
+    [message.matchId, message.userId || message.playerId, message.createdAt || message.timestamp, message.text || message.message].filter(Boolean).join(':') ||
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`
+  );
+}
+
+function normalizeChatMessage(message = {}) {
+  const source = unwrapBackendPayload(message);
+  const text = String(source.text ?? source.message ?? source.body ?? '').trim();
+  if (!text) return null;
+
+  return {
+    ...source,
+    id: getChatMessageId(source),
+    messageId: source.messageId || source.id || getChatMessageId(source),
+    matchId: source.matchId || source.gameId || source.roomId || null,
+    roomId: source.roomId || null,
+    userId: source.userId || source.senderId || source.accountId || null,
+    playerId: source.playerId || source.userId || source.senderId || null,
+    username: source.username || source.displayName || source.senderName || source.name || 'Player',
+    displayName: source.displayName || source.username || source.senderName || source.name || 'Player',
+    avatar: source.avatar || source.avatarId || source.avatarUrl || null,
+    avatarId: source.avatarId || source.avatar || null,
+    avatarUrl: source.avatarUrl || null,
+    text,
+    createdAt: source.createdAt || source.timestamp || new Date().toISOString(),
+  };
+}
+
+function extractChatMessages(payload = {}) {
+  const sources = getBackendPayloadSources(payload);
+  const messages = [];
+
+  for (const source of sources) {
+    const sourceMessages = source.messages || source.chatMessages || source.history || source.chatHistory;
+    if (Array.isArray(sourceMessages)) messages.push(...sourceMessages);
+    if (source.message && typeof source.message === 'object') messages.push(source.message);
+    if (source.chatMessage && typeof source.chatMessage === 'object') messages.push(source.chatMessage);
+    if (source.text || source.body) messages.push(source);
+  }
+
+  return messages.map(normalizeChatMessage).filter(Boolean);
+}
+
+function mergeChatMessageLists(currentMessages = [], incomingMessages = []) {
+  const byId = new Map();
+  for (const message of [...currentMessages, ...incomingMessages]) {
+    const normalized = normalizeChatMessage(message);
+    if (!normalized) continue;
+    byId.set(normalized.id, normalized);
+  }
+
+  return Array.from(byId.values())
+    .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime())
+    .slice(-50);
+}
+
+function extractChatError(payload = {}) {
+  const source = unwrapBackendPayload(payload);
+  return source.reason || source.message || source.error || source.data?.message || 'Chat error';
+}
+
+function getBackendPayloadSources(payload = {}) {
+  if (Array.isArray(payload)) return payload.flatMap(getBackendPayloadSources);
+  if (!payload || typeof payload !== 'object') return [];
+
+  const sources = [unwrapBackendPayload(payload)];
+  if (Array.isArray(payload.gameDataPayloads)) sources.push(...payload.gameDataPayloads.flatMap(getBackendPayloadSources));
+  if (Array.isArray(payload.payloads)) sources.push(...payload.payloads.flatMap(getBackendPayloadSources));
+  if (payload.data && typeof payload.data === 'object' && payload.data !== payload) sources.push(...getBackendPayloadSources(payload.data));
+  return sources.filter(Boolean);
+}
+
+function isBotsModeValue(value) {
+  if (typeof value === 'boolean') return value;
+  return String(value || '').trim().toLowerCase() === 'bots';
+}
+
+function isBotsModeSettings(settings = {}) {
+  return Boolean(
+    isBotsModeValue(settings.roomMode) ||
+    isBotsModeValue(settings.gameMode) ||
+    isBotsModeValue(settings.playMode) ||
+    settings.botsEnabled ||
+    settings.playWithBots ||
+    settings.withBots
+  );
+}
+
+function isBotsDirectStartResult(result = {}, patch = {}, settings = {}) {
+  const sources = getBackendPayloadSources(result);
+  const explicitDirectStart = sources.some((source) => Boolean(
+    source.directStart ||
+    source.shouldEnterGame ||
+    source.botsMatchStarted ||
+    source.startImmediately ||
+    String(source.stage || '').toLowerCase() === 'bots_match_started'
+  ));
+  const hasMatch = Boolean(patch.match || patch.currentMatchId || sources.some((source) => source.match || source.matchId));
+  return hasMatch && (explicitDirectStart || isBotsModeSettings(settings));
+}
+
 function normalizeRecentRoom(room = {}, roomCode) {
   const code = room.code || room.roomCode || roomCode;
   if (!code) return null;
@@ -869,6 +979,7 @@ function normalizeRoom(room = {}) {
     playerIds,
     playerCount,
     maxPlayers: Number.isFinite(maxPlayers) ? maxPlayers : 4,
+    roomMode: room.roomMode || room.gameMode || room.playMode || (room.botsEnabled || room.playWithBots || room.withBots ? 'bots' : 'normal'),
     isFull: Boolean(room.isFull ?? (playerCount >= maxPlayers)),
     status: room.status || 'waiting',
     matchId: room.matchId || null,
@@ -1354,6 +1465,44 @@ export default function App() {
 
   const getErrorMessage = (error) => error?.message || error?.reason || error?.data?.message || 'Socket request failed';
 
+  const setChatStatus = (patch) => {
+    setGameData((current) => ({
+      ...current,
+      chatStatus: {
+        ...(current.chatStatus || {}),
+        ...patch,
+      },
+    }));
+  };
+
+  const applyChatPayload = (payload, { replace = false } = {}) => {
+    const incomingMessages = extractChatMessages(payload);
+    const chatError = payload?.success === false ? extractChatError(payload) : null;
+
+    setGameData((current) => ({
+      ...current,
+      chatMessages: replace
+        ? mergeChatMessageLists([], incomingMessages)
+        : mergeChatMessageLists(current.chatMessages || [], incomingMessages),
+      chatStatus: {
+        ...(current.chatStatus || {}),
+        loading: false,
+        sending: false,
+        error: chatError,
+      },
+    }));
+
+    return incomingMessages;
+  };
+
+  const clearChatForMatch = () => {
+    setGameData((current) => ({
+      ...current,
+      chatMessages: [],
+      chatStatus: { loading: false, sending: false, error: null },
+    }));
+  };
+
   const applySocketMatchmakingPayload = (payload, actionName = 'matchmaking.socket') => {
     applyBackendPayloads(payload);
     setBackendStatus({ loading: false, error: null, lastAction: actionName });
@@ -1402,6 +1551,11 @@ export default function App() {
     onGameState: (socketPayload) => applySocketGameplayPayload(socketPayload, 'match.socket.state'),
     onRoundResult: (socketPayload) => applySocketGameplayPayload(socketPayload, 'match.socket.round_result'),
     onGameFinished: (socketPayload) => applySocketGameplayPayload(socketPayload, 'match.socket.finished'),
+    onChatMessage: (socketPayload) => applyChatPayload(socketPayload),
+    onChatHistory: (socketPayload) => applyChatPayload(socketPayload, { replace: true }),
+    onChatError: (error) => {
+      setChatStatus({ loading: false, sending: false, error: getErrorMessage(error) });
+    },
     onError: (error) => {
       setBackendStatus({ loading: false, error: getErrorMessage(error), lastAction: 'match.socket_error' });
     },
@@ -1454,7 +1608,18 @@ export default function App() {
       }
     },
     joinRoom: (room) => runBackendAction('rooms.join', () => backendBridge.joinRoom(room), navigation.goRoomLobby),
-    createRoom: (settings) => runBackendAction('rooms.create', () => backendBridge.createRoom(settings), navigation.goRoomLobby),
+    createRoom: (settings) => runBackendAction(
+      'rooms.create',
+      () => backendBridge.createRoom(settings),
+      (result) => {
+        const patch = extractGameDataPatch(result || {});
+        if (isBotsDirectStartResult(result || {}, patch, settings)) {
+          navigation.goGameplay();
+          return;
+        }
+        navigation.goRoomLobby();
+      },
+    ),
     getMyRoom: () => runBackendAction('rooms.my', () => backendBridge.getMyRoom(), navigation.goRoomLobby),
     refreshRoom: (room) => runBackendAction('rooms.get', () => backendBridge.getRoom(room || gameData.currentRoom || gameData.currentRoomId)),
     refreshRooms: () => runBackendAction('rooms.refresh', () => backendBridge.refreshRooms()),
@@ -1575,6 +1740,7 @@ export default function App() {
     refreshMatch: (matchId) => runBackendAction('match.state', () => backendBridge.getMatchState(matchId || gameData.currentMatchId)),
     joinGameplaySocket: async (matchId) => {
       const safeMatchId = matchId || gameData.currentMatchId || gameData.match?.id || gameData.match?.matchId;
+      clearChatForMatch();
       setBackendStatus({ loading: true, error: null, lastAction: 'match.socket.join' });
 
       try {
@@ -1590,6 +1756,37 @@ export default function App() {
       }
     },
     stopGameplaySocket: () => clearSocketGameplayListeners(),
+    loadChatHistory: async (matchId) => {
+      const safeMatchId = matchId || gameData.currentMatchId || gameData.match?.id || gameData.match?.matchId;
+      if (!safeMatchId) return null;
+
+      setChatStatus({ loading: true, error: null });
+
+      try {
+        const result = await loadSocketChatHistory({ matchId: safeMatchId });
+        applyChatPayload(result, { replace: true });
+        return result;
+      } catch (error) {
+        setChatStatus({ loading: false, sending: false, error: getErrorMessage(error) });
+        return null;
+      }
+    },
+    sendChatMessage: async (payload = {}) => {
+      const safeMatchId = payload.matchId || gameData.currentMatchId || gameData.match?.id || gameData.match?.matchId;
+      const text = String(payload.text || payload.message || '').trim().slice(0, 200);
+      if (!safeMatchId || !text) return null;
+
+      setChatStatus({ sending: true, error: null });
+
+      try {
+        const result = await sendSocketChatMessage({ matchId: safeMatchId, text });
+        applyChatPayload(result);
+        return result;
+      } catch (error) {
+        setChatStatus({ loading: false, sending: false, error: getErrorMessage(error) });
+        return null;
+      }
+    },
     loadMatchResult: (matchId, query) => runBackendAction('match.result.load', () => backendBridge.getMatchResult(matchId || gameData.currentMatchId, query)),
     finalizeMatchResult: (payload = {}) => runBackendAction('match.result.finalize', () => backendBridge.submitMatchResult({ ...payload, matchId: payload.matchId || gameData.currentMatchId })),
     submitGameAction: async (action = {}) => {

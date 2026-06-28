@@ -52,19 +52,30 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const [selectedCups, setSelectedCups] = useState(settings.selectedCups || '5');
   const [selectedTimer, setSelectedTimer] = useState(settings.selectedTimer || '15s');
   const [selectedBidStyle, setSelectedBidStyle] = useState(settings.selectedBidStyle || 'Classic');
+  const [selectedRoomMode, setSelectedRoomMode] = useState(String(settings.selectedRoomMode || settings.roomMode || 'normal').toLowerCase() === 'bots' ? 'bots' : 'normal');
   const [isPrivate, setIsPrivate] = useState(settings.isPrivate ?? true);
+
+  const isBotsMode = selectedRoomMode === 'bots';
 
   const currentSettings = {
     ...settings,
     roomName,
     selectedPlayers,
     maxPlayers: Number(selectedPlayers),
+    playersCount: Number(selectedPlayers),
     selectedCups,
     startingCups: Number(selectedCups),
     selectedTimer,
     turnTimer: Number(String(selectedTimer).replace(/[^0-9]/g, '')) || 15,
     selectedBidStyle,
     bidStyle: selectedBidStyle,
+    selectedRoomMode,
+    roomMode: selectedRoomMode,
+    gameMode: selectedRoomMode,
+    playMode: selectedRoomMode,
+    botsEnabled: isBotsMode,
+    playWithBots: isBotsMode,
+    withBots: isBotsMode,
     isPrivate,
   };
 
@@ -138,6 +149,14 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
             </div>
           </div>
 
+          <div className="create-room-block create-room-block--mode">
+            <span className="create-room-label">{tx('ROOM MODE')}</span>
+            <div className="create-room-optionRow create-room-optionRow--mode">
+              <OptionButton value="NORMAL" active={selectedRoomMode === 'normal'} className="create-room-option--mode" tx={tx} onClick={createSelectedHandler(setSelectedRoomMode, 'normal')} />
+              <OptionButton value="BOTS" active={selectedRoomMode === 'bots'} className="create-room-option--mode" tx={tx} onClick={createSelectedHandler(setSelectedRoomMode, 'bots')} />
+            </div>
+          </div>
+
           <div className="create-room-block create-room-block--private">
             <span className="create-room-label">{tx('PRIVATE ROOM')}</span>
             <button
@@ -167,7 +186,7 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
             <span className="create-room-invite__text">{tx(data?.currentRoom ? 'OPEN LOBBY' : 'INVITE FRIENDS')}</span>
           </button>
 
-          <span className="create-room-rules">{tx(settings.rulesCopy || 'Custom Rules: Standard • Bluff Re-roll enabled • Slam enabled')}</span>
+          <span className="create-room-rules">{tx(isBotsMode ? 'Bots mode starts immediately with CPU players.' : (settings.rulesCopy || 'Custom Rules: Standard • Bluff Re-roll enabled • Slam enabled'))}</span>
 
           {backendStatus?.error && backendStatus?.lastAction === 'rooms.create' ? <span className="create-room-rules" style={{ top: '366px', color: '#8a1a11' }}>{backendStatus.error}</span> : null}
 
@@ -178,7 +197,7 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
             disabled={isCreating}
           >
             <img className="create-room-bottom__skin" src={`${asset}b3.png`} alt="" draggable="false" />
-            <span className="create-room-bottom__text">{tx(isCreating ? 'CREATING...' : 'CREATE ROOM')}</span>
+            <span className="create-room-bottom__text">{tx(isCreating ? 'CREATING...' : isBotsMode ? 'START SOLO' : 'CREATE ROOM')}</span>
           </button>
 
           <button className="create-room-bottom create-room-bottom--back" type="button" onClick={navigation.goMainMenu}>

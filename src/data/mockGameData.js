@@ -118,4 +118,6 @@ export const mockBackendActions = {
   refreshMatch: () => null,
   submitGameAction: () => null,
   leaveMatch: () => null,
+  loadChatHistory: () => null,
+  sendChatMessage: () => null,
 };

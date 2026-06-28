@@ -25,11 +25,28 @@ function normalizeCreateRoomPayload(settings = {}) {
   const name = settings.name || settings.roomName || settings.title || 'Private Room';
   const tableId = settings.tableId || settings.selectedTableId || settings.tierId || (settings.isPrivate === false ? 'classic' : 'private');
   const maxPlayers = Number(settings.maxPlayers || settings.selectedPlayers || settings.playersCount || 4);
+  const safeMaxPlayers = Number.isFinite(maxPlayers) ? Math.min(Math.max(maxPlayers, 2), 4) : 4;
+  const roomMode = String(
+    settings.roomMode ||
+    settings.gameMode ||
+    settings.playMode ||
+    (settings.botsEnabled || settings.playWithBots || settings.withBots ? 'bots' : 'normal')
+  ).toLowerCase() === 'bots' ? 'bots' : 'normal';
 
   return {
     name,
     tableId,
-    maxPlayers: Number.isFinite(maxPlayers) ? Math.min(Math.max(maxPlayers, 2), 4) : 4,
+    maxPlayers: safeMaxPlayers,
+    playersCount: safeMaxPlayers,
+    roomMode,
+    gameMode: roomMode,
+    playMode: roomMode,
+    botsEnabled: roomMode === 'bots',
+    playWithBots: roomMode === 'bots',
+    withBots: roomMode === 'bots',
+    startingCups: Number(settings.startingCups || settings.selectedCups || 5) || 5,
+    turnTimer: Number(settings.turnTimer || String(settings.selectedTimer || '').replace(/[^0-9]/g, '') || 15) || 15,
+    bidStyle: settings.bidStyle || settings.selectedBidStyle || 'Classic',
   };
 }
 

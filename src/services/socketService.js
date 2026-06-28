@@ -80,6 +80,9 @@ function bindGameplayListeners(handlers = {}) {
     ['server:game_started', handlers.onGameStarted],
     ['server:round_result', handlers.onRoundResult],
     ['server:game_finished', handlers.onGameFinished],
+    ['chat:message', handlers.onChatMessage],
+    ['chat:history', handlers.onChatHistory],
+    ['chat:error', handlers.onChatError || handlers.onError],
     ['server:error', handlers.onError],
     ['connect_error', handlers.onError],
     ['disconnect', handlers.onDisconnect],
@@ -195,6 +198,14 @@ export function joinSocketMatch(payload = {}, handlers = {}) {
 
 export function sendSocketMatchAction(payload = {}) {
   return emitWithAck('client:match_action', payload);
+}
+
+export function sendSocketChatMessage(payload = {}) {
+  return emitWithAck('chat:send', payload);
+}
+
+export function loadSocketChatHistory(payload = {}) {
+  return emitWithAck('client:chat_history', payload);
 }
 
 export function leaveSocketMatch(payload = {}) {
