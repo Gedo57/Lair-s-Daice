@@ -10,13 +10,17 @@
   position: absolute;
   right: var(--chat-button-right);
   top: var(--chat-button-top);
-  z-index: 80;
+  z-index: 160;
   width: var(--chat-button-width);
   height: var(--chat-button-height);
-  padding: 0 24px;
+  padding: 0;
   border: 0;
   border-radius: 18px;
-  background: url('/assets/liars-dice/gameplay/chat-button-red.png') center / 100% 100% no-repeat;
+  background-color: transparent;
+  background-image: url('/assets/liars-dice/gameplay/chat-button-red.png');
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   box-shadow: none;
   color: #fff2c8;
   cursor: pointer;
@@ -25,6 +29,19 @@
   touch-action: manipulation;
   transform: translate(var(--chat-button-x), var(--chat-button-y)) scale(var(--chat-button-scale));
   transform-origin: center center;
+  overflow: visible;
+}
+
+.gameplay-chat-button__skin {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+  pointer-events: none;
+  user-select: none;
 }
 
 .gameplay-chat-button:disabled {
@@ -37,22 +54,26 @@
 }
 
 .gameplay-chat-button__title {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
-  display: block;
+  display: grid;
+  place-items: center;
+  padding: 0 18px;
   font-size: 22px;
   font-weight: 950;
   letter-spacing: .08em;
   line-height: 1;
   color: #fff7d2;
   text-shadow: 0 3px 0 rgba(70, 0, 0, .65), 0 0 8px rgba(255, 226, 156, .28);
+  pointer-events: none;
 }
 
 .gameplay-chat-button__count {
   position: absolute;
-  right: 5px;
-  top: -6px;
-  z-index: 3;
+  right: 4px;
+  top: -8px;
+  z-index: 4;
   min-width: 28px;
   height: 28px;
   padding: 0 7px;
@@ -65,6 +86,7 @@
   font-size: 13px;
   font-weight: 900;
   line-height: 1;
+  pointer-events: none;
 }
 
 .gameplay-chat-drawer {

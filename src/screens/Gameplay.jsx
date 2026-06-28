@@ -487,6 +487,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           aria-expanded={chatOpen}
           aria-controls="gameplay-chat-drawer"
         >
+          <img
+            className="gameplay-chat-button__skin"
+            src="/assets/liars-dice/gameplay/chat-button-red.png"
+            alt=""
+            draggable="false"
+          />
           <span className="gameplay-chat-button__title">{tx('CHAT')}</span>
           <span className="gameplay-chat-button__count">{chatMessages.length}</span>
         </button>
