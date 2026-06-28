@@ -1,21 +1,37 @@
 const asset = '/assets/liars-dice/help/';
 
-const helpPosterByLanguage = {
+const helpPortraitPosterByLanguage = {
   en: `${asset}how-to-play-en.png`,
   zh: `${asset}how-to-play-zh.png`,
+};
+
+const helpLandscapePosterByLanguage = {
+  en: `${asset}BGH.png`,
+  zh: '/assets/liars-dice/localized/zh/help-background.png',
 };
 
 export default function HelpScreen({ navigation, i18n }) {
   const tx = i18n?.tx || ((value) => value);
   const language = i18n?.language === 'zh' ? 'zh' : 'en';
-  const posterSrc = helpPosterByLanguage[language] || helpPosterByLanguage.en;
+  const portraitPosterSrc = helpPortraitPosterByLanguage[language] || helpPortraitPosterByLanguage.en;
+  const landscapePosterSrc = helpLandscapePosterByLanguage[language] || helpLandscapePosterByLanguage.en;
 
   return (
     <section className={`screen help-screen help-screen--${language}`} aria-label={tx('Learn the rules')}>
       <img
-        className="help-rules-poster"
-        src={posterSrc}
+        className="help-rules-poster help-rules-poster--portrait"
+        src={portraitPosterSrc}
         alt={language === 'zh' ? '如何玩骰子游戏' : 'How to Play'}
+        draggable="false"
+        loading="eager"
+        fetchPriority="high"
+      />
+
+      <img
+        className="help-rules-poster help-rules-poster--landscape"
+        src={landscapePosterSrc}
+        alt=""
+        aria-hidden="true"
         draggable="false"
         loading="eager"
         fetchPriority="high"

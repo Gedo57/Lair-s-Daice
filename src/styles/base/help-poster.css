@@ -8,20 +8,36 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center center;
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
   z-index: 1;
 }
 
+/* Default / desktop: use the landscape help poster. */
+.help-rules-poster--portrait {
+  display: none;
+}
+
+.help-rules-poster--landscape {
+  display: block;
+  object-fit: fill;
+  object-position: center center;
+}
+
 .help-back-button {
   z-index: 5;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .help-rules-poster {
-  object-fit: contain;
+/* Mobile portrait must use the portrait poster only. */
+html[data-device='mobile'][data-orientation='portrait'] .help-rules-poster--portrait {
+  display: block;
+  object-fit: cover;
+  object-position: center center;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .help-rules-poster--landscape {
+  display: none;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .help-back-button {
@@ -39,8 +55,15 @@ html[data-device='mobile'][data-orientation='portrait'] .help-back-button__text 
   text-align: center;
 }
 
-html[data-device='mobile'][data-orientation='landscape'] .help-rules-poster {
-  object-fit: contain;
+/* Mobile landscape must use the landscape poster only. */
+html[data-device='mobile'][data-orientation='landscape'] .help-rules-poster--portrait {
+  display: none;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .help-rules-poster--landscape {
+  display: block;
+  object-fit: fill;
+  object-position: center center;
 }
 
 html[data-device='mobile'][data-orientation='landscape'] .help-back-button {
@@ -50,7 +73,13 @@ html[data-device='mobile'][data-orientation='landscape'] .help-back-button {
   height: 64px;
 }
 
+/* Desktop uses the landscape poster as well. */
+html[data-device='desktop'] .help-rules-poster--portrait {
+  display: none;
+}
 
-html[data-device='desktop'] .help-rules-poster {
-  object-fit: contain;
+html[data-device='desktop'] .help-rules-poster--landscape {
+  display: block;
+  object-fit: fill;
+  object-position: center center;
 }

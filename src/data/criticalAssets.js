@@ -39,6 +39,8 @@ export const CRITICAL_ASSETS = {
   help: [
     `${helpAsset}how-to-play-en.png`,
     `${helpAsset}how-to-play-zh.png`,
+    `${helpAsset}BGH.png`,
+    '/assets/liars-dice/localized/zh/help-background.png',
   ],
 
   roomselect: [
