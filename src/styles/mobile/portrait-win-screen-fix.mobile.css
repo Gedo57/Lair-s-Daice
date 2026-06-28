@@ -406,28 +406,3 @@ html[data-device='mobile'][data-orientation='portrait'] .win-result-status {
   height: 34px !important;
   font-size: 19px !important;
 }
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .win-profile {
-  top: 50px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .win-currency {
-  top: 54px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .win-title {
-  top: 98px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .win-main-panel {
-  top: 178px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .win-action--again,
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .win-action--share {
-  top: 1038px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .win-action--lobby {
-  top: 1114px !important;
-}

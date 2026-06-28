@@ -108,16 +108,3 @@ html[data-device='mobile'][data-orientation='portrait'] .daily-reward-back span 
   top: 16px !important;
   font-size: 24px !important;
 }
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .daily-reward-cards {
-  height: 624px !important;
-  padding-bottom: 152px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .daily-reward-status {
-  top: 902px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .daily-reward-back {
-  top: 1034px !important;
-}

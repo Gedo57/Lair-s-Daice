@@ -1,10 +1,2 @@
-/* Chrome-only Starter portrait nudge.
-   This fixes the Chrome mobile visual placement without changing Safari or desktop. */
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .starter-button--play {
-  top: 966px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .starter-button--login {
-  top: 1104px !important;
-}
+/* Deprecated: Chrome now uses the same global visualViewport shell as Safari.
+   Per-screen Chrome nudges were intentionally removed to avoid double offsets. */

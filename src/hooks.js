@@ -35,22 +35,27 @@ function getBaseViewportSize() {
   };
 }
 
-function getSafariViewportSize() {
+function getVisualViewportSize() {
   const visualViewport = window.visualViewport;
   const documentElement = document.documentElement;
   const fallbackViewport = getBaseViewportSize();
 
   return {
-    // Safari can report 100vh / innerHeight as the full layout viewport while
-    // the visible area is smaller because of the browser chrome. visualViewport
-    // gives the real visible space, so the 1280x720 frame can scale without crop.
+    // iOS Safari and iOS Chrome can report 100vh / innerHeight as the larger
+    // layout viewport while the visible area is smaller because of the browser
+    // chrome. visualViewport gives the real visible space, so the fixed game
+    // frame scales against what the user can actually see.
     width: Math.floor(visualViewport?.width || fallbackViewport.width || documentElement.clientWidth),
     height: Math.floor(visualViewport?.height || documentElement.clientHeight || fallbackViewport.height),
   };
 }
 
-function getViewportSize(isSafari) {
-  return isSafari ? getSafariViewportSize() : getBaseViewportSize();
+function shouldUseVisualViewport(browserName) {
+  return browserName === 'safari' || browserName === 'chrome';
+}
+
+function getViewportSize(browserName) {
+  return shouldUseVisualViewport(browserName) ? getVisualViewportSize() : getBaseViewportSize();
 }
 
 function applyViewportCssVariables(viewport, browserName) {
@@ -62,7 +67,7 @@ function applyViewportCssVariables(viewport, browserName) {
     delete root.dataset.browser;
   }
 
-  if (browserName === 'safari') {
+  if (shouldUseVisualViewport(browserName)) {
     root.style.setProperty('--app-viewport-width', `${viewport.width}px`);
     root.style.setProperty('--app-viewport-height', `${viewport.height}px`);
     return;
@@ -76,7 +81,7 @@ function computeLayout() {
   const deviceMode = getDeviceMode();
   const browserName = getBrowserName();
   const isSafari = browserName === 'safari';
-  const viewport = getViewportSize(isSafari);
+  const viewport = getViewportSize(browserName);
   const orientation = getViewportOrientation(viewport);
   const mode = getEffectiveLayoutMode(deviceMode, orientation);
   const resolution = getDesignResolution(mode, orientation);

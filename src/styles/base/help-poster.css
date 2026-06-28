@@ -21,7 +21,7 @@
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .help-rules-poster {
-  object-fit: cover;
+  object-fit: contain;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .help-back-button {
@@ -50,9 +50,6 @@ html[data-device='mobile'][data-orientation='landscape'] .help-back-button {
   height: 64px;
 }
 
-html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .help-back-button {
-  top: 1144px;
-}
 
 html[data-device='desktop'] .help-rules-poster {
   object-fit: contain;

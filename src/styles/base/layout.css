@@ -278,3 +278,33 @@ html[data-browser='safari'] body {
 html[data-browser='safari'][data-device='mobile'] .app-shell {
   background-color: #050200;
 }
+
+/* Chrome mobile viewport correction.
+   iOS Chrome exposes a larger layout viewport than the visible area when the
+   browser toolbar is open. JS writes --app-viewport-* from visualViewport for
+   Chrome too, so the same fixed-shell model used by Safari is applied globally. */
+html[data-browser='chrome'][data-device='mobile'] .app-shell {
+  position: fixed;
+  inset: 0;
+  width: var(--app-viewport-width, 100vw);
+  height: var(--app-viewport-height, 100vh);
+  min-width: var(--app-viewport-width, 100vw);
+  min-height: var(--app-viewport-height, 100vh);
+  max-width: var(--app-viewport-width, 100vw);
+  max-height: var(--app-viewport-height, 100vh);
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+html[data-browser='chrome'][data-device='mobile'] .game-frame {
+  transform: scale(var(--ui-scale));
+  transform-origin: center center;
+}
+
+html[data-browser='chrome'],
+html[data-browser='chrome'] body,
+html[data-browser='chrome'][data-device='mobile'] .app-shell {
+  background-color: #050200;
+}
+

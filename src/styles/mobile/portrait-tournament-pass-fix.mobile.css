@@ -253,16 +253,3 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--tournamentpa
   border-radius: 999px !important;
   background: linear-gradient(#f0ca6a, #8d4c10) !important;
 }
-
-/* Chrome has less visible vertical room because of the bottom browser toolbar. */
-html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .app-shell--tournamentpass .tournament-pass-tournaments {
-  top: 124px !important;
-}
-
-html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .app-shell--tournamentpass .tournament-pass-lucky {
-  top: 496px !important;
-}
-
-html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .app-shell--tournamentpass .tournament-pass-back {
-  bottom: 64px !important;
-}

@@ -710,23 +710,3 @@ html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app
 html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--6 { left: 293px !important; top: 61px !important; }
 html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--7 { left: 340px !important; top: 75px !important; }
 html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__faceRow { left: 38px !important; top: 126px !important; gap: 14px !important; }
-
-/* iOS Chrome usually overlays a bottom toolbar; keep controls above it. */
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-bid-selector {
-  top: 828px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-player--you,
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-player--fourth {
-  top: 750px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-action--raise,
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-action--call {
-  top: 1027px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-action--slam,
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-action--confirm {
-  top: 1124px !important;
-}

@@ -351,16 +351,3 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--matchmaking 
   z-index: 90 !important;
   font-size: 17px !important;
 }
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--matchmaking .matchmaking-panel {
-  top: 164px !important;
-  height: 760px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--matchmaking .matchmaking-action--keep {
-  top: 948px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--matchmaking .matchmaking-action--cancel {
-  top: 1052px !important;
-}
