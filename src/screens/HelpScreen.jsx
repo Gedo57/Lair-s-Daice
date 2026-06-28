@@ -19,6 +19,26 @@ export default function HelpScreen({ navigation, i18n }) {
   return (
     <section className={`screen help-screen help-screen--${language}`} aria-label={tx('Learn the rules')}>
       <img
+        className="help-rules-backdrop help-rules-backdrop--portrait"
+        src={portraitPosterSrc}
+        alt=""
+        aria-hidden="true"
+        draggable="false"
+        loading="eager"
+        fetchPriority="high"
+      />
+
+      <img
+        className="help-rules-backdrop help-rules-backdrop--landscape"
+        src={landscapePosterSrc}
+        alt=""
+        aria-hidden="true"
+        draggable="false"
+        loading="eager"
+        fetchPriority="high"
+      />
+
+      <img
         className="help-rules-poster help-rules-poster--portrait"
         src={portraitPosterSrc}
         alt={language === 'zh' ? '如何玩骰子游戏' : 'How to Play'}
@@ -30,8 +50,7 @@ export default function HelpScreen({ navigation, i18n }) {
       <img
         className="help-rules-poster help-rules-poster--landscape"
         src={landscapePosterSrc}
-        alt=""
-        aria-hidden="true"
+        alt={language === 'zh' ? '如何玩骰子游戏' : 'How to Play'}
         draggable="false"
         loading="eager"
         fetchPriority="high"

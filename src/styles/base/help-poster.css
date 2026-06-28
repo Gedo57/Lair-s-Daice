@@ -3,6 +3,7 @@
   background: #130704;
 }
 
+.help-rules-backdrop,
 .help-rules-poster {
   position: absolute;
   inset: 0;
@@ -11,17 +12,35 @@
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
+}
+
+.help-rules-backdrop {
+  display: none;
+  z-index: 0;
+  object-fit: cover;
+  object-position: center center;
+  filter: blur(22px) brightness(.72) saturate(1.12);
+  transform: scale(1.08);
+  transform-origin: center center;
+}
+
+.help-rules-poster {
   z-index: 1;
 }
 
 /* Default / desktop: use the landscape help poster. */
+.help-rules-backdrop--portrait,
 .help-rules-poster--portrait {
   display: none;
 }
 
+.help-rules-backdrop--landscape,
 .help-rules-poster--landscape {
   display: block;
-  object-fit: fill;
+}
+
+.help-rules-poster--landscape {
+  object-fit: contain;
   object-position: center center;
 }
 
@@ -30,14 +49,19 @@
 }
 
 /* Mobile portrait must use the portrait poster only. */
+html[data-device='mobile'][data-orientation='portrait'] .help-rules-backdrop--portrait,
 html[data-device='mobile'][data-orientation='portrait'] .help-rules-poster--portrait {
   display: block;
-  object-fit: cover;
-  object-position: center center;
 }
 
+html[data-device='mobile'][data-orientation='portrait'] .help-rules-backdrop--landscape,
 html[data-device='mobile'][data-orientation='portrait'] .help-rules-poster--landscape {
   display: none;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .help-rules-poster--portrait {
+  object-fit: contain;
+  object-position: center center;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .help-back-button {
@@ -56,13 +80,18 @@ html[data-device='mobile'][data-orientation='portrait'] .help-back-button__text 
 }
 
 /* Mobile landscape must use the landscape poster only. */
+html[data-device='mobile'][data-orientation='landscape'] .help-rules-backdrop--portrait,
 html[data-device='mobile'][data-orientation='landscape'] .help-rules-poster--portrait {
   display: none;
 }
 
+html[data-device='mobile'][data-orientation='landscape'] .help-rules-backdrop--landscape,
 html[data-device='mobile'][data-orientation='landscape'] .help-rules-poster--landscape {
   display: block;
-  object-fit: fill;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .help-rules-poster--landscape {
+  object-fit: contain;
   object-position: center center;
 }
 
@@ -74,12 +103,17 @@ html[data-device='mobile'][data-orientation='landscape'] .help-back-button {
 }
 
 /* Desktop uses the landscape poster as well. */
+html[data-device='desktop'] .help-rules-backdrop--portrait,
 html[data-device='desktop'] .help-rules-poster--portrait {
   display: none;
 }
 
+html[data-device='desktop'] .help-rules-backdrop--landscape,
 html[data-device='desktop'] .help-rules-poster--landscape {
   display: block;
-  object-fit: fill;
+}
+
+html[data-device='desktop'] .help-rules-poster--landscape {
+  object-fit: contain;
   object-position: center center;
 }
