@@ -1,673 +1,834 @@
-/* Patch 4: Mobile portrait gameplay layout.
-   Target mobile design frame: 720x1280.
-   This file intentionally overrides the legacy 1280x720 mobile gameplay rules only. */
+/* Clean mobile portrait gameplay layout.
+   Scope: physical mobile portrait only. Landscape keeps the legacy 1280x720 layout.
+   This file does not redraw gameplay panels/table with CSS shapes; it only positions existing assets. */
 
-html[data-device='mobile'] .app-shell--gameplay {
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
   background-size: cover;
   background-position: center center;
 }
 
-html[data-device='mobile'] .gameplay-screen {
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen {
   width: 720px !important;
   height: 1280px !important;
+  overflow: hidden !important;
   color: #fff6e5;
   font-family: Arial, sans-serif;
   isolation: isolate;
 }
 
-html[data-device='mobile'] .gameplay-screen * {
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen::before,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen::after {
+  content: none !important;
+  display: none !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen *,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen *::before,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen *::after {
   box-sizing: border-box;
 }
 
-html[data-device='mobile'] .gameplay-screen button {
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen button {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
-/* Top HUD */
-html[data-device='mobile'] .gameplay-turnbar {
-  left: 75px;
-  top: 76px;
-  width: 570px;
-  height: 136px;
-  z-index: 55;
-  overflow: visible;
+/* Top controls */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-badge {
+  left: 24px !important;
+  top: 24px !important;
+  min-width: 106px !important;
+  height: 58px !important;
+  padding: 8px 12px !important;
+  z-index: 95 !important;
 }
 
-html[data-device='mobile'] .gameplay-turnbar__skin {
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-badge__label {
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-badge__value {
+  font-size: 25px !important;
+  line-height: 1 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-leave {
+  right: 24px !important;
+  top: 24px !important;
+  width: 178px !important;
+  height: 62px !important;
+  display: block !important;
+  z-index: 98 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-leave__skin {
+  position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: fill;
 }
 
-html[data-device='mobile'] .gameplay-turnbar__avatarBg {
-  left: 12px;
-  top: 20px;
-  width: 128px;
-  height: 96px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-leave__title {
+  left: 60px !important;
+  right: 12px !important;
+  top: 8px !important;
+  font-size: 23px !important;
+  line-height: 1 !important;
+  white-space: nowrap;
 }
 
-html[data-device='mobile'] .gameplay-turnbar__avatar {
-  left: -2px;
-  top: -22px;
-  width: 150px;
-  height: 150px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-leave__subtitle {
+  left: 60px !important;
+  right: 12px !important;
+  top: 34px !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  white-space: nowrap;
 }
 
-html[data-device='mobile'] .gameplay-turnbar__title {
-  left: 154px;
-  top: 26px;
-  width: 360px;
-  font-size: 21px;
-  line-height: 1.1;
+/* Turn bar */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar {
+  left: 100px !important;
+  top: 106px !important;
+  width: 498px !important;
+  height: 124px !important;
+  z-index: 88 !important;
+  overflow: visible !important;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar__skin {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar__avatarBg {
+  left: -5px !important;
+  top: 2px !important;
+  width: 132px !important;
+  height: 112px !important;
+  object-fit: fill;
+  display: block !important;
+  z-index: 1 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar__avatar {
+  left: -34px !important;
+  top: -32px !important;
+  width: 170px !important;
+  height: 170px !important;
+  object-fit: contain;
+  z-index: 4 !important;
+  filter: drop-shadow(0 7px 9px rgba(0, 0, 0, .42));
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar__title {
+  left: 134px !important;
+  top: 24px !important;
+  width: 294px !important;
+  font-size: 21px !important;
+  line-height: 1.05 !important;
+  font-weight: 900 !important;
+  color: #fff3cf !important;
+  text-align: center;
+  letter-spacing: .02em;
+  text-shadow: 0 3px 4px rgba(0, 0, 0, .65);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  z-index: 5 !important;
 }
 
-html[data-device='mobile'] .gameplay-turnbar__countRow {
-  left: 158px;
-  top: 75px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar__countRow {
+  left: 140px !important;
+  top: 70px !important;
+  z-index: 5 !important;
 }
 
-html[data-device='mobile'] .gameplay-turnbar__countDie {
-  width: 30px;
-  height: 30px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar__countDie {
+  width: 34px !important;
+  height: 34px !important;
 }
 
-html[data-device='mobile'] .gameplay-turnbar__countValue {
-  font-size: 25px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar__countValue {
+  font-size: 31px !important;
+  line-height: 1 !important;
+  color: #170b03 !important;
+  margin-left: 6px !important;
 }
 
-html[data-device='mobile'] .gameplay-turnbar__diceRow {
-  left: 220px;
-  top: 74px;
-  gap: 6px;
-  max-width: 300px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar__diceRow {
+  left: 220px !important;
+  top: 70px !important;
+  max-width: 230px !important;
+  gap: 5px !important;
   overflow: hidden;
+  z-index: 6 !important;
 }
 
-html[data-device='mobile'] .gameplay-turnbar__die {
-  width: 38px;
-  height: 38px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar__die,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-hidden-die.gameplay-turnbar__die {
+  width: 35px !important;
+  height: 35px !important;
   flex: 0 0 auto;
 }
 
-html[data-device='mobile'] .gameplay-timer {
-  left: 606px;
-  top: 116px;
-  width: 72px;
-  height: 86px;
-  z-index: 70;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-timer {
+  right: 24px !important;
+  left: auto !important;
+  top: 116px !important;
+  width: 80px !important;
+  height: 94px !important;
+  z-index: 92 !important;
+  display: block !important;
 }
 
-html[data-device='mobile'] .gameplay-timer__skin {
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-timer__skin {
+  position: absolute;
   inset: 0;
-  width: 0;
-  height: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill;
+  display: block !important;
 }
 
-html[data-device='mobile'] .gameplay-timer__icon {
-  left: 18px;
-  top: 5px;
-  width: 36px;
-  height: 32px;
-}
-
-html[data-device='mobile'] .gameplay-timer__value {
-  top: 43px;
-  font-size: 28px;
-  color: #fff1be;
-  text-shadow: 0 3px 4px rgba(0,0,0,.78), 0 0 10px rgba(255, 93, 41, .42);
-}
-
-html[data-device='mobile'] .gameplay-round-badge {
-  left: 20px;
-  top: 24px;
-  min-width: 128px;
-  padding: 8px 14px;
-  z-index: 80;
-}
-
-html[data-device='mobile'] .gameplay-round-badge__label {
-  font-size: 11px;
-}
-
-html[data-device='mobile'] .gameplay-round-badge__value {
-  font-size: 26px;
-}
-
-html[data-device='mobile'] .gameplay-leave {
-  right: 20px;
-  top: 24px;
-  width: 174px;
-  height: 58px;
-  z-index: 90;
-}
-
-html[data-device='mobile'] .gameplay-leave__title {
-  left: 58px;
-  right: 15px;
-  top: 8px;
-  font-size: 22px;
-}
-
-html[data-device='mobile'] .gameplay-leave__subtitle {
-  left: 58px;
-  right: 15px;
-  top: 34px;
-  font-size: 10px;
-}
-
-/* Player panels */
-html[data-device='mobile'] .gameplay-player {
-  z-index: 35;
-  transform: none;
-}
-
-html[data-device='mobile'] .gameplay-player__name {
-  max-width: 150px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 21px;
-  line-height: 1.05;
-}
-
-html[data-device='mobile'] .gameplay-player__countDie {
-  width: 27px;
-  height: 27px;
-}
-
-html[data-device='mobile'] .gameplay-player__countValue {
-  font-size: 24px;
-}
-
-html[data-device='mobile'] .gameplay-player__miniDie,
-html[data-device='mobile'] .gameplay-hidden-die {
-  width: 25px;
-  height: 25px;
-  flex: 0 0 auto;
-}
-
-html[data-device='mobile'] .gameplay-player__diceRow {
-  max-width: 138px;
-  overflow: hidden;
-}
-
-html[data-device='mobile'] .gameplay-player--fourth {
-  left: 200px;
-  top: 218px;
-  width: 320px;
-  height: 106px;
-  color: #fff8e3;
-}
-
-html[data-device='mobile'] .gameplay-player--sophie {
-  left: 22px;
-  top: 342px;
-  width: 320px;
-  height: 108px;
-  color: #fff8e3;
-}
-
-html[data-device='mobile'] .gameplay-player--you {
-  left: 190px;
-  top: 776px;
-  width: 340px;
-  height: 114px;
-  color: #180f05;
-  z-index: 42;
-}
-
-html[data-device='mobile'] .gameplay-player--dragon {
-  right: 22px;
-  top: 342px;
-  width: 310px;
-  height: 112px;
-  color: #fff8e3;
-}
-
-html[data-device='mobile'] .gameplay-player--fourth .gameplay-player__avatar,
-html[data-device='mobile'] .gameplay-player--sophie .gameplay-player__avatar,
-html[data-device='mobile'] .gameplay-player--you .gameplay-player__avatar {
-  left: -8px;
-  top: -24px;
-  width: 130px;
-  height: 130px;
-}
-
-html[data-device='mobile'] .gameplay-player--fourth .gameplay-player__name,
-html[data-device='mobile'] .gameplay-player--sophie .gameplay-player__name {
-  left: 143px;
-  top: 7px;
-}
-
-html[data-device='mobile'] .gameplay-player--you .gameplay-player__name {
-  left: 150px;
-  top: 9px;
-}
-
-html[data-device='mobile'] .gameplay-player--fourth .gameplay-player__countRow,
-html[data-device='mobile'] .gameplay-player--sophie .gameplay-player__countRow {
-  left: 150px;
-  top: 36px;
-}
-
-html[data-device='mobile'] .gameplay-player--you .gameplay-player__countRow {
-  left: 152px;
-  top: 38px;
-}
-
-html[data-device='mobile'] .gameplay-player--fourth .gameplay-player__diceRow,
-html[data-device='mobile'] .gameplay-player--sophie .gameplay-player__diceRow {
-  left: 150px;
-  top: 70px;
-  gap: 2px;
-}
-
-html[data-device='mobile'] .gameplay-player--you .gameplay-player__diceRow {
-  left: 152px;
-  top: 73px;
-  gap: 2px;
-}
-
-html[data-device='mobile'] .gameplay-player--dragon .gameplay-player__avatar {
-  right: 3px;
-  top: 1px;
-  width: 108px;
-  height: 108px;
-}
-
-html[data-device='mobile'] .gameplay-player--dragon .gameplay-player__name {
-  left: 28px;
-  top: 7px;
-  max-width: 138px;
-}
-
-html[data-device='mobile'] .gameplay-player--dragon .gameplay-player__countRow {
-  left: 28px;
-  top: 36px;
-}
-
-html[data-device='mobile'] .gameplay-player--dragon .gameplay-player__diceRow {
-  left: 28px;
-  top: 70px;
-  gap: 4px;
-}
-
-html[data-device='mobile'] .gameplay-screen--players-2 .gameplay-player--sophie,
-html[data-device='mobile'] .gameplay-screen--players-2 .gameplay-player--dragon,
-html[data-device='mobile'] .gameplay-screen--players-2 .gameplay-player--fourth {
-  left: 200px;
-  right: auto;
-  top: 300px;
-  width: 320px;
-  height: 108px;
-}
-
-html[data-device='mobile'] .gameplay-screen--players-2 .gameplay-player--dragon .gameplay-player__avatar {
-  left: -8px;
-  right: auto;
-  top: -24px;
-  width: 130px;
-  height: 130px;
-}
-
-html[data-device='mobile'] .gameplay-screen--players-2 .gameplay-player--dragon .gameplay-player__name,
-html[data-device='mobile'] .gameplay-screen--players-2 .gameplay-player--dragon .gameplay-player__countRow,
-html[data-device='mobile'] .gameplay-screen--players-2 .gameplay-player--dragon .gameplay-player__diceRow {
-  left: 150px;
-}
-
-html[data-device='mobile'] .gameplay-screen--players-2 .gameplay-player--you {
-  left: 190px;
-  top: 776px;
-}
-
-html[data-device='mobile'] .gameplay-screen--players-3 .gameplay-player--sophie {
-  left: 34px;
-  top: 318px;
-}
-
-html[data-device='mobile'] .gameplay-screen--players-3 .gameplay-player--dragon {
-  right: 34px;
-  top: 318px;
-}
-
-/* Center table / bid area */
-html[data-device='mobile'] .gameplay-current-bid {
-  left: 248px;
-  right: auto;
-  top: 472px;
-  width: 224px;
-  height: 184px;
-  z-index: 45;
-  color: #1d0d03;
-}
-
-html[data-device='mobile'] .gameplay-current-bid__skin {
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-html[data-device='mobile'] .gameplay-current-bid__header {
-  left: 32px;
-  top: 20px;
-  width: 160px;
-  height: 27px;
-  border-radius: 9px;
-  font-size: 13px;
-  line-height: 1;
-}
-
-html[data-device='mobile'] .gameplay-current-bid__main {
-  top: 51px;
-  gap: 12px;
-  font-size: 34px;
-}
-
-html[data-device='mobile'] .gameplay-current-bid__die {
-  width: 38px;
-  height: 38px;
-}
-
-html[data-device='mobile'] .gameplay-current-bid__total {
-  top: 97px;
-  padding: 0 14px;
-  font-size: 12px;
-}
-
-html[data-device='mobile'] .gameplay-current-bid__label {
-  top: 116px;
-  font-size: 13px;
-}
-
-html[data-device='mobile'] .gameplay-current-bid__copy {
-  top: 134px;
-  padding: 0 14px;
-  font-size: 11px;
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-html[data-device='mobile'] .gameplay-current-bid__last {
-  bottom: 5px;
-  gap: 10px;
-  font-size: 24px;
-}
-
-html[data-device='mobile'] .gameplay-current-bid__lastDie {
-  width: 30px;
-  height: 30px;
-}
-
-html[data-device='mobile'] .gameplay-cups {
-  left: 194px;
-  top: 590px;
-  width: 332px;
-  height: 220px;
-  z-index: 30;
-}
-
-html[data-device='mobile'] .gameplay-cups__image {
-  width: 100%;
-  height: 100%;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-timer__icon {
+  left: 23px !important;
+  top: 8px !important;
+  width: 36px !important;
+  height: 32px !important;
   object-fit: contain;
 }
 
-html[data-device='mobile'] .gameplay-bid-selector {
-  left: 171px;
-  top: 890px;
-  width: 378px;
-  height: 174px;
-  z-index: 52;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-timer__value {
+  left: 0 !important;
+  right: 0 !important;
+  top: 45px !important;
+  text-align: center;
+  color: #771012 !important;
+  font-size: 31px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
 }
 
-html[data-device='mobile'] .gameplay-bid-selector__skin {
-  inset: 0;
-  width: 112%;
-  height: 116%;
-  object-fit: fill;
-}
-
-html[data-device='mobile'] .gameplay-bid-selector__quantity {
-  width: 38px;
-  height: 34px;
-  font-size: 15px;
-}
-
-html[data-device='mobile'] .gameplay-bid-selector__quantity--1 { left: 46px; top: 75px; }
-html[data-device='mobile'] .gameplay-bid-selector__quantity--2 { left: 94px; top: 64px; }
-html[data-device='mobile'] .gameplay-bid-selector__quantity--3 { left: 140px; top: 57px; }
-html[data-device='mobile'] .gameplay-bid-selector__quantity--4 { left: 184px; top: 51px; width: 48px; height: 40px; }
-html[data-device='mobile'] .gameplay-bid-selector__quantity--5 { left: 244px; top: 57px; }
-html[data-device='mobile'] .gameplay-bid-selector__quantity--6 { left: 292px; top: 64px; }
-html[data-device='mobile'] .gameplay-bid-selector__quantity--7 { left: 342px; top: 75px; }
-
-html[data-device='mobile'] .gameplay-bid-selector__selectedSkin {
-  width: 58px;
-  height: 50px;
-}
-
-html[data-device='mobile'] .gameplay-bid-selector__faceRow {
-  left: 39px;
-  top: 133px;
-  gap: 15px;
-}
-
-html[data-device='mobile'] .gameplay-bid-selector__faceBtn {
-  width: 45px;
-  height: 44px;
-}
-
-html[data-device='mobile'] .gameplay-bid-selector__die {
-  width: 48px;
-  height: 48px;
-}
-
-html[data-device='mobile'] .gameplay-reroll {
-  left: 510px;
-  right: auto;
-  top: 812px;
-  width: 190px;
-  height: 70px;
-  z-index: 62;
-}
-
-html[data-device='mobile'] .gameplay-reroll__title {
-  left: 72px;
-  top: 21px;
-  font-size: 18px;
-}
-
-html[data-device='mobile'] .gameplay-reroll__count {
-  right: 18px;
-  bottom: -11px;
-}
-
-/* Bottom action zone */
-html[data-device='mobile'] .gameplay-action-tray {
-  left: 18px;
-  bottom: 10px;
-  width: 684px;
-  height: 148px;
-  z-index: 46;
-  overflow: visible;
-}
-
-html[data-device='mobile'] .gameplay-action-tray__skin {
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  opacity: .96;
-}
-
-html[data-device='mobile'] .gameplay-action {
-  width: 164px;
-  height: 86px;
-  z-index: 65;
-  bottom: auto;
+/* Player panels: keep original asset skins, only reposition. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player {
+  z-index: 44 !important;
   overflow: visible !important;
+  transform: none !important;
+  display: block !important;
 }
 
-html[data-device='mobile'] .gameplay-action__skin {
-  inset: -5px -8px;
-  width: calc(100% + 16px);
-  height: calc(100% + 10px);
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__skin {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: fill;
+  display: block !important;
 }
 
-html[data-device='mobile'] .gameplay-action__title {
-  left: 64px;
-  right: 10px;
-  top: 27px;
-  width: auto;
-  font-size: 15px;
-  line-height: 1;
-  text-align: left;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__avatar {
+  object-fit: contain;
+  filter: drop-shadow(0 5px 7px rgba(0, 0, 0, .42));
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__name {
+  font-size: 20px !important;
+  line-height: 1.04 !important;
+  font-weight: 900 !important;
+  max-width: 156px !important;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .42);
 }
 
-html[data-device='mobile'] .gameplay-action__subtitle {
-  left: 64px;
-  top: 50px;
-  width: 78px;
-  font-size: 8.5px;
-  line-height: 1.05;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__countDie {
+  width: 27px !important;
+  height: 27px !important;
 }
 
-html[data-device='mobile'] .gameplay-action--raise {
-  left: 22px;
-  top: 1172px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__countValue {
+  font-size: 25px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  margin-left: 5px !important;
 }
 
-html[data-device='mobile'] .gameplay-action--call {
-  left: 192px;
-  top: 1172px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__miniDie,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-hidden-die {
+  width: 23px !important;
+  height: 23px !important;
+  flex: 0 0 auto;
 }
 
-html[data-device='mobile'] .gameplay-action--slam {
-  left: 362px;
-  top: 1172px;
-  width: 164px;
-}
-
-html[data-device='mobile'] .gameplay-action--confirm {
-  left: 532px;
-  top: 1172px;
-}
-
-html[data-device='mobile'] .gameplay-action--slam .gameplay-action__title,
-html[data-device='mobile'] .gameplay-action--slam .gameplay-action__subtitle {
-  left: 64px;
-}
-
-/* Status and round result overlays */
-html[data-device='mobile'] .gameplay-round-result {
-  left: 50px;
-  top: 248px;
-  width: 620px;
-  max-height: 360px;
-  min-height: 0;
-  z-index: 120;
-  padding: 16px 20px 15px;
-  pointer-events: none;
-}
-
-html[data-device='mobile'] .gameplay-round-result__title {
-  font-size: 25px;
-}
-
-html[data-device='mobile'] .gameplay-round-result__summary {
-  font-size: 15px;
-  line-height: 1.22;
-}
-
-html[data-device='mobile'] .gameplay-round-result__meta {
-  flex-wrap: wrap;
-  gap: 8px 18px;
-}
-
-html[data-device='mobile'] .gameplay-round-result__revealed {
-  grid-template-columns: 1fr;
-  max-height: 190px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__diceRow {
+  max-width: 128px !important;
   overflow: hidden;
 }
 
-html[data-device='mobile'] .gameplay-round-result__playerName {
-  max-width: 150px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--fourth {
+  left: 198px !important;
+  top: 248px !important;
+  width: 324px !important;
+  height: 108px !important;
+  color: #fff8e3;
 }
 
-html[data-device='mobile'] .gameplay-round-result__die {
-  width: 25px;
-  height: 25px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--sophie {
+  left: 10px !important;
+  top: 364px !important;
+  width: 306px !important;
+  height: 104px !important;
+  color: #fff8e3;
 }
 
-html[data-device='mobile'] .gameplay-status {
-  left: 80px;
-  right: 80px;
-  bottom: 180px;
-  min-width: 0;
-  max-width: none;
-  width: auto;
-  z-index: 130;
-  padding: 10px 14px;
-  font-size: 14px;
-  line-height: 1.2;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon {
+  right: 10px !important;
+  top: 364px !important;
+  width: 306px !important;
+  height: 104px !important;
+  color: #fff8e3;
 }
 
-/* Chinese localized gameplay panel uses the same portrait hit areas. */
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector {
-  left: 171px;
-  top: 890px;
-  width: 378px;
-  height: 174px;
-  z-index: 52;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--you {
+  left: 152px !important;
+  top: 746px !important;
+  width: 416px !important;
+  height: 128px !important;
+  color: #180f05;
+  z-index: 58 !important;
 }
 
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__skin {
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--fourth .gameplay-player__avatar,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--sophie .gameplay-player__avatar,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--you .gameplay-player__avatar {
+  left: -9px !important;
+  right: auto !important;
+  top: -28px !important;
+  width: 142px !important;
+  height: 142px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon .gameplay-player__avatar {
+  right: -4px !important;
+  left: auto !important;
+  top: -10px !important;
+  width: 118px !important;
+  height: 118px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--fourth .gameplay-player__name,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--sophie .gameplay-player__name,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--you .gameplay-player__name {
+  left: 142px !important;
+  right: auto !important;
+  top: 8px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon .gameplay-player__name {
+  left: 34px !important;
+  right: auto !important;
+  top: 8px !important;
+  max-width: 142px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--fourth .gameplay-player__countRow,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--sophie .gameplay-player__countRow,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--you .gameplay-player__countRow {
+  left: 144px !important;
+  right: auto !important;
+  top: 38px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon .gameplay-player__countRow {
+  left: 34px !important;
+  right: auto !important;
+  top: 38px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--fourth .gameplay-player__diceRow,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--sophie .gameplay-player__diceRow,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--you .gameplay-player__diceRow {
+  left: 144px !important;
+  right: auto !important;
+  top: 74px !important;
+  gap: 3px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon .gameplay-player__diceRow {
+  left: 34px !important;
+  right: auto !important;
+  top: 74px !important;
+  gap: 3px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--sophie,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--dragon,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--fourth {
+  left: 198px !important;
+  right: auto !important;
+  top: 264px !important;
+  width: 324px !important;
+  height: 108px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--dragon .gameplay-player__avatar {
+  left: -9px !important;
+  right: auto !important;
+  top: -28px !important;
+  width: 142px !important;
+  height: 142px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--dragon .gameplay-player__name,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--dragon .gameplay-player__countRow,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--dragon .gameplay-player__diceRow {
+  left: 144px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--you {
+  left: 152px !important;
+  top: 744px !important;
+}
+
+/* Middle table assets */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups {
+  left: 140px !important;
+  top: 486px !important;
+  width: 440px !important;
+  height: 255px !important;
+  display: block !important;
+  z-index: 24 !important;
+  pointer-events: none;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__image {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  filter: drop-shadow(0 9px 11px rgba(0, 0, 0, .34));
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid {
+  left: 220px !important;
+  right: auto !important;
+  top: 408px !important;
+  width: 280px !important;
+  height: 220px !important;
+  z-index: 64 !important;
+  color: #1d0d03;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__skin {
+  position: absolute;
   inset: 0;
-  width: 112%;
-  height: 116%;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__header {
+  left: 32px !important;
+  top: 14px !important;
+  width: 216px !important;
+  height: 34px !important;
+  display: grid !important;
+  place-items: center;
+  font-size: 17px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  color: #fff0cf !important;
+  text-align: center;
+  border-radius: 10px;
+  border: 2px solid #d9a64d;
+  background: linear-gradient(#ac121b, #6e090e);
+  z-index: 3;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__main {
+  top: 58px !important;
+  left: 0 !important;
+  right: 0 !important;
+  gap: 13px !important;
+  font-size: 42px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  justify-content: center;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__die {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__total {
+  top: 112px !important;
+  left: 12px !important;
+  right: 12px !important;
+  font-size: 13px !important;
+  line-height: 1.08 !important;
+  font-weight: 900;
+  text-align: center;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__label {
+  top: 137px !important;
+  left: 12px !important;
+  right: 12px !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  font-weight: 900;
+  text-align: center;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__copy {
+  top: 158px !important;
+  left: 14px !important;
+  right: 14px !important;
+  font-size: 13px !important;
+  line-height: 1.08 !important;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__last {
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 7px !important;
+  gap: 10px !important;
+  font-size: 31px !important;
+  line-height: 1 !important;
+  font-weight: 900;
+  justify-content: center;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__lastDie {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+/* Result overlay: compact, readable and no longer colliding with controls. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result {
+  left: 54px !important;
+  top: 244px !important;
+  width: 612px !important;
+  max-height: 150px !important;
+  min-height: 0 !important;
+  padding: 12px 16px 10px !important;
+  z-index: 125 !important;
+  overflow: hidden !important;
+  pointer-events: none;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__title {
+  font-size: 22px !important;
+  line-height: 1.05 !important;
+  margin-bottom: 5px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__summary {
+  font-size: 13px !important;
+  line-height: 1.15 !important;
+  margin-bottom: 5px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__meta {
+  gap: 8px !important;
+  justify-content: center;
+  flex-wrap: nowrap;
+  font-size: 12px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__revealed {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 3px !important;
+  max-height: 52px !important;
+  margin-top: 4px !important;
+  overflow: hidden !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__player {
+  min-height: 22px !important;
+  padding: 2px 8px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__playerName {
+  max-width: 150px !important;
+  font-size: 10px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__die {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Bid selector */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector {
+  left: 147px !important;
+  top: 884px !important;
+  width: 426px !important;
+  height: 190px !important;
+  z-index: 76 !important;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__skin {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantityRow {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantity {
+  width: 40px !important;
+  height: 34px !important;
+  color: #f6e1a6;
+  font-size: 17px !important;
+  line-height: 1 !important;
+  font-weight: 900;
+  border-radius: 16px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantity--1 { left: 42px !important; top: 81px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantity--2 { left: 94px !important; top: 68px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantity--3 { left: 148px !important; top: 60px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantity--4 { left: 199px !important; top: 53px !important; width: 48px !important; height: 42px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantity--5 { left: 259px !important; top: 60px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantity--6 { left: 314px !important; top: 68px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantity--7 { left: 366px !important; top: 81px !important; }
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__selectedSkin {
+  width: 58px !important;
+  height: 50px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__faceRow {
+  left: 42px !important;
+  top: 133px !important;
+  gap: 18px !important;
+  z-index: 4;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__faceBtn {
+  width: 46px !important;
+  height: 46px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__die {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-reroll {
+  left: 506px !important;
+  right: auto !important;
+  top: 790px !important;
+  width: 190px !important;
+  height: 70px !important;
+  z-index: 78 !important;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-reroll__skin {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: fill;
 }
 
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__quantity--1 { left: 46px; top: 75px; }
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__quantity--2 { left: 94px; top: 64px; }
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__quantity--3 { left: 140px; top: 57px; }
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__quantity--4 { left: 184px; top: 51px; width: 48px; height: 40px; }
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__quantity--5 { left: 244px; top: 57px; }
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__quantity--6 { left: 292px; top: 64px; }
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__quantity--7 { left: 342px; top: 75px; }
-
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__faceRow {
-  left: 39px;
-  top: 133px;
-  gap: 15px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-reroll__title {
+  left: 72px !important;
+  top: 21px !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
 }
 
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__faceBtn {
-  width: 45px;
-  height: 44px;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-reroll__count {
+  right: 18px !important;
+  bottom: -10px !important;
 }
 
-html[data-device='mobile'][data-language='zh'] .gameplay-bid-selector__die {
-  width: 48px;
-  height: 48px;
+/* Bottom actions */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action-tray {
+  left: 14px !important;
+  top: 1080px !important;
+  bottom: auto !important;
+  width: 692px !important;
+  height: 184px !important;
+  z-index: 60 !important;
+  display: block !important;
+  overflow: visible !important;
 }
 
-/* Extra-small viewport resilience comes from frame scaling, but keep the playable controls above the safe bottom edge inside the 720x1280 design frame. */
-html[data-device='mobile'] .gameplay-action:disabled,
-html[data-device='mobile'] .gameplay-reroll:disabled,
-html[data-device='mobile'] .gameplay-bid-selector__faceBtn:disabled,
-html[data-device='mobile'] .gameplay-bid-selector__quantity:disabled {
-  opacity: 1;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action-tray__skin {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill;
+  opacity: .95;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action {
+  width: 334px !important;
+  height: 88px !important;
+  z-index: 88 !important;
+  overflow: visible !important;
+  bottom: auto !important;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action__skin {
+  position: absolute;
+  inset: -4px -7px;
+  width: calc(100% + 14px) !important;
+  height: calc(100% + 8px) !important;
+  object-fit: fill;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action__title {
+  left: 112px !important;
+  right: 12px !important;
+  top: 22px !important;
+  width: auto !important;
+  font-size: 30px !important;
+  line-height: .95 !important;
+  font-weight: 900 !important;
+  color: #fffaf1 !important;
+  text-align: left !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 3px 4px rgba(0, 0, 0, .55);
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action__subtitle {
+  left: 114px !important;
+  right: 10px !important;
+  top: 57px !important;
+  width: auto !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  color: #fff7df !important;
+  text-align: left !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .55);
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--raise {
+  left: 18px !important;
+  top: 1088px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--call {
+  left: 368px !important;
+  top: 1088px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--slam {
+  left: 18px !important;
+  top: 1180px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--confirm {
+  left: 368px !important;
+  top: 1180px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action:disabled,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-reroll:disabled,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__faceBtn:disabled,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__quantity:disabled {
+  opacity: 1 !important;
   filter: saturate(.78) brightness(.82);
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* Status messages */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-status {
+  left: 48px !important;
+  right: 48px !important;
+  bottom: 230px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  z-index: 140 !important;
+  padding: 10px 14px !important;
+  border-radius: 14px;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+}
+
+/* Chinese localized selector uses the same panel position with slightly adjusted hit areas. */
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector {
+  left: 144px !important;
+  top: 884px !important;
+  width: 432px !important;
+  height: 190px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--1 { left: 42px !important; top: 81px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--2 { left: 94px !important; top: 68px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--3 { left: 148px !important; top: 60px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--4 { left: 199px !important; top: 53px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--5 { left: 259px !important; top: 60px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--6 { left: 314px !important; top: 68px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--7 { left: 366px !important; top: 81px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__faceRow { left: 44px !important; top: 133px !important; gap: 18px !important; }
+
+/* iOS Chrome visible area is shorter because of the browser toolbar. Keep controls above it. */
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-player--you {
+  top: 704px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-reroll {
+  top: 750px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-bid-selector {
+  top: 838px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-action-tray {
+  top: 1028px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-action--raise,
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-action--call {
+  top: 1036px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-action--slam,
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-action--confirm {
+  top: 1128px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-browser='chrome'] .app-shell--gameplay .gameplay-status {
+  bottom: 288px !important;
 }

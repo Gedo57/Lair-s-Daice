@@ -25,7 +25,7 @@ html[data-device='mobile'][data-orientation='portrait'] .help-rules-poster {
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .help-back-button {
-  left: 252px;
+  left: 450px;
   top: 1184px;
   width: 216px;
   height: 68px;
