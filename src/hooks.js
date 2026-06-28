@@ -5,6 +5,9 @@ const SAFARI_EXCLUSION_PATTERN = /CriOS|FxiOS|EdgiOS|OPiOS|Chrome|Chromium|Edg|O
 const CHROME_PATTERN = /CriOS|Chrome|Chromium/i;
 const CHROME_EXCLUSION_PATTERN = /FxiOS|EdgiOS|OPiOS|Edg|OPR|SamsungBrowser/i;
 
+let lastStableMobileViewport = null;
+let lastStableMobileOrientation = '';
+
 function isSafariBrowser() {
   const userAgent = window.navigator.userAgent || '';
   const vendor = window.navigator.vendor || '';
@@ -33,6 +36,25 @@ function getBaseViewportSize() {
     width: window.innerWidth || document.documentElement.clientWidth,
     height: window.innerHeight || document.documentElement.clientHeight,
   };
+}
+
+function isEditableElement(element) {
+  if (!element) return false;
+  const tagName = element.tagName?.toLowerCase();
+  return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || element.isContentEditable;
+}
+
+function isMobileKeyboardLikelyOpen(deviceMode, browserName, viewport) {
+  if (deviceMode !== 'mobile' || !shouldUseVisualViewport(browserName)) return false;
+
+  const visualViewport = window.visualViewport;
+  const baseViewport = getBaseViewportSize();
+  const activeEditable = isEditableElement(document.activeElement);
+  const visualHeight = Number(visualViewport?.height || viewport?.height || 0);
+  const baseHeight = Number(baseViewport.height || 0);
+  const keyboardConsumesViewport = baseHeight > 0 && visualHeight > 0 && baseHeight - visualHeight > 80;
+
+  return activeEditable || keyboardConsumesViewport;
 }
 
 function getVisualViewportSize() {
@@ -81,13 +103,32 @@ function computeLayout() {
   const deviceMode = getDeviceMode();
   const browserName = getBrowserName();
   const isSafari = browserName === 'safari';
-  const viewport = getViewportSize(browserName);
-  const orientation = getViewportOrientation(viewport);
+  const measuredViewport = getViewportSize(browserName);
+  const measuredOrientation = getViewportOrientation(measuredViewport);
+  const keyboardOpen = isMobileKeyboardLikelyOpen(deviceMode, browserName, measuredViewport);
+
+  let viewport = measuredViewport;
+  let orientation = measuredOrientation;
+
+  if (deviceMode === 'mobile' && keyboardOpen) {
+    if (lastStableMobileViewport && lastStableMobileOrientation === measuredOrientation) {
+      viewport = lastStableMobileViewport;
+      orientation = lastStableMobileOrientation;
+    } else {
+      const baseViewport = getBaseViewportSize();
+      viewport = baseViewport.width && baseViewport.height ? baseViewport : measuredViewport;
+      orientation = getViewportOrientation(viewport);
+    }
+  } else if (deviceMode === 'mobile') {
+    lastStableMobileViewport = measuredViewport;
+    lastStableMobileOrientation = measuredOrientation;
+  }
+
   const mode = getEffectiveLayoutMode(deviceMode, orientation);
   const resolution = getDesignResolution(mode, orientation);
   const scale = Math.min(viewport.width / resolution.width, viewport.height / resolution.height);
 
-  return { mode, deviceMode, resolution, viewport, scale, orientation, isSafari, browserName };
+  return { mode, deviceMode, resolution, viewport, scale, orientation, isSafari, browserName, keyboardOpen };
 }
 
 export function useFixedViewport() {
@@ -128,8 +169,19 @@ export function useFixedViewport() {
 
     const visualViewport = window.visualViewport;
 
+    const handleFocusChange = () => {
+      update();
+      const timerId = window.setTimeout(() => {
+        delayedUpdates.delete(timerId);
+        update();
+      }, 180);
+      delayedUpdates.add(timerId);
+    };
+
     window.addEventListener('resize', update);
     window.addEventListener('orientationchange', updateAfterBrowserChromeSettles);
+    document.addEventListener('focusin', handleFocusChange);
+    document.addEventListener('focusout', handleFocusChange);
     visualViewport?.addEventListener('resize', update);
     visualViewport?.addEventListener('scroll', update);
 
@@ -141,6 +193,8 @@ export function useFixedViewport() {
       delayedUpdates.clear();
       window.removeEventListener('resize', update);
       window.removeEventListener('orientationchange', updateAfterBrowserChromeSettles);
+      document.removeEventListener('focusin', handleFocusChange);
+      document.removeEventListener('focusout', handleFocusChange);
       visualViewport?.removeEventListener('resize', update);
       visualViewport?.removeEventListener('scroll', update);
       document.documentElement.style.removeProperty('--app-viewport-width');

@@ -1249,17 +1249,54 @@ export default function App() {
       return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || element.isContentEditable;
     };
 
-    const setKeyboardOpen = (isOpen) => {
+    const clearKeyboardCssVariables = () => {
+      root.style.removeProperty('--keyboard-height');
+      root.style.removeProperty('--keyboard-visual-width');
+      root.style.removeProperty('--keyboard-visual-height');
+      root.style.removeProperty('--keyboard-offset-top');
+      root.style.removeProperty('--keyboard-offset-left');
+    };
+
+    const setKeyboardOpen = (isOpen, metrics = {}) => {
       root.classList.toggle('keyboard-open', isOpen);
       body?.classList.toggle('keyboard-open', isOpen);
+
+      if (!isOpen) {
+        clearKeyboardCssVariables();
+        return;
+      }
+
+      root.style.setProperty('--keyboard-height', `${Math.max(0, Math.round(metrics.keyboardHeight || 0))}px`);
+      root.style.setProperty('--keyboard-visual-width', `${Math.max(0, Math.round(metrics.visualWidth || 0))}px`);
+      root.style.setProperty('--keyboard-visual-height', `${Math.max(0, Math.round(metrics.visualHeight || 0))}px`);
+      root.style.setProperty('--keyboard-offset-top', `${Math.max(0, Math.round(metrics.offsetTop || 0))}px`);
+      root.style.setProperty('--keyboard-offset-left', `${Math.max(0, Math.round(metrics.offsetLeft || 0))}px`);
     };
 
     const refreshKeyboardState = () => {
       const hasFocusedInput = isEditableElement(document.activeElement);
       const viewportHeight = window.innerHeight || root.clientHeight || 0;
+      const viewportWidth = window.innerWidth || root.clientWidth || 0;
       const visualHeight = visualViewport?.height || viewportHeight;
-      const keyboardConsumesViewport = viewportHeight - visualHeight > 80;
-      setKeyboardOpen(layout.mode === 'mobile' && (hasFocusedInput || keyboardConsumesViewport));
+      const visualWidth = visualViewport?.width || viewportWidth;
+      const offsetTop = visualViewport?.offsetTop || 0;
+      const offsetLeft = visualViewport?.offsetLeft || 0;
+      const keyboardHeight = Math.max(0, viewportHeight - visualHeight - offsetTop);
+      const keyboardConsumesViewport = keyboardHeight > 80;
+      const isOpen = layout.deviceMode === 'mobile' && (hasFocusedInput || keyboardConsumesViewport);
+
+      setKeyboardOpen(isOpen, {
+        keyboardHeight,
+        visualWidth,
+        visualHeight,
+        offsetTop,
+        offsetLeft,
+      });
+
+      if (isOpen) {
+        window.setTimeout(() => window.scrollTo(0, 0), 0);
+        window.setTimeout(() => window.scrollTo(0, 0), 120);
+      }
     };
 
     const handleFocusIn = (event) => {
@@ -1283,7 +1320,7 @@ export default function App() {
       visualViewport?.removeEventListener('scroll', refreshKeyboardState);
       setKeyboardOpen(false);
     };
-  }, [layout.mode]);
+  }, [layout.mode, layout.deviceMode]);
 
   useEffect(() => {
     let active = true;
