@@ -56,6 +56,8 @@ import './styles/mobile/portrait-matchmaking-fix.mobile.css';
 import './styles/mobile/portrait-win-screen-fix.mobile.css';
 import './styles/mobile/portrait-tournament-pass-fix.mobile.css';
 
+import './styles/mobile/mobile-landscape-browser-fix.css';
+
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />

@@ -94,24 +94,53 @@ export function useFixedViewport() {
   const [layout, setLayout] = useState(() => computeLayout());
 
   useEffect(() => {
-    const update = () => {
+    let animationFrame = 0;
+    const delayedUpdates = new Set();
+
+    const runUpdate = () => {
       const nextLayout = computeLayout();
       applyViewportCssVariables(nextLayout.viewport, nextLayout.browserName);
       setLayout(nextLayout);
     };
 
+    const update = () => {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        runUpdate();
+      });
+    };
+
+    const updateAfterBrowserChromeSettles = () => {
+      update();
+
+      // iOS Chrome/Safari landscape updates visualViewport in phases while the
+      // address/tool bars animate. Rechecking a few times prevents stale scale
+      // values and keeps the 1280x720 landscape frame aligned.
+      [80, 240, 520].forEach((delay) => {
+        const timerId = window.setTimeout(() => {
+          delayedUpdates.delete(timerId);
+          update();
+        }, delay);
+        delayedUpdates.add(timerId);
+      });
+    };
+
     const visualViewport = window.visualViewport;
 
     window.addEventListener('resize', update);
-    window.addEventListener('orientationchange', update);
+    window.addEventListener('orientationchange', updateAfterBrowserChromeSettles);
     visualViewport?.addEventListener('resize', update);
     visualViewport?.addEventListener('scroll', update);
 
-    update();
+    updateAfterBrowserChromeSettles();
 
     return () => {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      delayedUpdates.forEach((timerId) => window.clearTimeout(timerId));
+      delayedUpdates.clear();
       window.removeEventListener('resize', update);
-      window.removeEventListener('orientationchange', update);
+      window.removeEventListener('orientationchange', updateAfterBrowserChromeSettles);
       visualViewport?.removeEventListener('resize', update);
       visualViewport?.removeEventListener('scroll', update);
       document.documentElement.style.removeProperty('--app-viewport-width');
