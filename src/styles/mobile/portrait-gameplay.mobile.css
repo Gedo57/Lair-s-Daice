@@ -747,7 +747,7 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--call {
   left: 368px !important;
-  top: 1088px !important;
+  top: 188px !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--slam {

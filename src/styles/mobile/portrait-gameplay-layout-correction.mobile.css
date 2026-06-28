@@ -497,18 +497,43 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   gap: 14px !important;
 }
 
+/* Action buttons: single control point for portrait gameplay.
+   Edit the variables on .app-shell--gameplay only.
+   x: positive = right, negative = left.
+   y: positive = down, negative = up. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
+  --gp-actions-left: 70px;
+  --gp-actions-top: 1080px;
+  --gp-actions-x: 0px;
+  --gp-actions-y: 0px;
+  --gp-actions-scale: 1;
+
+  --gp-action-width: 295px;
+  --gp-action-height: 95px;
+  --gp-action-gap-x: 10px;
+  --gp-action-gap-y: 0px;
+}
+
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action-tray {
-  left: 0 !important;
-  top: 1068px !important;
-  width: 720px !important;
-  height: 212px !important;
+  position: absolute !important;
+  bottom: auto !important;
+  left: calc(var(--gp-actions-left) + var(--gp-actions-x)) !important;
+  top: calc(var(--gp-actions-top) + var(--gp-actions-y) - 4px) !important;
+  width: calc(var(--gp-action-width) + var(--gp-action-width) + var(--gp-action-gap-x)) !important;
+  height: calc(var(--gp-action-height) + var(--gp-action-height) + var(--gp-action-gap-y) + 8px) !important;
   z-index: 70 !important;
+  transform: scale(var(--gp-actions-scale)) !important;
+  transform-origin: left top !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action {
-  width: 350px !important;
-  height: 100px !important;
+  position: absolute !important;
+  bottom: auto !important;
+  width: var(--gp-action-width) !important;
+  height: var(--gp-action-height) !important;
   z-index: 100 !important;
+  transform: scale(var(--gp-actions-scale)) !important;
+  transform-origin: left top !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action__skin {
@@ -537,23 +562,23 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--raise {
-  left: 8px !important;
-  top: 1072px !important;
+  left: calc(var(--gp-actions-left) + var(--gp-actions-x)) !important;
+  top: calc(var(--gp-actions-top) + var(--gp-actions-y)) !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--call {
-  left: 362px !important;
-  top: 1072px !important;
+  left: calc(var(--gp-actions-left) + var(--gp-action-width) + var(--gp-action-gap-x) + var(--gp-actions-x)) !important;
+  top: calc(var(--gp-actions-top) + var(--gp-actions-y)) !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--slam {
-  left: 8px !important;
-  top: 1172px !important;
+  left: calc(var(--gp-actions-left) + var(--gp-actions-x)) !important;
+  top: calc(var(--gp-actions-top) + var(--gp-action-height) + var(--gp-action-gap-y) + var(--gp-actions-y)) !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--confirm {
-  left: 362px !important;
-  top: 1172px !important;
+  left: calc(var(--gp-actions-left) + var(--gp-action-width) + var(--gp-action-gap-x) + var(--gp-actions-x)) !important;
+  top: calc(var(--gp-actions-top) + var(--gp-action-height) + var(--gp-action-gap-y) + var(--gp-actions-y)) !important;
 }
 
 /* Keep Chinese panel aligned with the same corrected layout. */
@@ -564,17 +589,7 @@ html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app
   height: 190px !important;
 }
 
-/* Chrome global viewport already handles visible height; keep controls inside the 720x1280 game frame. */
-html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--raise,
-html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--call {
-  top: 1064px !important;
-}
-
-html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--slam,
-html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--confirm {
-  top: 1160px !important;
-}
-
-html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action-tray {
-  top: 1060px !important;
+/* Chrome uses the same action controls. Adjust one variable only if needed. */
+html[data-browser='chrome'][data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
+  --gp-actions-y: -8px;
 }
