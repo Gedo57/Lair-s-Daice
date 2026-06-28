@@ -279,8 +279,8 @@
   Edit these variables only. Positive X moves left because the button is right-anchored.
 */
 html[data-device='desktop'] .app-shell--gameplay .gameplay-chat-button {
-  --chat-button-right: 42px;
-  --chat-button-top: 104px;
+  --chat-button-right:220px;
+  --chat-button-top: 20px;
   --chat-button-width: 184px;
   --chat-button-height: 64px;
   --chat-button-x: 0px;
