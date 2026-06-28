@@ -43,6 +43,8 @@ import './styles/mobile/tournament-pass.mobile.css';
 import './styles/mobile/portrait-main.mobile.css';
 import './styles/mobile/portrait-rooms.mobile.css';
 import './styles/mobile/portrait-gameplay.mobile.css';
+import './styles/mobile/portrait-gameplay-layout-correction.mobile.css';
+import './styles/mobile/portrait-gameplay-player-tuning.mobile.css';
 import './styles/mobile/portrait-mainmenu-reference.mobile.css';
 import './styles/mobile/portrait-backgrounds.mobile.css';
 import './styles/mobile/portrait-chrome-starter.mobile.css';

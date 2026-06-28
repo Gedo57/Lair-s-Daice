@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useFixedViewport } from './hooks.js';
 import { useLanguage } from './i18n/useLanguage.js';
 import { initialGameData } from './data/initialGameData.js';
+import { mockBackendActions, mockGameData } from './data/mockGameData.js';
 import { getPreloadAssetsForScreen } from './data/criticalAssets.js';
 import { preloadImages } from './utils/preloadImages.js';
 import { backendBridge } from './services/backendBridge.js';
@@ -46,6 +47,7 @@ const SCREENS = {
   profile: ProfileScreen,
   matchmaking: Matchmaking,
   gameplay: Gameplay,
+  mockgame: Gameplay,
   win: WinScreen,
   help: HelpScreen,
   specialevent: SpecialEvent,
@@ -65,6 +67,7 @@ const SCREEN_TO_PATH = {
   profile: '/profile',
   matchmaking: '/matchmaking',
   gameplay: '/gameplay',
+  mockgame: '/mock-game',
   win: '/win',
   help: '/help',
   specialevent: '/special-event',
@@ -79,6 +82,8 @@ const PATH_TO_SCREEN = Object.entries(SCREEN_TO_PATH).reduce((routes, [screenNam
   '/mainmenu': 'mainmenu',
   '/rooms': 'roomselect',
   '/game': 'gameplay',
+  '/mockgame': 'mockgame',
+  '/gameplay-mock': 'mockgame',
   '/result': 'win',
   '/create': 'createroom',
   '/join': 'joinroom',
@@ -1655,11 +1660,20 @@ export default function App() {
     loadResultAndGoWin: () => runBackendAction('match.result.load', () => backendBridge.getMatchResult(gameData.currentMatchId), navigation.goWin),
   };
 
+  const activeScreenClass = screen === 'mockgame'
+    ? 'gameplay app-shell--gameplay app-shell--mockgame'
+    : screen;
+  const activeScreenData = screen === 'mockgame' ? mockGameData : gameData;
+  const activeBackendActions = screen === 'mockgame' ? mockBackendActions : backendActions;
+  const activeBackendStatus = screen === 'mockgame'
+    ? { loading: false, error: null, lastAction: 'mock.gameplay' }
+    : backendStatus;
+
   return (
     <main
-      className={`app-shell app-shell--${layout.mode} app-shell--${screen}`}
+      className={`app-shell app-shell--${layout.mode} app-shell--${activeScreenClass}`}
       style={appStyle}
-      data-backend-action={backendStatus.lastAction || undefined}
+      data-backend-action={activeBackendStatus.lastAction || undefined}
     >
       <div className="orientation-guard" aria-hidden="true">
         <div className="orientation-guard__card">
@@ -1676,9 +1690,9 @@ export default function App() {
           name={screen}
           navigation={navigation}
           mode={layout.mode}
-          data={gameData}
-          backendActions={backendActions}
-          backendStatus={backendStatus}
+          data={activeScreenData}
+          backendActions={activeBackendActions}
+          backendStatus={activeBackendStatus}
           i18n={i18n}
         />
       </div>
