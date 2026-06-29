@@ -141,69 +141,12 @@ const PRELOAD_SCREEN_LABELS = {
 };
 
 const BOOT_PRELOAD_PHASE = 'starterShell';
-const PORTRAIT_BOOT_PRELOAD_PHASE = 'portraitBoot';
 const PLAY_FLOW_PRELOAD_PHASE = 'playFlow';
 const BACKGROUND_PRELOAD_PHASE = 'secondaryScreens';
 const preloadedCriticalScreens = new Set();
 const preloadedPhases = new Set();
 
-function isBootingInMobilePortrait() {
-  if (typeof window === 'undefined') return false;
 
-  const viewportWidth = window.innerWidth || document.documentElement?.clientWidth || 0;
-  const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
-  const looksMobile = window.matchMedia?.('(max-width: 1024px), (pointer: coarse)')?.matches || false;
-
-  return looksMobile && viewportHeight > viewportWidth;
-}
-
-function getBootPreloadConfig() {
-  if (isBootingInMobilePortrait()) {
-    return {
-      phase: PORTRAIT_BOOT_PRELOAD_PHASE,
-      destinationLabel: 'portrait assets',
-      minVisibleMs: 900,
-      concurrency: 6,
-      timeoutMs: 12000,
-    };
-  }
-
-  return {
-    phase: BOOT_PRELOAD_PHASE,
-    destinationLabel: 'start screen',
-    minVisibleMs: 900,
-    concurrency: 6,
-    timeoutMs: 12000,
-  };
-}
-
-function markPortraitBootPreloadComplete(phaseName) {
-  preloadedPhases.add(phaseName);
-
-  if (phaseName !== PORTRAIT_BOOT_PRELOAD_PHASE) return;
-
-  preloadedPhases.add(BOOT_PRELOAD_PHASE);
-  preloadedPhases.add(PLAY_FLOW_PRELOAD_PHASE);
-  preloadedPhases.add(BACKGROUND_PRELOAD_PHASE);
-  [
-    'starter',
-    'loading',
-    'login',
-    'mainmenu',
-    'roomselect',
-    'createroom',
-    'joinroom',
-    'roomlobby',
-    'profile',
-    'matchmaking',
-    'gameplay',
-    'win',
-    'help',
-    'specialevent',
-    'dailyreward',
-    'tournamentpass',
-  ].forEach((screenName) => preloadedCriticalScreens.add(screenName));
-}
 
 const ROOM_SELECT_DECOR = [
   { key: 'beginner', card: 'card-1.png', tableArt: '213.png', button: '15.png' },
@@ -1282,16 +1225,13 @@ export default function App() {
   const [gameData, setGameData] = useState(initialGameData);
   const [backendStatus, setBackendStatus] = useState({ loading: false, error: null, lastAction: null });
   const [starterAssetsReady, setStarterAssetsReady] = useState(false);
-  const [bootAssetLoading, setBootAssetLoading] = useState(() => {
-    const bootConfig = getBootPreloadConfig();
-    return {
-      active: true,
-      phase: bootConfig.phase,
-      destinationLabel: bootConfig.destinationLabel,
-      progress: 1,
-      loaded: 0,
-      total: 0,
-    };
+  const [bootAssetLoading, setBootAssetLoading] = useState({
+    active: true,
+    phase: BOOT_PRELOAD_PHASE,
+    destinationLabel: 'start screen',
+    progress: 1,
+    loaded: 0,
+    total: 0,
   });
   const assetNavigationIdRef = useRef(0);
   const layout = useFixedViewport();
@@ -1300,52 +1240,52 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
-    const bootConfig = getBootPreloadConfig();
-    const bootAssets = getAssetsForPhase(bootConfig.phase);
+    const starterAssets = getAssetsForPhase(BOOT_PRELOAD_PHASE);
     const startedAt = Date.now();
+    const minVisibleMs = 900;
 
     const finishBoot = async () => {
       const elapsed = Date.now() - startedAt;
-      if (elapsed < bootConfig.minVisibleMs) {
-        await new Promise((resolve) => window.setTimeout(resolve, bootConfig.minVisibleMs - elapsed));
+      if (elapsed < minVisibleMs) {
+        await new Promise((resolve) => window.setTimeout(resolve, minVisibleMs - elapsed));
       }
 
       if (!active) return;
-      markPortraitBootPreloadComplete(bootConfig.phase);
+      preloadedPhases.add(BOOT_PRELOAD_PHASE);
       preloadedCriticalScreens.add('starter');
       setBootAssetLoading((current) => ({
         ...current,
         active: false,
         progress: 100,
-        loaded: bootAssets.length,
-        total: bootAssets.length,
+        loaded: starterAssets.length,
+        total: starterAssets.length,
       }));
       setStarterAssetsReady(true);
     };
 
-    if (!bootAssets.length) {
+    if (!starterAssets.length) {
       finishBoot();
       return () => { active = false; };
     }
 
     setBootAssetLoading({
       active: true,
-      phase: bootConfig.phase,
-      destinationLabel: bootConfig.destinationLabel,
+      phase: BOOT_PRELOAD_PHASE,
+      destinationLabel: 'start screen',
       progress: 1,
       loaded: 0,
-      total: bootAssets.length,
+      total: starterAssets.length,
     });
 
-    preloadAssets(bootAssets, {
-      concurrency: bootConfig.concurrency,
-      timeoutMs: bootConfig.timeoutMs,
+    preloadAssets(starterAssets, {
+      concurrency: 6,
+      timeoutMs: 12000,
       onProgress: ({ loaded, total, percent }) => {
         if (!active) return;
         setBootAssetLoading({
           active: true,
-          phase: bootConfig.phase,
-          destinationLabel: bootConfig.destinationLabel,
+          phase: BOOT_PRELOAD_PHASE,
+          destinationLabel: 'start screen',
           progress: Math.max(1, Math.min(100, percent || 1)),
           loaded,
           total,

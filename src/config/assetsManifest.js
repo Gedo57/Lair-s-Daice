@@ -342,24 +342,6 @@ export const ASSET_GROUPS = {
 
 export const PRELOAD_PHASES = {
   starterShell: ['starter', 'loading'],
-  portraitBoot: [
-    'starter',
-    'loading',
-    'login',
-    'mainmenu',
-    'roomselect',
-    'createroom',
-    'joinroom',
-    'roomlobby',
-    'matchmaking',
-    'gameplay',
-    'win',
-    'profile',
-    'dailyreward',
-    'tournamentpass',
-    'specialevent',
-    'help',
-  ],
   playFlow: ['loading', 'mainmenu', 'roomselect', 'matchmaking', 'gameplay', 'win'],
   secondaryScreens: ['login', 'createroom', 'joinroom', 'roomlobby', 'profile', 'dailyreward', 'tournamentpass', 'specialevent', 'help'],
 };
