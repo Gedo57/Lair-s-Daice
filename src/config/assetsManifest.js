@@ -101,6 +101,7 @@ export const ASSET_GROUPS = {
   ],
 
   login: [
+    file(ASSET_FOLDERS.portrait, 'starter-mainmenu-bg.png'),
     file(ASSET_FOLDERS.login, 'bg.png'),
     ...files(ASSET_FOLDERS.login, ['LOGO.png', 'PANAL.png', 'CR1.png', 'B1.png', 'B2.png', 'B3.png', '1.png', '2.png']),
   ],
@@ -341,7 +342,7 @@ export const ASSET_GROUPS = {
 };
 
 export const PRELOAD_PHASES = {
-  starterShell: ['starter', 'loading'],
+  starterShell: ['starter', 'loading', 'login'],
   playFlow: ['loading', 'mainmenu', 'roomselect', 'matchmaking', 'gameplay', 'win'],
   secondaryScreens: ['login', 'createroom', 'joinroom', 'roomlobby', 'profile', 'dailyreward', 'tournamentpass', 'specialevent', 'help'],
 };

@@ -1,6 +1,7 @@
 const cache = new Map();
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_CONCURRENCY = 8;
+const DEFAULT_BACKGROUND_CONCURRENCY = 2;
 
 function normalizeSrc(src) {
   if (!src || typeof src !== 'string') return '';
@@ -14,6 +15,39 @@ function makeProgress(loaded, total, src = '', ok = true) {
     percent: total ? Math.max(1, Math.min(100, Math.round((loaded / total) * 100))) : 100,
     src,
     ok,
+  };
+}
+
+function scheduleIdleTask(callback, options = {}) {
+  const delayMs = Math.max(0, Number(options.delayMs) || 0);
+  const timeout = Math.max(0, Number(options.idleTimeoutMs) || 2000);
+  let idleId = null;
+  let timerId = null;
+  let cancelled = false;
+
+  const run = () => {
+    if (cancelled) return;
+
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(() => {
+        if (!cancelled) callback();
+      }, { timeout });
+      return;
+    }
+
+    timerId = window.setTimeout(() => {
+      if (!cancelled) callback();
+    }, 0);
+  };
+
+  timerId = window.setTimeout(run, delayMs);
+
+  return () => {
+    cancelled = true;
+    if (timerId) window.clearTimeout(timerId);
+    if (idleId && typeof window !== 'undefined' && typeof window.cancelIdleCallback === 'function') {
+      window.cancelIdleCallback(idleId);
+    }
   };
 }
 
@@ -60,6 +94,14 @@ export function clearAssetPreloadCache() {
 export function getPreloadedAssetState(src) {
   const safeSrc = normalizeSrc(src);
   return safeSrc ? cache.get(safeSrc) || null : null;
+}
+
+export function isAssetPreloaded(src) {
+  return getPreloadedAssetState(src)?.ok === true;
+}
+
+export function getAssetPreloadSnapshot() {
+  return Array.from(cache.values()).map(({ promise, image, ...state }) => state);
 }
 
 export function preloadAsset(src, options = {}) {
@@ -118,6 +160,40 @@ export async function preloadAssets(list = [], options = {}) {
   }, concurrency);
 
   return results;
+}
+
+export function preloadAssetsInBackground(list = [], options = {}) {
+  const assets = [...new Set((Array.isArray(list) ? list : []).map(normalizeSrc).filter(Boolean))];
+  let cancelled = false;
+  let stopIdleTask = null;
+
+  const promise = new Promise((resolve) => {
+    stopIdleTask = scheduleIdleTask(() => {
+      if (cancelled || !assets.length) {
+        resolve([]);
+        return;
+      }
+
+      preloadAssets(assets, {
+        timeoutMs: options.timeoutMs ?? 10000,
+        concurrency: options.concurrency ?? DEFAULT_BACKGROUND_CONCURRENCY,
+        onProgress: options.onProgress,
+      })
+        .then(resolve)
+        .catch(() => resolve([]));
+    }, {
+      delayMs: options.delayMs ?? 700,
+      idleTimeoutMs: options.idleTimeoutMs ?? 2000,
+    });
+  });
+
+  return {
+    promise,
+    cancel: () => {
+      cancelled = true;
+      stopIdleTask?.();
+    },
+  };
 }
 
 export const preloadImage = preloadAsset;
