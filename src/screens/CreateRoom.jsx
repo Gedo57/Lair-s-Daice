@@ -44,21 +44,17 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const players = settings.players?.length ? settings.players : ['2', '3', '4'];
   const cups = settings.cups?.length ? settings.cups : ['5'];
   const timers = settings.timers || [];
-  const bidStyles = settings.bidStyles || [];
   const isCreating = backendStatus?.loading && backendStatus?.lastAction === 'rooms.create';
 
   const [roomName, setRoomName] = useState(settings.roomName || `${user?.displayName || user?.username || 'Player'}’s Room`);
   const [selectedPlayers, setSelectedPlayers] = useState(settings.selectedPlayers || '2');
   const [selectedCups, setSelectedCups] = useState('5');
   const [selectedTimer, setSelectedTimer] = useState(settings.selectedTimer || '15s');
-  const [selectedBidStyle, setSelectedBidStyle] = useState(settings.selectedBidStyle || 'Classic');
   const [selectedRoomMode, setSelectedRoomMode] = useState(String(settings.selectedRoomMode || settings.roomMode || 'normal').toLowerCase() === 'bots' ? 'bots' : 'normal');
   const [isPrivate, setIsPrivate] = useState(settings.isPrivate ?? true);
 
   const isBotsMode = selectedRoomMode === 'bots';
-  const selectedRulesCopy = selectedBidStyle === 'Wild Ones'
-    ? 'Rules: 5 dice each • ones are wild unless first bid is ones • bid or call liar only'
-    : 'Rules: 5 dice each • bid or call liar only';
+  const selectedRulesCopy = 'Rules: 5 dice each • 1s are wild until 1s are called • bid or call liar only';
 
   const currentSettings = {
     ...settings,
@@ -72,8 +68,7 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
     dicePerPlayer: 5,
     selectedTimer,
     turnTimer: Number(String(selectedTimer).replace(/[^0-9]/g, '')) || 15,
-    selectedBidStyle,
-    bidStyle: selectedBidStyle,
+    bidStyle: 'Official Rules',
     selectedRoomMode,
     roomMode: selectedRoomMode,
     gameMode: selectedRoomMode,
@@ -144,13 +139,6 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
             <span className="create-room-label">{tx('TURN TIMER')}</span>
             <div className="create-room-optionRow create-room-optionRow--timer">
               {timers.map((value) => <OptionButton key={value} value={value} active={value === selectedTimer} tx={tx} onClick={createSelectedHandler(setSelectedTimer, value)} />)}
-            </div>
-          </div>
-
-          <div className="create-room-block create-room-block--bid">
-            <span className="create-room-label">{tx('BID STYLE')}</span>
-            <div className="create-room-optionRow create-room-optionRow--bid">
-              {bidStyles.map((value) => <OptionButton key={value} value={value} active={value === selectedBidStyle} className="create-room-option--wide" tx={tx} onClick={createSelectedHandler(setSelectedBidStyle, value)} />)}
             </div>
           </div>
 

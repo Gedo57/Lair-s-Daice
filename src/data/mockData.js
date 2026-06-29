@@ -129,31 +129,31 @@ export const mockRooms = [
     id: 'beginner', key: 'beginner', title: 'BEGINNER', card: 'card-1.png', tableArt: '213.png', button: '15.png',
     pricing: { entryFee: 500 }, rewards: { winnerReward: 2000, xpWin: 50, xpLose: 15, rewardMultiplier: 1 },
     entryFee: 500, winnerReward: 2000, xpWin: 50, xpLose: 15, rewardMultiplier: 1, minPlayers: 2, maxPlayers: 2,
-    rows: [{ icon: 'IC1.png', text: '2 Players' }, { icon: 'IC2.png', text: 'Classic Rules' }, { icon: 'IC3.png', text: 'Daily Rewards' }],
+    rows: [{ icon: 'IC1.png', text: '2 Players' }, { icon: 'IC2.png', text: 'Official Rules' }, { icon: 'IC3.png', text: 'Daily Rewards' }],
   },
   {
     id: 'classic', key: 'classic', title: 'CLASSIC', card: 'card-2.png', tableArt: '213124.png', button: '14.png',
     pricing: { entryFee: 1000 }, rewards: { winnerReward: 5000, xpWin: 90, xpLose: 25, rewardMultiplier: 1.25 },
     entryFee: 1000, winnerReward: 5000, xpWin: 90, xpLose: 25, rewardMultiplier: 1.25, minPlayers: 4, maxPlayers: 4,
-    rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC2.png', text: 'Classic Rules' }, { icon: 'IC5.png', text: 'Bonus Rewards' }],
+    rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC2.png', text: 'Official Rules' }, { icon: 'IC5.png', text: 'Bonus Rewards' }],
   },
   {
     id: 'high-roller', key: 'high-roller', title: 'HIGH ROLLER', card: 'card-3.png', tableArt: '3323423.png', button: '12.png',
     pricing: { entryFee: 5000 }, rewards: { winnerReward: 75000, xpWin: 180, xpLose: 55, rewardMultiplier: 2 },
     entryFee: 5000, winnerReward: 75000, xpWin: 180, xpLose: 55, rewardMultiplier: 2, minPlayers: 4, maxPlayers: 4,
-    rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC4.png', text: 'Classic Rules' }, { icon: 'IC5.png', text: 'Premium Rewards' }],
+    rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC4.png', text: 'Official Rules' }, { icon: 'IC5.png', text: 'Premium Rewards' }],
   },
   {
     id: 'vip', key: 'vip', title: 'VIP', card: 'card-4.png', tableArt: '3123213.png', button: '13.png',
     pricing: { entryFee: 10000 }, rewards: { winnerReward: 100000, xpWin: 260, xpLose: 80, rewardMultiplier: 3 },
     entryFee: 10000, winnerReward: 100000, xpWin: 260, xpLose: 80, rewardMultiplier: 3, minPlayers: 4, maxPlayers: 4,
-    rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC4.png', text: 'Classic Rules' }, { icon: 'IC6.png', text: 'High Rewards' }],
+    rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC4.png', text: 'Official Rules' }, { icon: 'IC6.png', text: 'High Rewards' }],
   },
   {
     id: 'private', key: 'private', title: 'PRIVATE ROOM', card: 'card-5.png', tableArt: '1232131.png', button: 'back-button.png',
     pricing: { entryFee: 500 }, rewards: { winnerReward: 2000, xpWin: 50, xpLose: 15, rewardMultiplier: 1 },
     entryFee: 500, winnerReward: 2000, xpWin: 50, xpLose: 15, rewardMultiplier: 1, minPlayers: 4, maxPlayers: 4,
-    rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC1.png', text: 'Invite Friends' }, { icon: 'IC7.png', text: 'Classic / Wild Ones' }],
+    rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC1.png', text: 'Invite Friends' }, { icon: 'IC7.png', text: 'Official Rules' }],
   },
 ];
 
@@ -165,11 +165,9 @@ export const mockCreateRoomSettings = {
   selectedCups: '5',
   timers: ['10s', '15s', '20s'],
   selectedTimer: '15s',
-  bidStyles: ['Classic', 'Wild Ones'],
-  selectedBidStyle: 'Classic',
   isPrivate: true,
   roomCode: 'LD-4729',
-  rulesCopy: 'Rules: 5 dice each • bid or call liar only',
+  rulesCopy: 'Rules: 5 dice each • 1s are wild until 1s are called • bid or call liar only',
 };
 
 

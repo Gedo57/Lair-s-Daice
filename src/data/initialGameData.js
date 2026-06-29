@@ -6,14 +6,12 @@ export const defaultCreateRoomSettings = {
   selectedCups: '5',
   timers: ['10s', '15s', '20s'],
   selectedTimer: '15s',
-  bidStyles: ['Classic', 'Wild Ones'],
-  selectedBidStyle: 'Classic',
   roomModes: ['normal', 'bots'],
   selectedRoomMode: 'normal',
   roomMode: 'normal',
   isPrivate: true,
   roomCode: '',
-  rulesCopy: 'Rules: 5 dice each • bid or call liar only',
+  rulesCopy: 'Rules: 5 dice each • 1s are wild until 1s are called • bid or call liar only',
 };
 
 export const initialGameData = {

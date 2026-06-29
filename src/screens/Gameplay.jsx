@@ -594,7 +594,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           <div className="gameplay-round-result__meta">
             <span>{tx('Bid')}: {bidLabel(roundResult?.bid)}</span>
             <span>{tx('Actual')}: {toNumber(roundResult?.actualCount, 0)}</span>
-            {roundResult?.wildDice ? <span>{tx('Wild ones counted')}: {toNumber(roundResult?.wildOnesCount, 0)}</span> : null}
+            {toNumber(roundResult?.wildOnesCount, 0) > 0 ? <span>{tx('Wild ones counted')}: {toNumber(roundResult?.wildOnesCount, 0)}</span> : null}
+            {roundResult?.onesWereCalledThisRound && toNumber(roundResult?.wildOnesCount, 0) <= 0 ? <span>{tx('Ones stopped being wild')}</span> : null}
           </div>
           {revealedRows.length ? (
             <div className="gameplay-round-result__revealed">

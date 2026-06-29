@@ -48,7 +48,7 @@ function normalizeCreateRoomPayload(settings = {}) {
     startingDice: 5,
     dicePerPlayer: 5,
     turnTimer: Number(settings.turnTimer || String(settings.selectedTimer || '').replace(/[^0-9]/g, '') || 15) || 15,
-    bidStyle: String(settings.bidStyle || settings.selectedBidStyle || 'Classic').toLowerCase().includes('wild') ? 'Wild Ones' : 'Classic',
+    bidStyle: 'Official Rules',
   };
 }
 
