@@ -5,6 +5,7 @@ import App from './App.jsx';
 import './styles/base/reset.css';
 import './styles/base/layout.css';
 import './styles/base/orientation-guard.css';
+import './styles/base/asset-boot-screen.css';
 import './styles/base/components.css';
 import './styles/desktop/starter-screen.css';
 import './styles/desktop/login-screen.css';

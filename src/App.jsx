@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFixedViewport } from './hooks.js';
 import { useLanguage } from './i18n/useLanguage.js';
 import { initialGameData } from './data/initialGameData.js';
 import { mockBackendActions, mockGameData } from './data/mockGameData.js';
-import { getPreloadAssetsForScreen } from './data/criticalAssets.js';
-import { preloadImages } from './utils/preloadImages.js';
+import { getAssetsForPhase, getAssetsForScreen } from './config/assetsManifest.js';
+import { preloadAssets, preloadAssetsInBackground } from './services/assetPreloader.js';
 import { backendBridge } from './services/backendBridge.js';
 import {
   cancelSocketMatchmaking,
@@ -22,6 +22,7 @@ import { hasAccessToken } from './api/client.js';
 import StarterScreen from './screens/StarterScreen.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
 import LoadingScreen from './screens/LoadingScreen.jsx';
+import AssetBootScreen from './screens/AssetBootScreen.jsx';
 import MainMenu from './screens/MainMenu.jsx';
 import RoomSelect from './screens/RoomSelect.jsx';
 import HelpScreen from './screens/HelpScreen.jsx';
@@ -129,12 +130,21 @@ function getPathForScreen(screenName) {
 }
 
 const PRELOAD_SCREEN_LABELS = {
-  mainmenu: 'main menu',
+  starter: 'start screen',
+  login: 'login screen',
+  mainmenu: 'game assets',
   roomselect: 'room select',
   loading: 'loading screen',
+  matchmaking: 'matchmaking',
+  gameplay: 'gameplay',
+  win: 'result screen',
 };
 
+const BOOT_PRELOAD_PHASE = 'starterShell';
+const PLAY_FLOW_PRELOAD_PHASE = 'playFlow';
+const BACKGROUND_PRELOAD_PHASE = 'secondaryScreens';
 const preloadedCriticalScreens = new Set();
+const preloadedPhases = new Set();
 
 
 
@@ -1214,10 +1224,81 @@ export default function App() {
   });
   const [gameData, setGameData] = useState(initialGameData);
   const [backendStatus, setBackendStatus] = useState({ loading: false, error: null, lastAction: null });
-  const [assetNavigationId, setAssetNavigationId] = useState(0);
+  const [starterAssetsReady, setStarterAssetsReady] = useState(false);
+  const [bootAssetLoading, setBootAssetLoading] = useState({
+    active: true,
+    phase: BOOT_PRELOAD_PHASE,
+    destinationLabel: 'start screen',
+    progress: 1,
+    loaded: 0,
+    total: 0,
+  });
+  const assetNavigationIdRef = useRef(0);
   const layout = useFixedViewport();
   const i18n = useLanguage();
   const ScreenComponent = SCREENS[screen] || StarterScreen;
+
+  useEffect(() => {
+    let active = true;
+    const starterAssets = getAssetsForPhase(BOOT_PRELOAD_PHASE);
+    const startedAt = Date.now();
+    const minVisibleMs = 250;
+
+    const finishBoot = async () => {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < minVisibleMs) {
+        await new Promise((resolve) => window.setTimeout(resolve, minVisibleMs - elapsed));
+      }
+
+      if (!active) return;
+      preloadedPhases.add(BOOT_PRELOAD_PHASE);
+      preloadedCriticalScreens.add('starter');
+      setBootAssetLoading((current) => ({
+        ...current,
+        active: false,
+        progress: 100,
+        loaded: starterAssets.length,
+        total: starterAssets.length,
+      }));
+      setStarterAssetsReady(true);
+    };
+
+    if (!starterAssets.length) {
+      finishBoot();
+      return () => { active = false; };
+    }
+
+    setBootAssetLoading({
+      active: true,
+      phase: BOOT_PRELOAD_PHASE,
+      destinationLabel: 'start screen',
+      progress: 1,
+      loaded: 0,
+      total: starterAssets.length,
+    });
+
+    preloadAssets(starterAssets, {
+      concurrency: 6,
+      timeoutMs: 12000,
+      onProgress: ({ loaded, total, percent }) => {
+        if (!active) return;
+        setBootAssetLoading({
+          active: true,
+          phase: BOOT_PRELOAD_PHASE,
+          destinationLabel: 'start screen',
+          progress: Math.max(1, Math.min(100, percent || 1)),
+          loaded,
+          total,
+        });
+      },
+    })
+      .catch(() => {
+        // Never trap the player on the boot preloader if an optional image fails.
+      })
+      .finally(finishBoot);
+
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.device = layout.mode;
@@ -1228,6 +1309,32 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.language = i18n.language;
   }, [i18n.language]);
+
+  useEffect(() => {
+    if (!starterAssetsReady) return;
+    if (screen !== 'mainmenu' && screen !== 'roomselect') return;
+    if (preloadedPhases.has(BACKGROUND_PRELOAD_PHASE)) return;
+
+    const backgroundAssets = getAssetsForPhase(BACKGROUND_PRELOAD_PHASE);
+    if (!backgroundAssets.length) {
+      preloadedPhases.add(BACKGROUND_PRELOAD_PHASE);
+      return;
+    }
+
+    preloadedPhases.add(BACKGROUND_PRELOAD_PHASE);
+    const task = preloadAssetsInBackground(backgroundAssets, {
+      concurrency: 2,
+      timeoutMs: 10000,
+      delayMs: 900,
+      idleTimeoutMs: 3000,
+    });
+
+    task.promise.then(() => {
+      ['login', 'createroom', 'joinroom', 'roomlobby', 'profile', 'dailyreward', 'tournamentpass', 'specialevent', 'help'].forEach((screenName) => {
+        preloadedCriticalScreens.add(screenName);
+      });
+    });
+  }, [screen, starterAssetsReady]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -1389,20 +1496,24 @@ export default function App() {
 
   const preloadAndNavigate = async (nextScreen, options = {}) => {
     const safeScreen = SCREENS[nextScreen] ? nextScreen : 'starter';
-    const assets = getPreloadAssetsForScreen(safeScreen);
-    const shouldGate = assets.length > 0 && !preloadedCriticalScreens.has(safeScreen);
+    const phaseName = options.phaseName || null;
+    const preloadKey = options.preloadKey || phaseName || safeScreen;
+    const assets = options.assets || (phaseName ? getAssetsForPhase(phaseName) : getAssetsForScreen(safeScreen));
+    const alreadyPreloaded = phaseName ? preloadedPhases.has(preloadKey) : preloadedCriticalScreens.has(preloadKey);
+    const shouldGate = assets.length > 0 && !alreadyPreloaded;
 
     if (!shouldGate) {
       navigateToScreen(safeScreen);
       return;
     }
 
-    const navId = assetNavigationId + 1;
-    setAssetNavigationId(navId);
+    assetNavigationIdRef.current += 1;
+    const navId = assetNavigationIdRef.current;
     const destinationLabel = options.destinationLabel || PRELOAD_SCREEN_LABELS[safeScreen] || 'assets';
 
     setAssetLoadingState({
       active: true,
+      phase: phaseName,
       screen: safeScreen,
       destinationLabel,
       progress: 1,
@@ -1414,19 +1525,27 @@ export default function App() {
     const startedAt = Date.now();
 
     try {
-      await preloadImages(assets, ({ loaded, total, percent }) => {
-        setAssetLoadingState({
-          active: true,
-          screen: safeScreen,
-          destinationLabel,
-          progress: Math.max(1, Math.min(100, percent || 1)),
-          loaded,
-          total,
-        });
+      await preloadAssets(assets, {
+        concurrency: options.concurrency ?? 8,
+        timeoutMs: options.timeoutMs ?? 15000,
+        onProgress: ({ loaded, total, percent }) => {
+          if (navId !== assetNavigationIdRef.current) return;
+          setAssetLoadingState({
+            active: true,
+            phase: phaseName,
+            screen: safeScreen,
+            destinationLabel,
+            progress: Math.max(1, Math.min(100, percent || 1)),
+            loaded,
+            total,
+          });
+        },
       });
     } catch {
       // Do not block the player forever if one critical image fails.
     }
+
+    if (navId !== assetNavigationIdRef.current) return;
 
     const elapsed = Date.now() - startedAt;
     const minVisibleMs = options.minVisibleMs ?? 350;
@@ -1434,12 +1553,21 @@ export default function App() {
       await new Promise((resolve) => window.setTimeout(resolve, minVisibleMs - elapsed));
     }
 
-    preloadedCriticalScreens.add(safeScreen);
-    if (safeScreen === 'mainmenu') {
-      preloadedCriticalScreens.add('roomselect');
+    if (phaseName) {
+      preloadedPhases.add(preloadKey);
+    } else {
+      preloadedCriticalScreens.add(preloadKey);
     }
+
+    if (phaseName === PLAY_FLOW_PRELOAD_PHASE || safeScreen === 'mainmenu') {
+      ['mainmenu', 'roomselect', 'matchmaking', 'gameplay', 'win'].forEach((screenName) => {
+        preloadedCriticalScreens.add(screenName);
+      });
+    }
+
     setAssetLoadingState({
       active: false,
+      phase: phaseName,
       screen: safeScreen,
       destinationLabel,
       progress: 100,
@@ -1451,21 +1579,33 @@ export default function App() {
 
   const navigation = {
     goStarter: () => navigateToScreen('starter'),
-    goLogin: () => navigateToScreen('login'),
-    goLoading: () => preloadAndNavigate('mainmenu', { destinationLabel: 'main menu' }),
-    goMainMenu: () => preloadAndNavigate('mainmenu', { destinationLabel: 'main menu' }),
+    goLogin: () => preloadAndNavigate('login', { destinationLabel: 'login screen', minVisibleMs: 250 }),
+    goLoading: () => preloadAndNavigate('mainmenu', {
+      destinationLabel: 'game assets',
+      phaseName: PLAY_FLOW_PRELOAD_PHASE,
+      preloadKey: PLAY_FLOW_PRELOAD_PHASE,
+      minVisibleMs: 650,
+      concurrency: 8,
+    }),
+    goMainMenu: () => preloadAndNavigate('mainmenu', {
+      destinationLabel: 'game assets',
+      phaseName: PLAY_FLOW_PRELOAD_PHASE,
+      preloadKey: PLAY_FLOW_PRELOAD_PHASE,
+      minVisibleMs: 650,
+      concurrency: 8,
+    }),
     goRoomSelect: () => preloadAndNavigate('roomselect', { destinationLabel: 'room select' }),
-    goCreateRoom: () => navigateToScreen('createroom'),
-    goJoinRoom: () => navigateToScreen('joinroom'),
-    goRoomLobby: () => navigateToScreen('roomlobby'),
-    goMatchmaking: () => navigateToScreen('matchmaking'),
-    goGameplay: () => navigateToScreen('gameplay'),
-    goWin: () => navigateToScreen('win'),
-    goHelp: () => navigateToScreen('help'),
-    goProfile: () => navigateToScreen('profile'),
-    goSpecialEvent: () => navigateToScreen('specialevent'),
-    goDailyReward: () => navigateToScreen('dailyreward'),
-    goTournamentPass: () => navigateToScreen('tournamentpass'),
+    goCreateRoom: () => preloadAndNavigate('createroom', { destinationLabel: 'create room', minVisibleMs: 180, concurrency: 4 }),
+    goJoinRoom: () => preloadAndNavigate('joinroom', { destinationLabel: 'join room', minVisibleMs: 180, concurrency: 4 }),
+    goRoomLobby: () => preloadAndNavigate('roomlobby', { destinationLabel: 'room lobby', minVisibleMs: 180, concurrency: 4 }),
+    goMatchmaking: () => preloadAndNavigate('matchmaking', { destinationLabel: 'matchmaking', minVisibleMs: 180, concurrency: 4 }),
+    goGameplay: () => preloadAndNavigate('gameplay', { destinationLabel: 'gameplay', minVisibleMs: 180, concurrency: 4 }),
+    goWin: () => preloadAndNavigate('win', { destinationLabel: 'result screen', minVisibleMs: 180, concurrency: 4 }),
+    goHelp: () => preloadAndNavigate('help', { destinationLabel: 'help screen', minVisibleMs: 180, concurrency: 4 }),
+    goProfile: () => preloadAndNavigate('profile', { destinationLabel: 'profile', minVisibleMs: 180, concurrency: 4 }),
+    goSpecialEvent: () => preloadAndNavigate('specialevent', { destinationLabel: 'special event', minVisibleMs: 180, concurrency: 4 }),
+    goDailyReward: () => preloadAndNavigate('dailyreward', { destinationLabel: 'daily rewards', minVisibleMs: 180, concurrency: 4 }),
+    goTournamentPass: () => preloadAndNavigate('tournamentpass', { destinationLabel: 'tournament pass', minVisibleMs: 180, concurrency: 4 }),
   };
 
   useEffect(() => {
@@ -1894,14 +2034,25 @@ export default function App() {
     loadResultAndGoWin: () => runBackendAction('match.result.load', () => backendBridge.getMatchResult(gameData.currentMatchId), navigation.goWin),
   };
 
-  const activeScreenClass = screen === 'mockgame'
-    ? 'gameplay app-shell--gameplay app-shell--mockgame'
-    : screen;
-  const activeScreenData = screen === 'mockgame' ? mockGameData : gameData;
-  const activeBackendActions = screen === 'mockgame' ? mockBackendActions : backendActions;
-  const activeBackendStatus = screen === 'mockgame'
-    ? { loading: false, error: null, lastAction: 'mock.gameplay' }
-    : backendStatus;
+  const isBootPreloading = !starterAssetsReady;
+  const RenderedScreenComponent = isBootPreloading ? AssetBootScreen : ScreenComponent;
+  const renderedScreenName = isBootPreloading ? 'assetboot' : screen;
+  const activeScreenClass = isBootPreloading
+    ? 'assetboot'
+    : screen === 'mockgame'
+      ? 'gameplay app-shell--gameplay app-shell--mockgame'
+      : screen;
+  const activeScreenData = isBootPreloading
+    ? { ...gameData, assetLoading: bootAssetLoading }
+    : screen === 'mockgame'
+      ? mockGameData
+      : gameData;
+  const activeBackendActions = isBootPreloading ? {} : screen === 'mockgame' ? mockBackendActions : backendActions;
+  const activeBackendStatus = isBootPreloading
+    ? { loading: false, error: null, lastAction: 'asset.boot' }
+    : screen === 'mockgame'
+      ? { loading: false, error: null, lastAction: 'mock.gameplay' }
+      : backendStatus;
 
   return (
     <main
@@ -1921,7 +2072,7 @@ export default function App() {
 
       <div className="game-frame">
         <ScreenComponent
-          name={screen}
+          name={renderedScreenName}
           navigation={navigation}
           mode={layout.mode}
           data={activeScreenData}
