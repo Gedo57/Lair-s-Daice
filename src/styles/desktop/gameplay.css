@@ -70,8 +70,8 @@ html[data-device='desktop'] .gameplay-player__miniDie {
 }
 
 html[data-device='desktop'] .gameplay-player--sophie {
-  left: -5px;
-  top: 188px;
+  left: 8px;
+  top: 288px;
   width: 335px;
   height: 112px;
   color: #fff8e3;
@@ -82,8 +82,8 @@ html[data-device='desktop'] .gameplay-player--sophie .gameplay-player__countRow 
 html[data-device='desktop'] .gameplay-player--sophie .gameplay-player__diceRow { left: 160px; top: 70px; gap: 2px; }
 
 html[data-device='desktop'] .gameplay-player--you {
-  left: 0;
-  top: 330px;
+  left: 8px;
+  top: 430px;
   width: 337px;
   height: 115px;
 }
@@ -193,7 +193,30 @@ html[data-device='desktop'] .gameplay-current-bid__last { position: absolute; le
 html[data-device='desktop'] .gameplay-current-bid__lastDie { width: 31px; height: 31px; }
 
 html[data-device='desktop'] .gameplay-cups { position: absolute; left: 520px; top:240px; width: 245px; height: 190px; z-index: 20; }
-html[data-device='desktop'] .gameplay-cups__image { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
+.gameplay-cups__cup {
+  position: absolute;
+  width: 42%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,.35));
+}
+
+.gameplay-cups--count-2 .gameplay-cups__cup { width: 46%; }
+.gameplay-cups--count-3 .gameplay-cups__cup { width: 37%; }
+.gameplay-cups--count-4 .gameplay-cups__cup { width: 34%; }
+
+.gameplay-cups__cup--2-1 { left: 6%; top: 36%; }
+.gameplay-cups__cup--2-2 { right: 6%; top: 36%; }
+
+.gameplay-cups__cup--3-1 { left: 50%; top: 2%; transform: translateX(-50%); }
+.gameplay-cups__cup--3-2 { left: 10%; top: 46%; }
+.gameplay-cups__cup--3-3 { right: 10%; top: 46%; }
+
+.gameplay-cups__cup--4-1 { left: 8%; top: 10%; }
+.gameplay-cups__cup--4-2 { right: 8%; top: 10%; }
+.gameplay-cups__cup--4-3 { left: 8%; top: 52%; }
+.gameplay-cups__cup--4-4 { right: 8%; top: 52%; }
+
 
 html[data-device='desktop'] .gameplay-bid-selector { position: absolute; left: 453px; top: 380px; width: 330px; height: 150px; z-index: 30; }
 html[data-device='desktop'] .gameplay-bid-selector__skin { position: absolute; inset: 0; width: 114.2%; height: 120%; object-fit: fill; }
@@ -257,16 +280,18 @@ html[data-device='desktop'] .gameplay-reroll__skin { position: absolute; inset: 
 html[data-device='desktop'] .gameplay-reroll__title { position: absolute; left: 72px; top: 22px; font-size: 18px; font-weight: 900; color: #fff; }
 html[data-device='desktop'] .gameplay-reroll__count { position: absolute; right: 20px; bottom: -12px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #235cb8; color: #fff; font-size: 20px; font-weight: 900; }
 
-html[data-device='desktop'] .gameplay-action-tray { position: absolute; left: 180px; bottom: 3px; width: 870px; height: 157px; z-index: 24; }
-html[data-device='desktop'] .gameplay-action-tray__skin { width: 100%; height: 95%; object-fit: fill; }
+html[data-device='desktop'] .gameplay-action-tray { position: absolute; left: 400px; bottom: 3px; width: 870px; height: 157px; z-index: 24; }
+html[data-device='desktop'] .gameplay-action-tray__skin { width: 52%; height: 95%; object-fit: fill; }
 
 html[data-device='desktop'] .gameplay-action { position: absolute; bottom: 40px; width: 190px; height: 95px; z-index: 30; transition: transform .15s ease, filter .15s ease; }
 html[data-device='desktop'] .gameplay-action:hover { transform: translateY(-2px) scale(1.01); filter: brightness(1.08); }
 html[data-device='desktop'] .gameplay-action__skin { position: absolute; inset: 0; width: 106%; height: 100%; object-fit: fill; }
 html[data-device='desktop'] .gameplay-action__title { position: absolute; left: 65px; top: 30px; font-size: 21px; font-weight: 900; color: #fff6e4; text-shadow: 0 2px 3px rgba(0,0,0,.6); white-space: nowrap; }
 html[data-device='desktop'] .gameplay-action__subtitle { position: absolute; left: 62px; top: 56px; width: 112px; font-size: 10px; line-height: 1.05; font-weight: 700; color: #fff1d5; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
-html[data-device='desktop'] .gameplay-action--raise { left: 195px; }
-html[data-device='desktop'] .gameplay-action--call { left: 400px; }
+html[data-device='desktop'] .gameplay-action--raise { left: 420px; }
+html[data-device='desktop'] .gameplay-action--call { left: 640px; }
+html[data-device='desktop'] .gameplay-action--raise .gameplay-action__title { left: 57px; font-size: 18px; }
+html[data-device='desktop'] .gameplay-action--call .gameplay-action__title { left: 68px; }
 html[data-device='desktop'] .gameplay-action--slam { left: 605px; width: 190px; }
 html[data-device='desktop'] .gameplay-action--confirm { left: 820px; }
 html[data-device='desktop'] .gameplay-action--slam .gameplay-action__title { left: 72px; }
@@ -757,8 +782,8 @@ html[data-device='desktop'] .gameplay-status--loading { color: #d9f0ff; }
 
 /* Patch: fourth-player panel and cleaner disabled action buttons. */
 html[data-device='desktop'] .gameplay-player--fourth {
-  left: -5px;
-  top: 68px;
+  left: 960px;
+  top: 448px;
   width: 318px;
   height: 106px;
   color: #fff8e3;

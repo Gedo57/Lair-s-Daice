@@ -44,9 +44,11 @@ function normalizeCreateRoomPayload(settings = {}) {
     botsEnabled: roomMode === 'bots',
     playWithBots: roomMode === 'bots',
     withBots: roomMode === 'bots',
-    startingCups: Number(settings.startingCups || settings.selectedCups || 5) || 5,
+    startingCups: 5,
+    startingDice: 5,
+    dicePerPlayer: 5,
     turnTimer: Number(settings.turnTimer || String(settings.selectedTimer || '').replace(/[^0-9]/g, '') || 15) || 15,
-    bidStyle: settings.bidStyle || settings.selectedBidStyle || 'Classic',
+    bidStyle: String(settings.bidStyle || settings.selectedBidStyle || 'Classic').toLowerCase().includes('wild') ? 'Wild Ones' : 'Classic',
   };
 }
 

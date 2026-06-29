@@ -289,19 +289,19 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--sophie {
-  left: -2px !important;
+  left: 8px !important;
   right: auto !important;
-  top: 256px !important;
+  top: 300px !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon {
   left: auto !important;
-  right: -2px !important;
-  top: 256px !important;
+  right: -14px !important;
+  top: 300px !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--you {
-  left: -2px !important;
+  left: 8px !important;
   right: auto !important;
   top: 746px !important;
   color: #170b03 !important;
@@ -441,9 +441,9 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 
 /* Table / cups stay as supplied art. */
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups {
-  left: 112px !important;
-  top: 496px !important;
-  width: 496px !important;
+  left: 200px !important;
+  top: 426px !important;
+  width: 356px !important;
   height: 318px !important;
   z-index: 30 !important;
   pointer-events: none !important;
@@ -502,14 +502,14 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
    x: positive = right, negative = left.
    y: positive = down, negative = up. */
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
-  --gp-actions-left: 70px;
+  --gp-actions-left: 40px;
   --gp-actions-top: 1080px;
   --gp-actions-x: 0px;
   --gp-actions-y: 0px;
   --gp-actions-scale: 1;
 
-  --gp-action-width: 295px;
-  --gp-action-height: 95px;
+  --gp-action-width: 320px;
+  --gp-action-height: 130px;
   --gp-action-gap-x: 10px;
   --gp-action-gap-y: 0px;
 }
@@ -520,7 +520,7 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   left: calc(var(--gp-actions-left) + var(--gp-actions-x)) !important;
   top: calc(var(--gp-actions-top) + var(--gp-actions-y) - 4px) !important;
   width: calc(var(--gp-action-width) + var(--gp-action-width) + var(--gp-action-gap-x)) !important;
-  height: calc(var(--gp-action-height) + var(--gp-action-height) + var(--gp-action-gap-y) + 8px) !important;
+  height: calc(var(--gp-action-height) + 8px) !important;
   z-index: 70 !important;
   transform: scale(var(--gp-actions-scale)) !important;
   transform-origin: left top !important;
@@ -561,6 +561,14 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   white-space: nowrap !important;
 }
 
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--raise .gameplay-action__title {
+  font-size: 25px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--call .gameplay-action__title {
+  font-size: 27px !important;
+}
+
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--raise {
   left: calc(var(--gp-actions-left) + var(--gp-actions-x)) !important;
   top: calc(var(--gp-actions-top) + var(--gp-actions-y)) !important;
@@ -577,8 +585,7 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--confirm {
-  left: calc(var(--gp-actions-left) + var(--gp-action-width) + var(--gp-action-gap-x) + var(--gp-actions-x)) !important;
-  top: calc(var(--gp-actions-top) + var(--gp-action-height) + var(--gp-action-gap-y) + var(--gp-actions-y)) !important;
+  display: none !important;
 }
 
 /* Keep Chinese panel aligned with the same corrected layout. */

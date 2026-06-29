@@ -42,20 +42,23 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const wallet = data?.wallet || {};
   const settings = data?.createRoom || {};
   const players = settings.players?.length ? settings.players : ['2', '3', '4'];
-  const cups = settings.cups || [];
+  const cups = settings.cups?.length ? settings.cups : ['5'];
   const timers = settings.timers || [];
   const bidStyles = settings.bidStyles || [];
   const isCreating = backendStatus?.loading && backendStatus?.lastAction === 'rooms.create';
 
   const [roomName, setRoomName] = useState(settings.roomName || `${user?.displayName || user?.username || 'Player'}’s Room`);
   const [selectedPlayers, setSelectedPlayers] = useState(settings.selectedPlayers || '2');
-  const [selectedCups, setSelectedCups] = useState(settings.selectedCups || '5');
+  const [selectedCups, setSelectedCups] = useState('5');
   const [selectedTimer, setSelectedTimer] = useState(settings.selectedTimer || '15s');
   const [selectedBidStyle, setSelectedBidStyle] = useState(settings.selectedBidStyle || 'Classic');
   const [selectedRoomMode, setSelectedRoomMode] = useState(String(settings.selectedRoomMode || settings.roomMode || 'normal').toLowerCase() === 'bots' ? 'bots' : 'normal');
   const [isPrivate, setIsPrivate] = useState(settings.isPrivate ?? true);
 
   const isBotsMode = selectedRoomMode === 'bots';
+  const selectedRulesCopy = selectedBidStyle === 'Wild Ones'
+    ? 'Rules: 5 dice each • ones are wild unless first bid is ones • bid or call liar only'
+    : 'Rules: 5 dice each • bid or call liar only';
 
   const currentSettings = {
     ...settings,
@@ -63,8 +66,10 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
     selectedPlayers,
     maxPlayers: Number(selectedPlayers),
     playersCount: Number(selectedPlayers),
-    selectedCups,
-    startingCups: Number(selectedCups),
+    selectedCups: '5',
+    startingCups: 5,
+    startingDice: 5,
+    dicePerPlayer: 5,
     selectedTimer,
     turnTimer: Number(String(selectedTimer).replace(/[^0-9]/g, '')) || 15,
     selectedBidStyle,
@@ -129,9 +134,9 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
           </div>
 
           <div className="create-room-block create-room-block--cups">
-            <span className="create-room-label">{tx('STARTING CUPS')}</span>
+            <span className="create-room-label">{tx('DICE PER PLAYER')}</span>
             <div className="create-room-optionRow create-room-optionRow--cups">
-              {cups.map((value) => <OptionButton key={value} value={value} active={value === selectedCups} tx={tx} onClick={createSelectedHandler(setSelectedCups, value)} />)}
+              {cups.map((value) => <OptionButton key={value} value={value} active={value === selectedCups} tx={tx} onClick={createSelectedHandler(setSelectedCups, '5')} />)}
             </div>
           </div>
 
@@ -186,7 +191,7 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
             <span className="create-room-invite__text">{tx(data?.currentRoom ? 'OPEN LOBBY' : 'INVITE FRIENDS')}</span>
           </button>
 
-          <span className="create-room-rules">{tx(isBotsMode ? 'Bots mode starts immediately with CPU players.' : (settings.rulesCopy || 'Custom Rules: Standard • Bluff Re-roll enabled • Slam enabled'))}</span>
+          <span className="create-room-rules">{tx(isBotsMode ? 'Bots mode starts immediately with CPU players.' : selectedRulesCopy)}</span>
 
           {backendStatus?.error && backendStatus?.lastAction === 'rooms.create' ? <span className="create-room-rules" style={{ top: '366px', color: '#8a1a11' }}>{backendStatus.error}</span> : null}
 

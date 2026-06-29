@@ -249,6 +249,37 @@ function getPanelItems(match, user) {
     .map((item) => ({ ...item, ...panelLayoutBySlot[item.slot] }));
 }
 
+function getTablePlayerCount(match, fallback = 2) {
+  const values = [
+    match?.requiredPlayers,
+    match?.maxPlayers,
+    match?.selectedPlayers,
+    match?.playersCount,
+    Array.isArray(match?.players) ? match.players.length : null,
+    fallback,
+  ];
+
+  for (const value of values) {
+    const count = Number(value);
+    if (Number.isFinite(count) && count >= 2 && count <= 4) return count;
+  }
+
+  return 2;
+}
+
+function renderCupSlots(playerCount) {
+  const safeCount = Math.min(Math.max(Number(playerCount) || 2, 2), 4);
+  return Array.from({ length: safeCount }, (_, index) => (
+    <img
+      key={`cup-${safeCount}-${index}`}
+      className={`gameplay-cups__cup gameplay-cups__cup--${safeCount}-${index + 1}`}
+      src="/assets/liars-dice/gameplay/cup.png"
+      alt=""
+      draggable="false"
+    />
+  ));
+}
+
 function getActorName(match, actorId) {
   const player = match?.players?.find((item) => playerId(item) === actorId);
   return playerName(player, actorId || 'Player');
@@ -272,6 +303,33 @@ function getMatchRoundResult(match, data) {
   if (data?.roundResult) return data.roundResult;
   if (match?.lastRoundResult) return match.lastRoundResult;
   return null;
+}
+
+
+function getRoundResultKey(roundResult) {
+  if (!roundResult) return '';
+
+  const bid = roundResult.bid || {};
+  const revealedDiceSignature = Array.isArray(roundResult.revealedDice)
+    ? roundResult.revealedDice.map((row) => `${playerId(row) || playerName(row, 'Player')}:${Array.isArray(row.dice) ? row.dice.join(',') : ''}`).join('|')
+    : '';
+
+  return [
+    roundResult.id,
+    roundResult.roundId,
+    roundResult.roundNumber,
+    roundResult.challengeType,
+    bid.quantity,
+    bid.face,
+    roundResult.actualCount,
+    roundResult.bidWasTrue,
+    roundResult.loserId,
+    roundResult.loserName,
+    roundResult.createdAt,
+    roundResult.updatedAt,
+    roundResult.settledAt,
+    revealedDiceSignature,
+  ].filter((value) => value !== null && value !== undefined && value !== '').join('|');
 }
 
 function normalizedActionList(list) {
@@ -329,6 +387,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const user = data?.user || {};
   const activePlayer = getActivePlayer(match);
   const panelItems = getPanelItems(match, user);
+  const tablePlayerCount = getTablePlayerCount(match, panelItems.length || 2);
   const botsMatch = isBotsMatch(match);
   const totalDice = toNumber(match?.totalDiceInPlay, (match?.players || []).reduce((sum, player) => sum + toNumber(player?.diceCount || player?.dice?.length, 0), 0));
   const currentBid = match?.currentBid || null;
@@ -343,11 +402,11 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const hasServerActionRules = availableActions.length > 0 || disabledActions.length > 0;
   const canSubmitBid = canAct && (!hasServerActionRules || availableActions.includes('bid')) && !disabledActions.includes('bid');
   const canCallLiar = canAct && Boolean(currentBid) && (!hasServerActionRules || availableActions.includes('call_liar') || availableActions.includes('call_lira')) && !disabledActions.includes('call_liar') && !disabledActions.includes('call_lira');
-  const canSlam = canAct && Boolean(currentBid) && availableActions.includes('slam') && !disabledActions.includes('slam');
-  const canReroll = canAct && availableActions.includes('reroll') && !disabledActions.includes('reroll');
   const roundResult = getMatchRoundResult(match, data);
-  const showRoundResult = Boolean(match && roundResult && !isFinished);
+  const roundResultKey = getRoundResultKey(roundResult);
   const revealedRows = revealedDiceRows(roundResult);
+  const [roundResultVisible, setRoundResultVisible] = useState(false);
+  const showRoundResult = Boolean(match && roundResult && roundResultVisible && !isFinished);
   const [clockTick, setClockTick] = useState(() => Date.now());
   const liveTurnSeconds = getLiveTurnSeconds(match, clockTick);
   const chatMessages = Array.isArray(data?.chatMessages) ? data.chatMessages : [];
@@ -356,6 +415,17 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const [chatDraft, setChatDraft] = useState('');
   const chatListRef = useRef(null);
   const canUseChat = Boolean(currentMatchId && !botsMatch);
+
+  useEffect(() => {
+    if (!roundResult || isFinished) {
+      setRoundResultVisible(false);
+      return undefined;
+    }
+
+    setRoundResultVisible(true);
+    const timeout = window.setTimeout(() => setRoundResultVisible(false), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [roundResultKey, Boolean(roundResult), isFinished]);
 
   useEffect(() => {
     if (!match || match.status !== 'active') return undefined;
@@ -436,8 +506,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const bidIsValid = isValidBid(currentBid, selectedQuantity, selectedFace);
   const challengeDisabled = !canCallLiar;
   const bidDisabled = !canSubmitBid || !bidIsValid;
-  const slamDisabled = !canSlam;
-  const rerollDisabled = !canReroll;
   const turnName = playerName(activePlayer, myTurn ? 'You' : 'Player');
 
   return (
@@ -526,6 +594,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           <div className="gameplay-round-result__meta">
             <span>{tx('Bid')}: {bidLabel(roundResult?.bid)}</span>
             <span>{tx('Actual')}: {toNumber(roundResult?.actualCount, 0)}</span>
+            {roundResult?.wildDice ? <span>{tx('Wild ones counted')}: {toNumber(roundResult?.wildOnesCount, 0)}</span> : null}
           </div>
           {revealedRows.length ? (
             <div className="gameplay-round-result__revealed">
@@ -544,8 +613,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         </div>
       ) : null}
 
-      <div className="gameplay-cups">
-        <img className="gameplay-cups__image" src={`${asset}gameplay-cups.png`} alt="" draggable="false" />
+      <div className={`gameplay-cups gameplay-cups--count-${tablePlayerCount}`} aria-hidden="true">
+        {renderCupSlots(tablePlayerCount)}
       </div>
 
       <div className="gameplay-bid-selector">
@@ -590,20 +659,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         </div>
       </div>
 
-      <button className="gameplay-reroll" type="button" onClick={() => submitSimpleAction('reroll')} disabled={rerollDisabled}>
-        <img className="gameplay-reroll__skin" src={`${asset}1234.png`} alt="" draggable="false" />
-        <span className="gameplay-reroll__title">{tx('RE-ROLL')}</span>
-        <span className="gameplay-reroll__count">{canReroll ? (match?.rerollsRemaining ?? 1) : 'OFF'}</span>
-      </button>
-
       <div className="gameplay-action-tray">
         <img className="gameplay-action-tray__skin" src={`${asset}Panal.png`} alt="" draggable="false" />
       </div>
 
-      <ActionButton className="gameplay-action--raise" skin="B!.png" title="RAISE BID" subtitle={bidIsValid ? 'Increase the bid' : 'Bid must be higher'} onClick={submitBid} disabled={bidDisabled} tx={tx} />
-      <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIRA" subtitle="Challenge the bet" onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
-      <ActionButton className="gameplay-action--slam" skin="B3.png" title="SLAM" subtitle="Disabled in Classic" onClick={() => submitSimpleAction('slam')} disabled={slamDisabled} tx={tx} />
-      <ActionButton className="gameplay-action--confirm" skin="B4.png" title="CONFIRM" subtitle="Submit your bid" onClick={submitBid} disabled={bidDisabled} tx={tx} />
+      <ActionButton className="gameplay-action--raise" skin="B!.png" title="CONFIRM BID" subtitle={bidIsValid ? 'Submit your bid' : 'Bid must be higher'} onClick={submitBid} disabled={bidDisabled} tx={tx} />
+      <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIAR" subtitle="Challenge the bid" onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
 
       {canUseChat && chatOpen ? (
         <aside id="gameplay-chat-drawer" className="gameplay-chat-drawer" aria-label={tx('Match Chat')}>

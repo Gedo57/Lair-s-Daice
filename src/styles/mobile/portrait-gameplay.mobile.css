@@ -410,12 +410,32 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   pointer-events: none;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__image {
-  width: 100% !important;
-  height: 100% !important;
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup {
+  position: absolute;
+  width: 42%;
+  height: auto;
   object-fit: contain;
   filter: drop-shadow(0 9px 11px rgba(0, 0, 0, .34));
 }
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups--count-2 .gameplay-cups__cup { width: 46%; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups--count-3 .gameplay-cups__cup { width: 38%; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups--count-4 .gameplay-cups__cup { width: 34%; }
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--2-1 { left: 4%; top: 34%; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--2-2 { right: 4%; top: 34%; }
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--3-1 { left: 50%; top: 0%; transform: translateX(-50%); }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--3-2 { left: 9%; top: 42%; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--3-3 { right: 9%; top: 42%; }
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--4-1 { left: 8%; top: 7%; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--4-2 { right: 8%; top: 7%; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--4-3 { left: 8%; top: 51%; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--4-4 { right: 8%; top: 51%; }
+
+
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid {
   left: 220px !important;
@@ -745,9 +765,17 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   top: 1088px !important;
 }
 
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--raise .gameplay-action__title {
+  font-size: 26px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--call .gameplay-action__title {
+  font-size: 27px !important;
+}
+
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--call {
   left: 368px !important;
-  top: 188px !important;
+  top: 1088px !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--slam {
@@ -756,8 +784,7 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--confirm {
-  left: 368px !important;
-  top: 1180px !important;
+  display: none !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action:disabled,

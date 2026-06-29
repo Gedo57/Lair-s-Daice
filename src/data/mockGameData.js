@@ -40,8 +40,9 @@ export const mockGameData = {
     myTurn: true,
     currentBid: { quantity: 5, face: 1 },
     previousBid: { quantity: 4, face: 1 },
+    gameRules: { mode: 'classic', startingDice: 5, cupPerPlayer: 1, wildDice: false, slamEnabled: false, rerollEnabled: false },
     lastAction: { type: 'bid', by: 'mock-sophie', playerId: 'mock-sophie' },
-    availableActions: ['bid', 'call_liar', 'call_lira', 'slam', 'reroll'],
+    availableActions: ['bid', 'call_liar'],
     disabledActions: [],
     roundResult: {
       challengeType: 'call_lira',

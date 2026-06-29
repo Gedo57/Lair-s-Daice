@@ -2,7 +2,7 @@ export const defaultCreateRoomSettings = {
   roomName: '',
   players: ['2', '3', '4'],
   selectedPlayers: '2',
-  cups: ['3', '4', '5'],
+  cups: ['5'],
   selectedCups: '5',
   timers: ['10s', '15s', '20s'],
   selectedTimer: '15s',
@@ -13,7 +13,7 @@ export const defaultCreateRoomSettings = {
   roomMode: 'normal',
   isPrivate: true,
   roomCode: '',
-  rulesCopy: '',
+  rulesCopy: 'Rules: 5 dice each • bid or call liar only',
 };
 
 export const initialGameData = {
