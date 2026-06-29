@@ -4,7 +4,7 @@ import { useLanguage } from './i18n/useLanguage.js';
 import { initialGameData } from './data/initialGameData.js';
 import { mockBackendActions, mockGameData } from './data/mockGameData.js';
 import { getAssetsForPhase, getAssetsForScreen } from './config/assetsManifest.js';
-import { preloadAssets, preloadAssetsInBackground } from './services/assetPreloader.js';
+import { preloadAssets } from './services/assetPreloader.js';
 import { backendBridge } from './services/backendBridge.js';
 import {
   cancelSocketMatchmaking,
@@ -142,7 +142,6 @@ const PRELOAD_SCREEN_LABELS = {
 
 const BOOT_PRELOAD_PHASE = 'starterShell';
 const PLAY_FLOW_PRELOAD_PHASE = 'playFlow';
-const BACKGROUND_PRELOAD_PHASE = 'secondaryScreens';
 const preloadedCriticalScreens = new Set();
 const preloadedPhases = new Set();
 
@@ -1242,7 +1241,7 @@ export default function App() {
     let active = true;
     const starterAssets = getAssetsForPhase(BOOT_PRELOAD_PHASE);
     const startedAt = Date.now();
-    const minVisibleMs = 900;
+    const minVisibleMs = 250;
 
     const finishBoot = async () => {
       const elapsed = Date.now() - startedAt;
@@ -1309,32 +1308,6 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.language = i18n.language;
   }, [i18n.language]);
-
-  useEffect(() => {
-    if (!starterAssetsReady) return;
-    if (screen !== 'mainmenu' && screen !== 'roomselect') return;
-    if (preloadedPhases.has(BACKGROUND_PRELOAD_PHASE)) return;
-
-    const backgroundAssets = getAssetsForPhase(BACKGROUND_PRELOAD_PHASE);
-    if (!backgroundAssets.length) {
-      preloadedPhases.add(BACKGROUND_PRELOAD_PHASE);
-      return;
-    }
-
-    preloadedPhases.add(BACKGROUND_PRELOAD_PHASE);
-    const task = preloadAssetsInBackground(backgroundAssets, {
-      concurrency: 2,
-      timeoutMs: 10000,
-      delayMs: 900,
-      idleTimeoutMs: 3000,
-    });
-
-    task.promise.then(() => {
-      ['login', 'createroom', 'joinroom', 'roomlobby', 'profile', 'dailyreward', 'tournamentpass', 'specialevent', 'help'].forEach((screenName) => {
-        preloadedCriticalScreens.add(screenName);
-      });
-    });
-  }, [screen, starterAssetsReady]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -1595,17 +1568,17 @@ export default function App() {
       concurrency: 8,
     }),
     goRoomSelect: () => preloadAndNavigate('roomselect', { destinationLabel: 'room select' }),
-    goCreateRoom: () => preloadAndNavigate('createroom', { destinationLabel: 'create room', minVisibleMs: 180, concurrency: 4 }),
-    goJoinRoom: () => preloadAndNavigate('joinroom', { destinationLabel: 'join room', minVisibleMs: 180, concurrency: 4 }),
-    goRoomLobby: () => preloadAndNavigate('roomlobby', { destinationLabel: 'room lobby', minVisibleMs: 180, concurrency: 4 }),
-    goMatchmaking: () => preloadAndNavigate('matchmaking', { destinationLabel: 'matchmaking', minVisibleMs: 180, concurrency: 4 }),
-    goGameplay: () => preloadAndNavigate('gameplay', { destinationLabel: 'gameplay', minVisibleMs: 180, concurrency: 4 }),
-    goWin: () => preloadAndNavigate('win', { destinationLabel: 'result screen', minVisibleMs: 180, concurrency: 4 }),
-    goHelp: () => preloadAndNavigate('help', { destinationLabel: 'help screen', minVisibleMs: 180, concurrency: 4 }),
-    goProfile: () => preloadAndNavigate('profile', { destinationLabel: 'profile', minVisibleMs: 180, concurrency: 4 }),
-    goSpecialEvent: () => preloadAndNavigate('specialevent', { destinationLabel: 'special event', minVisibleMs: 180, concurrency: 4 }),
-    goDailyReward: () => preloadAndNavigate('dailyreward', { destinationLabel: 'daily rewards', minVisibleMs: 180, concurrency: 4 }),
-    goTournamentPass: () => preloadAndNavigate('tournamentpass', { destinationLabel: 'tournament pass', minVisibleMs: 180, concurrency: 4 }),
+    goCreateRoom: () => navigateToScreen('createroom'),
+    goJoinRoom: () => navigateToScreen('joinroom'),
+    goRoomLobby: () => navigateToScreen('roomlobby'),
+    goMatchmaking: () => navigateToScreen('matchmaking'),
+    goGameplay: () => navigateToScreen('gameplay'),
+    goWin: () => navigateToScreen('win'),
+    goHelp: () => navigateToScreen('help'),
+    goProfile: () => navigateToScreen('profile'),
+    goSpecialEvent: () => navigateToScreen('specialevent'),
+    goDailyReward: () => navigateToScreen('dailyreward'),
+    goTournamentPass: () => navigateToScreen('tournamentpass'),
   };
 
   useEffect(() => {
@@ -2071,7 +2044,7 @@ export default function App() {
       </div>
 
       <div className="game-frame">
-        <RenderedScreenComponent
+        <ScreenComponent
           name={renderedScreenName}
           navigation={navigation}
           mode={layout.mode}
