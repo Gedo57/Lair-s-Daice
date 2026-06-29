@@ -238,8 +238,8 @@ html[data-device='mobile'][data-orientation='portrait'] .room-lobby-panel {
 
 html[data-device='mobile'][data-orientation='portrait'] .create-room-character
 {
-  left: 90px !important;
-  bottom: 180px !important;
+  left: 70px !important;
+  bottom: 200px !important;
   width: 210px !important;
   height: auto !important;
   opacity: .99 !important;
@@ -274,6 +274,8 @@ html[data-device='mobile'][data-orientation='portrait'] .create-room-block--time
 html[data-device='mobile'][data-orientation='portrait'] .create-room-block--bid { left: 292px !important; top: 184px !important; width: 248px !important; }
 html[data-device='mobile'][data-orientation='portrait'] .create-room-block--private { left: 0 !important; top: 288px !important; width: 248px !important; }
 html[data-device='mobile'][data-orientation='portrait'] .create-room-block--code { left: 292px !important; top: 288px !important; width: 248px !important; }
+
+
 
 html[data-device='mobile'][data-orientation='portrait'] .create-room-input--name {
   left: 16px !important;
@@ -325,7 +327,7 @@ html[data-device='mobile'][data-orientation='portrait'] .create-room-rules {
 
 html[data-device='mobile'][data-orientation='portrait'] .create-room-bottom {
   bottom: auto !important;
-  top: 612px !important;
+  top: 662px !important;
   height: 62px !important;
 }
 

@@ -126,7 +126,7 @@ html[data-device='desktop'] .create-room-block--cups { left: 0; top: 64px; width
 html[data-device='desktop'] .create-room-block--timer { left: 242px; top: 64px; width: 210px; height: 58px; }
 html[data-device='desktop'] .create-room-block--bid { left: 0; top: 128px; width: 200px; height: 58px; }
 html[data-device='desktop'] .create-room-block--private { left: 260px; top: 128px; width: 175px; height: 58px; }
-html[data-device='desktop'] .create-room-block--code { left: 0; top: 208px; width: 210px; height: 72px; }
+html[data-device='desktop'] .create-room-block--code { left: 0; top: 158px; width: 210px; height: 72px; }
 
 html[data-device='desktop'] .create-room-input,
 html[data-device='desktop'] .create-room-codeWrap {
@@ -252,7 +252,7 @@ html[data-device='desktop'] .create-room-codeWrap__text {
   left: 18px;
   top: 8px;
   font-family: Arial, sans-serif;
-  font-size: 25px;
+  font-size: 15px;
   font-weight: 900;
   letter-spacing: .02em;
   color: #4a2a08;
@@ -315,7 +315,7 @@ html[data-device='desktop'] .create-room-rules {
 
 html[data-device='desktop'] .create-room-bottom {
   position: absolute;
-  bottom: 4px;
+  bottom: -15px;
   height: 50px;
   transition: transform .16s ease, filter .16s ease;
 }

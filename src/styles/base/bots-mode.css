@@ -49,7 +49,7 @@ html[data-device='mobile'] .create-room-rules {
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--mode {
-  left: 0 !important;
+  left: 120px !important;
   top: 410px !important;
   width: 548px !important;
   height: 78px !important;
