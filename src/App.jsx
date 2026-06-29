@@ -1242,7 +1242,7 @@ export default function App() {
     let active = true;
     const starterAssets = getAssetsForPhase(BOOT_PRELOAD_PHASE);
     const startedAt = Date.now();
-    const minVisibleMs = 250;
+    const minVisibleMs = 900;
 
     const finishBoot = async () => {
       const elapsed = Date.now() - startedAt;
@@ -2071,7 +2071,7 @@ export default function App() {
       </div>
 
       <div className="game-frame">
-        <ScreenComponent
+        <RenderedScreenComponent
           name={renderedScreenName}
           navigation={navigation}
           mode={layout.mode}
