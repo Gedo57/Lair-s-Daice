@@ -607,3 +607,181 @@ html.keyboard-open[data-physical-device='mobile'][data-orientation='landscape'] 
   border-radius: 10px !important;
   font-size: 11px !important;
 }
+
+
+/* Voice chat microphone button. Uses the same visual skin as the normal chat button. */
+.gameplay-voice-button {
+  --voice-button-right: 760px;
+  --voice-button-top: 30px;
+  --voice-button-width: 154px;
+  --voice-button-height: 64px;
+  --voice-button-x: 0px;
+  --voice-button-y: 0px;
+  --voice-button-scale: 1;
+
+  position: absolute;
+  right: var(--voice-button-right);
+  top: var(--voice-button-top);
+  z-index: 160;
+  width: var(--voice-button-width);
+  height: var(--voice-button-height);
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background-color: transparent;
+  background-image: url('/assets/liars-dice/gameplay/chat-button-red.png');
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  box-shadow: none;
+  color: #fff7d2;
+  cursor: pointer;
+  font-family: inherit;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transform: translate(var(--voice-button-x), var(--voice-button-y)) scale(var(--voice-button-scale));
+  transform-origin: center center;
+  overflow: visible;
+}
+
+.gameplay-voice-button__skin {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.gameplay-voice-button.is-muted .gameplay-voice-button__skin,
+.gameplay-voice-button:not(.is-connected) .gameplay-voice-button__skin {
+  filter: brightness(.9) saturate(.95);
+}
+
+.gameplay-voice-button.is-live .gameplay-voice-button__skin {
+  filter: brightness(1.06) saturate(1.12);
+}
+
+.gameplay-voice-button.is-connecting {
+  opacity: .72;
+  cursor: wait;
+}
+
+.gameplay-voice-button__icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  font-size: 22px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .42));
+  pointer-events: none;
+}
+
+.gameplay-voice-button__title {
+  position: absolute;
+  inset: 0 12px 0 42px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: .04em;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(70, 0, 0, .54);
+  pointer-events: none;
+}
+
+.gameplay-voice-status {
+  position: absolute;
+  right: 42px;
+  top: 146px;
+  z-index: 165;
+  max-width: 340px;
+  padding: 8px 11px;
+  border: 2px solid rgba(255, 221, 139, .86);
+  border-radius: 12px;
+  background: rgba(55, 12, 9, .92);
+  color: #ffd8d0;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.18;
+}
+
+html[data-device='desktop'] .app-shell--gameplay .gameplay-voice-button {
+  --voice-button-right: 960px;
+  --voice-button-top: 100px;
+  --voice-button-width: 154px;
+  --voice-button-height: 64px;
+}
+
+html[data-device='desktop'] .app-shell--gameplay .gameplay-voice-status {
+  right: 588px;
+  top: 100px;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-voice-button {
+  --voice-button-right: 188px;
+  --voice-button-top: 92px;
+  --voice-button-width: 132px;
+  --voice-button-height: 56px;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-voice-button__title {
+  inset: 0 10px 0 36px;
+  font-size: 14px;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-voice-status {
+  right: 24px;
+  top: 150px;
+  max-width: 328px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-voice-button {
+  --voice-button-right: 210px;
+  --voice-button-top: 44px;
+  --voice-button-width: 100px;
+  --voice-button-height: 54px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-voice-button__icon {
+  left: 13px;
+  font-size: 18px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-voice-button__title {
+  inset: 0 8px 0 32px;
+  font-size: 13px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-voice-status {
+  right: 24px;
+  top: 154px;
+  max-width: 360px;
+}
+
+html.keyboard-open[data-device='mobile'] .app-shell--gameplay .gameplay-voice-button,
+html.keyboard-open[data-device='mobile'] .app-shell--gameplay .gameplay-voice-status {
+  z-index: 1200 !important;
+}
+
+html.keyboard-open[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-voice-button {
+  --voice-button-right: 156px;
+  --voice-button-top: 18px;
+  --voice-button-width: 118px;
+  --voice-button-height: 46px;
+  --voice-button-scale: .92;
+}
+
+html.keyboard-open[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-voice-button__title {
+  font-size: 12px !important;
+}
+
+html.keyboard-open[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-voice-button {
+  --voice-button-top: 28px;
+}

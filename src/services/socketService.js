@@ -130,6 +130,15 @@ function bindMatchmakingListeners(handlers = {}) {
   return matchmakingCleanup;
 }
 
+
+export function getConnectedGameSocket() {
+  return getSocket();
+}
+
+export function emitSocketEventWithAck(eventName, payload = {}) {
+  return emitWithAck(eventName, payload);
+}
+
 export function startSocketMatchmaking(payload = {}, handlers = {}) {
   const socket = getSocket();
   bindMatchmakingListeners(handlers);

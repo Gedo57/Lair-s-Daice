@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveProfileAvatarSrc as resolveAvatarSrc } from '../utils/profileAvatars.js';
+import { startVoiceChatSession } from '../services/voiceChatService.js';
 
 const asset = '/assets/liars-dice/gameplay/';
 
@@ -414,7 +415,16 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const [chatOpen, setChatOpen] = useState(false);
   const [chatDraft, setChatDraft] = useState('');
   const chatListRef = useRef(null);
+  const voiceSessionRef = useRef(null);
   const canUseChat = Boolean(currentMatchId && !botsMatch);
+  const canUseVoice = canUseChat;
+  const [voiceState, setVoiceState] = useState({
+    connected: false,
+    connecting: false,
+    muted: true,
+    participants: [],
+    error: null,
+  });
 
   useEffect(() => {
     if (!roundResult || isFinished) {
@@ -476,6 +486,20 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   }, [chatOpen, chatMessages.length]);
 
   useEffect(() => {
+    if (!canUseVoice && voiceSessionRef.current) {
+      voiceSessionRef.current.stop();
+      voiceSessionRef.current = null;
+    }
+
+    return () => {
+      if (voiceSessionRef.current) {
+        voiceSessionRef.current.stop();
+        voiceSessionRef.current = null;
+      }
+    };
+  }, [currentMatchId, canUseVoice]);
+
+  useEffect(() => {
     if (isFinished) navigation?.goWin?.();
   }, [isFinished, navigation]);
 
@@ -501,6 +525,26 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
     const result = await backendActions?.sendChatMessage?.({ matchId: currentMatchId, text });
     if (result !== null) setChatDraft('');
+  };
+
+  const toggleVoiceChat = async () => {
+    if (!canUseVoice || !currentMatchId) return;
+
+    if (!voiceSessionRef.current) {
+      setVoiceState((current) => ({ ...current, connecting: true, error: null }));
+      const session = startVoiceChatSession({
+        matchId: currentMatchId,
+        muted: false,
+        onState: (patch) => setVoiceState((current) => ({ ...current, ...patch })),
+        onError: (message) => setVoiceState((current) => ({ ...current, connecting: false, error: message })),
+      });
+      voiceSessionRef.current = session;
+      const started = await session.start();
+      if (!started) voiceSessionRef.current = null;
+      return;
+    }
+
+    voiceSessionRef.current.toggleMute();
   };
 
   const bidIsValid = isValidBid(currentBid, selectedQuantity, selectedFace);
@@ -564,6 +608,32 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           <span className="gameplay-chat-button__title">{tx('CHAT')}</span>
           <span className="gameplay-chat-button__count">{chatMessages.length}</span>
         </button>
+      ) : null}
+
+      {canUseVoice ? (
+        <button
+          className={`gameplay-voice-button ${voiceState.connected ? 'is-connected' : ''} ${voiceState.muted ? 'is-muted' : ''} ${voiceState.connected && !voiceState.muted ? 'is-live' : ''} ${voiceState.connecting ? 'is-connecting' : ''}`}
+          type="button"
+          onClick={toggleVoiceChat}
+          disabled={voiceState.connecting}
+          aria-pressed={voiceState.connected && !voiceState.muted}
+          title={voiceState.connected ? tx(voiceState.muted ? 'Mic muted' : 'Mic live') : tx('Join voice chat')}
+        >
+          <img
+            className="gameplay-voice-button__skin"
+            src="/assets/liars-dice/gameplay/chat-button-red.png"
+            alt=""
+            draggable="false"
+          />
+          <span className="gameplay-voice-button__icon" aria-hidden="true">🎙</span>
+          <span className="gameplay-voice-button__title">
+            {voiceState.connecting ? tx('CONNECTING') : tx(voiceState.connected ? (voiceState.muted ? 'MUTED' : 'LIVE') : 'VOICE')}
+          </span>
+        </button>
+      ) : null}
+
+      {canUseVoice && voiceState.error ? (
+        <div className="gameplay-voice-status gameplay-voice-status--error">{voiceState.error}</div>
       ) : null}
 
       <div className="gameplay-current-bid">
@@ -672,7 +742,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           <div className="gameplay-chat-drawer__header">
             <div>
               <div className="gameplay-chat-drawer__title">{tx('MATCH CHAT')}</div>
-              <div className="gameplay-chat-drawer__subtitle">{tx('Normal mode only')}</div>
+              <div className="gameplay-chat-drawer__subtitle">{tx('Normal mode only')} · {tx('Voice')}: {tx(voiceState.connected ? (voiceState.muted ? 'Muted' : 'Live') : 'Off')}</div>
             </div>
             <button className="gameplay-chat-drawer__close" type="button" onClick={() => setChatOpen(false)} aria-label={tx('Close chat')}>×</button>
           </div>
