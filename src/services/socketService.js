@@ -10,9 +10,51 @@ let gameplayCleanup = null;
 
 function normalizeSocketError(error) {
   if (!error) return new Error('Socket error');
-  if (error instanceof Error) return error;
   if (typeof error === 'string') return new Error(error);
-  return new Error(error.message || error.reason || 'Socket error');
+
+  const message = error.message
+    || error.reason
+    || error.description
+    || error.data?.message
+    || error.payload?.message
+    || 'Socket error';
+
+  if (error instanceof Error) {
+    error.message = error.message || message;
+    return error;
+  }
+
+  const normalizedError = new Error(message);
+  normalizedError.data = error.data || error.payload || null;
+  normalizedError.code = error.code || error.status || null;
+  return normalizedError;
+}
+
+function isGameStartedPayload(payload = {}) {
+  const status = String(payload.status || payload.matchStatus || payload.match?.status || '').toLowerCase();
+  const stage = String(payload.stage || payload.matchmaking?.stage || '').toLowerCase();
+
+  return Boolean(
+    payload.shouldEnterGame
+    || stage === 'game_started'
+    || status === 'active'
+    || status === 'in_progress'
+    || status === 'started'
+  );
+}
+
+function routeMatchmakingResponse(response = {}, handlers = {}) {
+  if (isGameStartedPayload(response)) {
+    handlers.onGameStarted?.(response);
+    return;
+  }
+
+  if (response?.matchId || response?.match?.id || response?.match?.matchId) {
+    handlers.onMatchFound?.(response);
+    return;
+  }
+
+  handlers.onQueueUpdate?.(response || { success: true });
 }
 
 function getSocket() {
@@ -163,12 +205,7 @@ export function startSocketMatchmaking(payload = {}, handlers = {}) {
         return;
       }
 
-      if (response?.matchId) {
-        handlers.onMatchFound?.(response);
-        return;
-      }
-
-      handlers.onQueueUpdate?.(response || { success: true });
+      routeMatchmakingResponse(response, handlers);
     });
   };
 

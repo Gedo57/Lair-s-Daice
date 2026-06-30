@@ -889,7 +889,38 @@ function unwrapBackendPayload(payload = {}) {
   return nested ? { ...payload, ...nested } : payload;
 }
 
+function isActiveMatchStatus(value) {
+  const normalized = String(value || '').toLowerCase();
+  return ['active', 'in_progress', 'started', 'game_started'].includes(normalized);
+}
 
+function isGameStartedPayload(payload = {}) {
+  const source = unwrapBackendPayload(payload);
+  const match = source.match && typeof source.match === 'object' ? source.match : {};
+  return Boolean(
+    source.shouldEnterGame
+    || String(source.stage || '').toLowerCase() === 'game_started'
+    || isActiveMatchStatus(source.status)
+    || isActiveMatchStatus(source.matchStatus)
+    || isActiveMatchStatus(match.status)
+    || isActiveMatchStatus(match.matchStatus)
+  );
+}
+
+function mergeSocketMatchmakingState(source = {}, matchmakingSource = null) {
+  const merged = { ...(matchmakingSource || {}) };
+
+  ['queueId', 'matchId', 'roomId', 'playersFound', 'requiredPlayers', 'startsAt', 'countdownStartedAt', 'entryFeeCharged'].forEach((key) => {
+    if (source[key] !== undefined && merged[key] === undefined) merged[key] = source[key];
+  });
+
+  if (source.status !== undefined) merged.status = source.status;
+  if (source.stage !== undefined) merged.stage = source.stage;
+  if (source.matchStatus !== undefined) merged.matchStatus = source.matchStatus;
+  if (isGameStartedPayload(source)) merged.shouldEnterGame = true;
+
+  return merged;
+}
 
 function getChatMessageId(message = {}) {
   return String(
@@ -1159,11 +1190,12 @@ function extractGameDataPatch(payload = {}) {
 
   const matchmakingSource = source.matchmaking || source.queue || source.queueStatus || (hasTopLevelMatchmaking ? source : null);
   if (matchmakingSource) {
-    patch.serverMatchmaking = matchmakingSource;
-    const serverMatchmakingUi = normalizeMatchmakingUi(matchmakingSource);
+    const mergedMatchmakingSource = mergeSocketMatchmakingState(source, matchmakingSource);
+    patch.serverMatchmaking = mergedMatchmakingSource;
+    const serverMatchmakingUi = normalizeMatchmakingUi(mergedMatchmakingSource);
     if (serverMatchmakingUi) patch.matchmaking = serverMatchmakingUi;
-    if (matchmakingSource.selectedTable || matchmakingSource.table || matchmakingSource.tier) {
-      const selectedTableSource = matchmakingSource.selectedTable || matchmakingSource.table || matchmakingSource.tier;
+    if (mergedMatchmakingSource.selectedTable || mergedMatchmakingSource.table || mergedMatchmakingSource.tier) {
+      const selectedTableSource = mergedMatchmakingSource.selectedTable || mergedMatchmakingSource.table || mergedMatchmakingSource.tier;
       patch.selectedTable = normalizeSelectableRoom(selectedTableSource, 0) || selectedTableSource;
     }
   }
@@ -1691,7 +1723,12 @@ export default function App() {
     }
   };
 
-  const getErrorMessage = (error) => error?.message || error?.reason || error?.data?.message || 'Socket request failed';
+  const getErrorMessage = (error) => error?.message
+    || error?.reason
+    || error?.description
+    || error?.data?.message
+    || error?.payload?.message
+    || 'Realtime connection failed';
 
   const setChatStatus = (patch) => {
     setGameData((current) => ({
@@ -1731,10 +1768,15 @@ export default function App() {
     }));
   };
 
-  const applySocketMatchmakingPayload = (payload, actionName = 'matchmaking.socket') => {
+  const applySocketMatchmakingPayload = (payload, actionName = 'matchmaking.socket', options = {}) => {
     applyBackendPayloads(payload);
     setBackendStatus({ loading: false, error: null, lastAction: actionName });
-    navigation.goMatchmaking();
+
+    if (options.navigate !== false) {
+      if (isGameStartedPayload(payload)) navigation.goGameplay();
+      else navigation.goMatchmaking();
+    }
+
     return payload;
   };
 
@@ -1892,9 +1934,8 @@ export default function App() {
           onMatchFound: (socketPayload) => applySocketMatchmakingPayload(socketPayload, 'matchmaking.match_found'),
           onMatchCountdown: (socketPayload) => applySocketMatchmakingPayload(socketPayload, 'matchmaking.countdown'),
           onGameStarted: (socketPayload) => {
-            const applied = applySocketMatchmakingPayload(socketPayload, 'matchmaking.game_started');
-            navigation.goGameplay();
-            return applied;
+            clearChatForMatch();
+            return applySocketMatchmakingPayload(socketPayload, 'matchmaking.game_started');
           },
           onQueueCancelled: (socketPayload) => {
             applyBackendPayloads(socketPayload);
@@ -1902,24 +1943,31 @@ export default function App() {
             setBackendStatus({ loading: false, error: null, lastAction: 'matchmaking.cancel' });
             navigation.goRoomSelect();
           },
+          onDisconnect: () => {
+            setBackendStatus({
+              loading: false,
+              error: 'Realtime connection disconnected. Reconnecting...',
+              lastAction: 'matchmaking.socket_disconnect',
+            });
+          },
           onError: (error) => {
             setBackendStatus({ loading: false, error: getErrorMessage(error), lastAction: 'matchmaking.socket_error' });
           },
         });
 
-        const actionName = result?.matchId ? 'matchmaking.match_found' : 'matchmaking.queue_update';
+        const actionName = isGameStartedPayload(result)
+          ? 'matchmaking.game_started'
+          : result?.matchId || result?.match?.id || result?.match?.matchId
+            ? 'matchmaking.match_found'
+            : 'matchmaking.queue_update';
         return applySocketMatchmakingPayload(result, actionName);
       } catch (error) {
-        try {
-          const result = await backendBridge.startMatchmaking(payload);
-          applyBackendPayloads(result);
-          setBackendStatus({ loading: false, error: null, lastAction: 'matchmaking.start.rest_fallback' });
-          navigation.goMatchmaking();
-          return result;
-        } catch (restError) {
-          setBackendStatus({ loading: false, error: getErrorMessage(restError) || getErrorMessage(error), lastAction: 'matchmaking.start' });
-          return null;
-        }
+        setBackendStatus({
+          loading: false,
+          error: `Realtime matchmaking is required. ${getErrorMessage(error)}`,
+          lastAction: 'matchmaking.start.socket_required',
+        });
+        return null;
       }
     },
     getMatchmakingStatus: () => runBackendAction('matchmaking.status', () => backendBridge.getMatchmakingStatus()),

@@ -76,6 +76,22 @@ function countdownSeconds(ms) {
   return Math.max(0, Math.ceil(Number(ms || 0) / 1000));
 }
 
+function isActiveMatchStatus(value) {
+  const normalized = String(value || '').toLowerCase();
+  return ['active', 'in_progress', 'started', 'game_started'].includes(normalized);
+}
+
+function hasGameplayStarted(serverMatchmaking = {}, match = null) {
+  return Boolean(
+    serverMatchmaking?.shouldEnterGame
+    || String(serverMatchmaking?.stage || '').toLowerCase() === 'game_started'
+    || isActiveMatchStatus(serverMatchmaking?.status)
+    || isActiveMatchStatus(serverMatchmaking?.matchStatus)
+    || isActiveMatchStatus(match?.status)
+    || isActiveMatchStatus(match?.matchStatus)
+  );
+}
+
 
 export default function Matchmaking({ navigation, data, backendActions, backendStatus, i18n }) {
   const tx = i18n?.tx || ((value) => value);
@@ -91,6 +107,8 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
   const countdownMs = getCountdownRemainingMs(serverMatchmaking, match, clockTick);
   const countdown = countdownSeconds(countdownMs);
   const isCountdown = Boolean(currentMatchId && (rawQueueStatus.includes('starting') || rawQueueStatus.includes('countdown') || match?.status === 'countdown') && countdown > 0);
+  const gameStarted = Boolean(currentMatchId && hasGameplayStarted(serverMatchmaking, match));
+  const canEnterGameplay = Boolean(currentMatchId && gameStarted && !isCountdown);
   const signalTitle = String(serverMatchmaking?.quality || serverMatchmaking?.matchQuality || 'EXCELLENT').toUpperCase();
   const signalSub = serverMatchmaking?.ping ? `${serverMatchmaking.ping}ms` : '45ms';
   const filters = matchmaking.filters || [];
@@ -108,14 +126,18 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
   }, [isCountdown]);
 
   const centerTitle = currentMatchId
-    ? isCountdown
-      ? `MATCH STARTS IN ${countdown}`
-      : 'MATCH FOUND'
+    ? canEnterGameplay
+      ? 'MATCH STARTED'
+      : isCountdown
+        ? `MATCH STARTS IN ${countdown}`
+        : 'MATCH FOUND'
     : 'FINDING OPPONENTS';
   const centerCopy = currentMatchId
-    ? isCountdown
-      ? 'Entry fee charged. Cancel now to refund before start.'
-      : 'Your table is ready. Enter the match.'
+    ? canEnterGameplay
+      ? 'Gameplay is ready. Entering the table.'
+      : isCountdown
+        ? 'Entry fee charged. Waiting for server start.'
+        : 'Table found. Waiting for game start signal.'
     : 'Looking for players with similar skill';
 
   const buildOpponentSlot = (index, className) => {
@@ -147,7 +169,7 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
 
   const startOrEnterMatch = () => {
     if (currentMatchId) {
-      if (!isCountdown) navigation.goGameplay();
+      if (canEnterGameplay) navigation.goGameplay();
       return;
     }
     if (isStarting || isSearching) return;
@@ -241,10 +263,10 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
         </div>
       </div>
 
-      <button className="matchmaking-action matchmaking-action--keep" type="button" onClick={startOrEnterMatch} disabled={isStarting || isCountdown}>
+      <button className="matchmaking-action matchmaking-action--keep" type="button" onClick={startOrEnterMatch} disabled={isStarting || isCountdown || Boolean(currentMatchId && !canEnterGameplay)}>
         <img className="matchmaking-action__skin" src={'/assets/liars-dice/room-select/bottom-play.png'} alt="" draggable="false" />
-        <span className="matchmaking-action__title">{tx(currentMatchId ? isCountdown ? `STARTING IN ${countdown}` : 'ENTER MATCH' : isStarting ? 'MATCHING...' : isSearching ? 'KEEP SEARCHING' : 'START MATCH')}</span>
-        <span className="matchmaking-action__subtitle">{tx(currentMatchId ? isCountdown ? 'Starting automatically' : 'Match is ready' : isSearching ? 'Waiting for real players' : "We'll find you the best table")}</span>
+        <span className="matchmaking-action__title">{tx(currentMatchId ? isCountdown ? `STARTING IN ${countdown}` : canEnterGameplay ? 'ENTER MATCH' : 'WAITING FOR START' : isStarting ? 'MATCHING...' : isSearching ? 'KEEP SEARCHING' : 'START MATCH')}</span>
+        <span className="matchmaking-action__subtitle">{tx(currentMatchId ? isCountdown ? 'Starting automatically' : canEnterGameplay ? 'Match is ready' : 'Server is preparing the table' : isSearching ? 'Waiting for real players' : "We'll find you the best table")}</span>
       </button>
 
       <button className="matchmaking-action matchmaking-action--cancel" type="button" onClick={() => backendActions?.cancelMatchmaking?.() || navigation.goRoomSelect()} disabled={backendStatus?.loading && backendStatus.lastAction === 'matchmaking.cancel'}>
