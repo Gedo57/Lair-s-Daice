@@ -214,28 +214,77 @@ function formatBackendRange(min, max) {
 function normalizeBackendPricing(room = {}) {
   const pricing = room.pricing && typeof room.pricing === 'object' ? room.pricing : {};
   const rewards = room.rewards && typeof room.rewards === 'object' ? room.rewards : {};
+  const pot = room.pot && typeof room.pot === 'object' ? room.pot : {};
 
   const minBuyIn = getFirstValue(pricing, ['minBuyIn', 'buyInMin']) ?? getFirstValue(room, ['minBuyIn', 'buyInMin']);
   const maxBuyIn = getFirstValue(pricing, ['maxBuyIn', 'buyInMax']) ?? getFirstValue(room, ['maxBuyIn', 'buyInMax']);
-
+  const entryFee = getFirstValue(pricing, ['entryFee', 'fee', 'buyInAmount', 'buyInCoins'])
+    ?? getFirstValue(room, ['entryFee', 'fee', 'buyInAmount', 'buyInCoins']);
 
   const buyIn = getFirstValue(pricing, ['buyIn', 'buyInRange', 'buyInLabel', 'entryFeeLabel'])
     || getFirstValue(room, ['buyIn', 'buyInRange', 'buyInLabel', 'entryFeeLabel'])
     || formatBackendRange(minBuyIn, maxBuyIn)
-    || formatBackendAmount(getFirstValue(pricing, ['entryFee', 'fee']) ?? getFirstValue(room, ['entryFee', 'fee']));
+    || formatBackendAmount(entryFee);
+
+  const grossPotPreview = getFirstValue(pricing, ['grossPotPreview', 'grossPot', 'totalPotPreview', 'totalPot'])
+    ?? getFirstValue(rewards, ['grossPotPreview', 'grossPot', 'totalPotPreview', 'totalPot'])
+    ?? getFirstValue(pot, ['grossPotPreview', 'grossPot', 'totalPotPreview', 'totalPot'])
+    ?? getFirstValue(room, ['grossPotPreview', 'grossPot', 'totalPotPreview', 'totalPot']);
+  const platformFeePreview = getFirstValue(pricing, ['platformFeePreview', 'platformFee'])
+    ?? getFirstValue(rewards, ['platformFeePreview', 'platformFee'])
+    ?? getFirstValue(pot, ['platformFeePreview', 'platformFee'])
+    ?? getFirstValue(room, ['platformFeePreview', 'platformFee']);
+  const netPotPreview = getFirstValue(pricing, ['netPotPreview', 'netPot'])
+    ?? getFirstValue(rewards, ['netPotPreview', 'netPot'])
+    ?? getFirstValue(pot, ['netPotPreview', 'netPot'])
+    ?? getFirstValue(room, ['netPotPreview', 'netPot']);
+  const winnerPayoutPreview = getFirstValue(rewards, ['winnerPayoutPreview', 'winnerPayout', 'winnerReward'])
+    ?? getFirstValue(pricing, ['winnerPayoutPreview', 'winnerPayout', 'winnerReward'])
+    ?? getFirstValue(pot, ['winnerPayoutPreview', 'winnerPayout', 'winnerReward'])
+    ?? getFirstValue(room, ['winnerPayoutPreview', 'winnerPayout', 'winnerReward', 'winReward']);
+
+  const minCoinBet = getFirstValue(pricing, ['minCoinBet', 'minBidCoins', 'stakeMin']) ?? getFirstValue(room, ['minCoinBet', 'minBidCoins', 'stakeMin']);
+  const maxCoinBet = getFirstValue(pricing, ['maxCoinBet', 'maxBidCoins', 'stakeMax']) ?? getFirstValue(room, ['maxCoinBet', 'maxBidCoins', 'stakeMax']);
+  const defaultCoinBet = getFirstValue(pricing, ['defaultCoinBet', 'defaultBidCoins']) ?? getFirstValue(room, ['defaultCoinBet', 'defaultBidCoins']);
+  const bidCoinStep = getFirstValue(pricing, ['bidCoinStep', 'coinBetStep']) ?? getFirstValue(room, ['bidCoinStep', 'coinBetStep']);
+  const coinBetOptions = Array.isArray(pricing.coinBetOptions) && pricing.coinBetOptions.length
+    ? pricing.coinBetOptions
+    : Array.isArray(room.coinBetOptions) ? room.coinBetOptions : undefined;
 
   return {
     pricing: {
       ...pricing,
       minBuyIn,
       maxBuyIn,
-      entryFee: getFirstValue(pricing, ['entryFee', 'fee']) ?? getFirstValue(room, ['entryFee', 'fee']),
+      entryFee,
+      buyInAmount: getFirstValue(pricing, ['buyInAmount', 'buyInCoins']) ?? getFirstValue(room, ['buyInAmount', 'buyInCoins']) ?? entryFee,
       buyIn,
       buyInRange: getFirstValue(pricing, ['buyInRange']) || buyIn,
+      paidPlayerCountPreview: getFirstValue(pricing, ['paidPlayerCountPreview']) ?? getFirstValue(room, ['paidPlayerCountPreview']),
+      grossPotPreview,
+      platformFeePreview,
+      netPotPreview,
+      winnerPayoutPreview,
+      winnerPayout: getFirstValue(pricing, ['winnerPayout']) ?? getFirstValue(rewards, ['winnerPayout']) ?? getFirstValue(room, ['winnerPayout']) ?? winnerPayoutPreview,
+      winnerReward: getFirstValue(pricing, ['winnerReward']) ?? getFirstValue(rewards, ['winnerReward']) ?? getFirstValue(room, ['winnerReward']) ?? winnerPayoutPreview,
+      minCoinBet,
+      maxCoinBet,
+      defaultCoinBet,
+      bidCoinStep,
+      coinBetOptions,
+      potMode: getFirstValue(pricing, ['potMode']) ?? getFirstValue(room, ['potMode']),
+      payoutMode: getFirstValue(pricing, ['payoutMode']) ?? getFirstValue(room, ['payoutMode']),
+      winnerRewardMode: getFirstValue(pricing, ['winnerRewardMode']) ?? getFirstValue(rewards, ['winnerRewardMode']) ?? getFirstValue(room, ['winnerRewardMode']) ?? 'pot',
     },
     rewards: {
       ...rewards,
-      winnerReward: getFirstValue(rewards, ['winnerReward', 'winReward']) ?? getFirstValue(room, ['winnerReward', 'winReward']),
+      grossPotPreview,
+      platformFeePreview,
+      netPotPreview,
+      winnerPayoutPreview,
+      winnerPayout: getFirstValue(rewards, ['winnerPayout']) ?? getFirstValue(pricing, ['winnerPayout']) ?? getFirstValue(room, ['winnerPayout']) ?? winnerPayoutPreview,
+      winnerReward: getFirstValue(rewards, ['winnerReward', 'winReward']) ?? getFirstValue(pricing, ['winnerReward']) ?? getFirstValue(room, ['winnerReward', 'winReward']) ?? winnerPayoutPreview,
+      winnerRewardMode: getFirstValue(rewards, ['winnerRewardMode']) ?? getFirstValue(pricing, ['winnerRewardMode']) ?? getFirstValue(room, ['winnerRewardMode']) ?? 'pot',
       xpWin: getFirstValue(rewards, ['xpWin']) ?? getFirstValue(room, ['xpWin']),
       xpLose: getFirstValue(rewards, ['xpLose']) ?? getFirstValue(room, ['xpLose']),
     },
@@ -1114,12 +1163,14 @@ function extractGameDataPatch(payload = {}) {
     const serverMatchmakingUi = normalizeMatchmakingUi(matchmakingSource);
     if (serverMatchmakingUi) patch.matchmaking = serverMatchmakingUi;
     if (matchmakingSource.selectedTable || matchmakingSource.table || matchmakingSource.tier) {
-      patch.selectedTable = matchmakingSource.selectedTable || matchmakingSource.table || matchmakingSource.tier;
+      const selectedTableSource = matchmakingSource.selectedTable || matchmakingSource.table || matchmakingSource.tier;
+      patch.selectedTable = normalizeSelectableRoom(selectedTableSource, 0) || selectedTableSource;
     }
   }
 
   if (source.selectedTable || source.table || source.tier || source.defaultTable || source.playNowTable) {
-    patch.selectedTable = source.selectedTable || source.table || source.tier || source.defaultTable || source.playNowTable;
+    const selectedTableSource = source.selectedTable || source.table || source.tier || source.defaultTable || source.playNowTable;
+    patch.selectedTable = normalizeSelectableRoom(selectedTableSource, 0) || selectedTableSource;
   }
 
   if (source.matchId) patch.currentMatchId = source.matchId;

@@ -3,6 +3,31 @@ import ProfileHud from '../components/ProfileHud.jsx';
 const asset = '/assets/liars-dice/create-room/';
 const shared = '/assets/liars-dice/room-select/';
 
+const STAKE_OPTIONS = [500, 1000, 5000, 10000];
+const COIN_BET_BY_STAKE = {
+  500: [100, 200, 500],
+  1000: [200, 500, 1000],
+  5000: [1000, 2000, 5000],
+  10000: [2000, 5000, 10000],
+};
+
+function formatStakeOption(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return String(value);
+  if (number >= 1000) return `${Number((number / 1000).toFixed(1))}K`;
+  return new Intl.NumberFormat('en-US').format(number);
+}
+
+function normalizeStake(value, fallback = 500) {
+  const number = Number(String(value || '').replace(/,/g, ''));
+  if (!Number.isFinite(number)) return fallback;
+  return STAKE_OPTIONS.includes(number) ? number : fallback;
+}
+
+function buildCoinBetOptionsForStake(stake) {
+  return COIN_BET_BY_STAKE[stake] || COIN_BET_BY_STAKE[500];
+}
+
 function TopHud({ user, wallet }) {
   return (
     <>
@@ -51,9 +76,11 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const [selectedCups, setSelectedCups] = useState('5');
   const [selectedTimer, setSelectedTimer] = useState(settings.selectedTimer || '15s');
   const [selectedRoomMode, setSelectedRoomMode] = useState(String(settings.selectedRoomMode || settings.roomMode || 'normal').toLowerCase() === 'bots' ? 'bots' : 'normal');
+  const [selectedBuyIn, setSelectedBuyIn] = useState(normalizeStake(settings.buyInAmount || settings.buyInCoins || settings.customBuyIn || settings.customStake || settings.entryFee, 500));
   const [isPrivate, setIsPrivate] = useState(settings.isPrivate ?? true);
 
   const isBotsMode = selectedRoomMode === 'bots';
+  const coinBetOptionsForStake = buildCoinBetOptionsForStake(selectedBuyIn);
   const selectedRulesCopy = 'Rules: 5 dice each • 1s are wild until 1s are called • bid or call liar only';
 
   const currentSettings = {
@@ -68,6 +95,19 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
     dicePerPlayer: 5,
     selectedTimer,
     turnTimer: Number(String(selectedTimer).replace(/[^0-9]/g, '')) || 15,
+    buyInAmount: selectedBuyIn,
+    buyInCoins: selectedBuyIn,
+    customBuyIn: selectedBuyIn,
+    customStake: selectedBuyIn,
+    entryFee: selectedBuyIn,
+    minCoinBet: coinBetOptionsForStake[0],
+    minBidCoins: coinBetOptionsForStake[0],
+    maxCoinBet: coinBetOptionsForStake[coinBetOptionsForStake.length - 1],
+    maxBidCoins: coinBetOptionsForStake[coinBetOptionsForStake.length - 1],
+    defaultCoinBet: coinBetOptionsForStake[0],
+    defaultBidCoins: coinBetOptionsForStake[0],
+    bidCoinStep: selectedBuyIn >= 5000 ? 500 : 100,
+    coinBetOptions: coinBetOptionsForStake,
     bidStyle: 'Official Rules',
     selectedRoomMode,
     roomMode: selectedRoomMode,
@@ -139,6 +179,22 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
             <span className="create-room-label">{tx('TURN TIMER')}</span>
             <div className="create-room-optionRow create-room-optionRow--timer">
               {timers.map((value) => <OptionButton key={value} value={value} active={value === selectedTimer} tx={tx} onClick={createSelectedHandler(setSelectedTimer, value)} />)}
+            </div>
+          </div>
+
+          <div className="create-room-block create-room-block--bid">
+            <span className="create-room-label">{tx('BUY-IN')}</span>
+            <div className="create-room-optionRow create-room-optionRow--bid">
+              {STAKE_OPTIONS.map((value) => (
+                <OptionButton
+                  key={value}
+                  value={formatStakeOption(value)}
+                  active={value === selectedBuyIn}
+                  className="create-room-option--wide"
+                  tx={tx}
+                  onClick={createSelectedHandler(setSelectedBuyIn, value)}
+                />
+              ))}
             </div>
           </div>
 

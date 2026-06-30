@@ -6,7 +6,7 @@ const asset = '/assets/liars-dice/gameplay/';
 
 const FALLBACK_DICE = [4, 2, 5, 5, 1, 1];
 const faceOptions = [1, 2, 3, 4, 5, 6];
-const quantityOptions = [1, 2, 3, 4, 5, 6, 7];
+const DEFAULT_COIN_BET_OPTIONS = [100, 200, 500, 1000];
 const PANEL_SKINS = {
   left: 'bb3.png',
   center: 'bb2.png',
@@ -55,7 +55,181 @@ function samePlayer(left, right) {
 
 function formatTimer(value) {
   const timer = toNumber(value, 15);
-  return `${Math.max(0, Math.trunc(timer))}S`;
+  return `${Math.max(0, Math.trunc(timer))}s`;
+}
+
+function formatAmount(value, fallback = '0') {
+  const sanitized = typeof value === 'string' ? value.replace(/,/g, '').trim() : value;
+  const number = Number(sanitized);
+  if (!Number.isFinite(number)) return fallback;
+  return number.toLocaleString('en-US');
+}
+
+function getPlayerStack(player, fallback = 0) {
+  const values = [
+    player?.stack,
+    player?.coins,
+    player?.coinBalance,
+    player?.walletCoins,
+    player?.chipStack,
+    player?.balance,
+  ];
+
+  for (const value of values) {
+    const sanitized = typeof value === 'string' ? value.replace(/,/g, '').trim() : value;
+    const number = Number(sanitized);
+    if (Number.isFinite(number)) return number;
+  }
+
+  return fallback;
+}
+
+function readNumber(value, fallback = undefined) {
+  if (value === undefined || value === null || value === '') return fallback;
+  const sanitized = typeof value === 'string' ? value.replace(/,/g, '').trim() : value;
+  const number = Number(sanitized);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function firstPositiveNumber(...values) {
+  for (const value of values) {
+    const number = readNumber(value);
+    if (Number.isFinite(number) && number >= 0) return number;
+  }
+  return undefined;
+}
+
+function getBidControls(match = {}) {
+  if (match?.bidControls && typeof match.bidControls === 'object') return match.bidControls;
+  if (match?.bidRules && typeof match.bidRules === 'object') return match.bidRules;
+  return {};
+}
+
+function cleanCoinOptions(options = [], min = 0, max = Infinity) {
+  if (!Array.isArray(options)) return [];
+  return Array.from(new Set(options
+    .map((value) => readNumber(value))
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .map((value) => Math.trunc(value))))
+    .filter((value) => value >= min && value <= max)
+    .sort((left, right) => left - right);
+}
+
+function getMinimumCoinBet(match = {}) {
+  const controls = getBidControls(match);
+  return firstPositiveNumber(
+    controls.nextMinCoinAmount,
+    controls.minCoinAmount,
+    controls.minCoinBet,
+    controls.minBidCoins,
+    match?.nextMinCoinAmount,
+    match?.minCoinBet,
+    match?.minBidCoins,
+    match?.pricing?.minCoinBet,
+    match?.pricing?.minBidCoins,
+    1,
+  );
+}
+
+function getMaximumCoinBet(match = {}) {
+  const controls = getBidControls(match);
+  const value = firstPositiveNumber(
+    controls.viewerMaxCoinAmount,
+    controls.maxCoinAmount,
+    controls.maxCoinBet,
+    controls.maxBidCoins,
+    match?.viewerMaxCoinAmount,
+    match?.maxCoinBet,
+    match?.maxBidCoins,
+    match?.pricing?.maxCoinBet,
+    match?.pricing?.maxBidCoins,
+  );
+  return value ?? Infinity;
+}
+
+function getCoinBetOptions(match = {}) {
+  const controls = getBidControls(match);
+  const min = getMinimumCoinBet(match);
+  const max = getMaximumCoinBet(match);
+  const rawOptions = Array.isArray(controls.coinBetOptions) && controls.coinBetOptions.length
+    ? controls.coinBetOptions
+    : Array.isArray(match?.coinBetOptions) && match.coinBetOptions.length
+      ? match.coinBetOptions
+      : Array.isArray(match?.pricing?.coinBetOptions) && match.pricing.coinBetOptions.length
+        ? match.pricing.coinBetOptions
+        : DEFAULT_COIN_BET_OPTIONS;
+  const cleaned = cleanCoinOptions(rawOptions, min, max);
+  if (cleaned.length) return cleaned;
+
+  return cleanCoinOptions([min, match?.defaultCoinBet, match?.pricing?.defaultCoinBet, max], min, max);
+}
+
+function getMatchCoinBet(match) {
+  const controls = getBidControls(match);
+  const current = firstPositiveNumber(
+    match?.currentBid?.coinBet,
+    match?.currentBid?.coinAmount,
+    match?.currentBid?.bidAmount,
+    match?.currentBid?.betAmount,
+    match?.currentBid?.amount,
+    match?.currentBid?.coins,
+    match?.currentBidCoinBet,
+    match?.currentBidAmount,
+    match?.currentCoinBet,
+    match?.currentBet,
+    match?.coinBet,
+    match?.betAmount,
+    match?.currentRoundCoinBet,
+    controls.defaultCoinAmount,
+    controls.minCoinAmount,
+    match?.defaultCoinBet,
+    match?.pricing?.defaultCoinBet,
+  );
+  return current ?? getMinimumCoinBet(match);
+}
+
+function readPotValue(value) {
+  if (value && typeof value === 'object') {
+    return firstPositiveNumber(
+      value.grossPot,
+      value.grossPotPreview,
+      value.totalPot,
+      value.totalPotPreview,
+      value.currentPot,
+      value.netPot,
+      value.netPotPreview,
+      value.winnerPayout,
+      value.winnerPayoutPreview,
+    );
+  }
+  return readNumber(value);
+}
+
+function getTotalPot(match) {
+  const values = [
+    match?.totalPot,
+    match?.grossPot,
+    match?.grossPotPreview,
+    match?.tablePot,
+    match?.currentPot,
+    match?.pot,
+    match?.potCoins,
+    match?.totalCoinPot,
+    match?.pricing?.grossPot,
+    match?.pricing?.grossPotPreview,
+  ];
+
+  for (const value of values) {
+    const number = readPotValue(value);
+    if (Number.isFinite(number) && number >= 0) return number;
+  }
+
+  return 0;
+}
+
+function getQuantityValues(totalDice) {
+  const max = Math.max(1, Math.min(20, toNumber(totalDice, 1)));
+  return Array.from({ length: max }, (_, index) => index + 1);
 }
 
 function getLiveTurnSeconds(match, tick = Date.now()) {
@@ -73,8 +247,10 @@ function getLiveTurnSeconds(match, tick = Date.now()) {
   return toNumber(match.turnTimer, 15);
 }
 
-function Die({ value, className = '' }) {
-  return <img className={className} src={`${asset}n${clampDie(value)}.png`} alt="" draggable="false" />;
+function Die({ value, className = '', variant = 'white' }) {
+  const die = clampDie(value);
+  const filename = variant === 'red' ? `n${die}${die}.png` : `n${die}.png`;
+  return <img className={className} src={`${asset}${filename}`} alt="" draggable="false" />;
 }
 
 function HiddenDie({ className = '' }) {
@@ -110,6 +286,7 @@ function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = fal
   if (!player) return null;
 
   const count = toNumber(player?.diceCount ?? player?.lives ?? player?.dice?.length, 0);
+  const stack = getPlayerStack(player, 0);
   const isEliminated = Boolean(player?.eliminated || player?.active === false || count <= 0);
   const botClass = isBotPlayer(player) ? 'gameplay-player--bot' : '';
 
@@ -118,9 +295,9 @@ function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = fal
       <img className="gameplay-player__skin" src={`${asset}${skin}`} alt="" draggable="false" />
       <img className="gameplay-player__avatar" src={resolveAvatarSrc(player)} alt="" draggable="false" />
       <span className="gameplay-player__name">{playerName(player, fallbackName)}</span>
-      <div className="gameplay-player__countRow">
-        <Die value={4} className="gameplay-player__countDie" />
-        <span className="gameplay-player__countValue">{count || '-'}</span>
+      <div className="gameplay-player__coinRow">
+        <img className="gameplay-player__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
+        <span className="gameplay-player__coinValue">{formatAmount(stack)}</span>
       </div>
       <div className="gameplay-player__diceRow">
         {renderDice(player, 'gameplay-player__miniDie', 5)}
@@ -382,7 +559,7 @@ function isValidBid(currentBid, quantity, face) {
 export default function Gameplay({ navigation, data, backendActions, backendStatus, i18n }) {
   const tx = i18n?.tx || ((value) => value);
   const isChinese = i18n?.language === 'zh';
-  const bidSelectorSkin = isChinese ? '/assets/liars-dice/localized/zh/gameplay-bid-panel.png' : `${asset}234.png`;
+  const bidSelectorSkin = `${asset}PP22.png`;
   const match = data?.match || null;
   const currentMatchId = data?.currentMatchId || match?.id || match?.matchId || null;
   const user = data?.user || {};
@@ -444,8 +621,23 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   }, [match?.id, match?.status, match?.turnDeadlineAt]);
 
   const defaultBid = useMemo(() => nextDefaultBid(currentBid, totalDice || 7), [currentBid, totalDice]);
+  const quantityValues = useMemo(() => getQuantityValues(totalDice), [totalDice]);
+  const dynamicCoinBetOptions = useMemo(() => getCoinBetOptions(match), [
+    match?.id,
+    match?.matchId,
+    match?.bidControls,
+    match?.bidRules,
+    match?.coinBetOptions,
+    match?.pricing?.coinBetOptions,
+    match?.currentBid?.coinBet,
+    match?.currentBid?.coinAmount,
+    match?.currentBid?.betAmount,
+    match?.currentBidCoinBet,
+    match?.currentBidAmount,
+  ]);
   const [selectedQuantity, setSelectedQuantity] = useState(defaultBid.quantity || 1);
   const [selectedFace, setSelectedFace] = useState(defaultBid.face || 1);
+  const [selectedCoinBet, setSelectedCoinBet] = useState(getMatchCoinBet(match));
 
   useEffect(() => {
     if (!currentMatchId && match) return undefined;
@@ -465,9 +657,32 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   }, [currentMatchId]);
 
   useEffect(() => {
-    setSelectedQuantity(Math.max(1, Math.min(7, defaultBid.quantity || 1)));
+    setSelectedQuantity(Math.max(1, Math.min(quantityValues.length, defaultBid.quantity || 1)));
     setSelectedFace(Math.max(1, Math.min(6, defaultBid.face || 1)));
-  }, [defaultBid.quantity, defaultBid.face]);
+  }, [defaultBid.quantity, defaultBid.face, quantityValues.length]);
+
+  useEffect(() => {
+    const min = getMinimumCoinBet(match);
+    const max = getMaximumCoinBet(match);
+    const preferred = getMatchCoinBet(match);
+    const available = dynamicCoinBetOptions.filter((value) => value >= min && value <= max);
+    const nextValue = available.includes(preferred)
+      ? preferred
+      : available.find((value) => value >= preferred)
+        ?? available[0]
+        ?? Math.min(Math.max(preferred, min), max);
+    setSelectedCoinBet(nextValue);
+  }, [
+    dynamicCoinBetOptions.join('|'),
+    match?.currentBid?.coinBet,
+    match?.currentBid?.coinAmount,
+    match?.currentBid?.betAmount,
+    match?.currentBidCoinBet,
+    match?.currentBidAmount,
+    match?.coinBet,
+    match?.betAmount,
+    match?.currentRoundCoinBet,
+  ]);
 
   useEffect(() => {
     if (!canUseChat) {
@@ -506,7 +721,9 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const submitBid = () => backendActions?.submitGameAction?.({
     matchId: currentMatchId,
     type: 'bid',
-    bid: { quantity: selectedQuantity, face: selectedFace },
+    bid: { quantity: selectedQuantity, face: selectedFace, coinBet: selectedCoinBet, coinAmount: selectedCoinBet, betAmount: selectedCoinBet },
+    coinBet: selectedCoinBet,
+    betAmount: selectedCoinBet,
   });
 
   const submitSimpleAction = (type) => backendActions?.submitGameAction?.({ matchId: currentMatchId, type });
@@ -548,9 +765,15 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   };
 
   const bidIsValid = isValidBid(currentBid, selectedQuantity, selectedFace);
+  const minRequiredCoinBet = getMinimumCoinBet(match);
+  const maxAllowedCoinBet = getMaximumCoinBet(match);
+  const coinBetIsValid = selectedCoinBet >= minRequiredCoinBet && selectedCoinBet <= maxAllowedCoinBet;
   const challengeDisabled = !canCallLiar;
-  const bidDisabled = !canSubmitBid || !bidIsValid;
+  const bidDisabled = !canSubmitBid || !bidIsValid || !coinBetIsValid;
   const turnName = playerName(activePlayer, myTurn ? 'You' : 'Player');
+  const currentCoinBet = getMatchCoinBet(match);
+  const totalPot = getTotalPot(match);
+  const viewerStack = getPlayerStack(viewerPlayer || user, 0);
 
   return (
     <section className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'}`} aria-label={tx('Gameplay')}>
@@ -643,12 +866,15 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           {currentBid ? <span>{toNumber(currentBid.quantity, 0)} x</span> : <span>- x</span>}
           <Die value={currentBid?.face || 1} className="gameplay-current-bid__die" />
         </div>
-        <span className="gameplay-current-bid__total">{tx('TOTAL DICE IN PLAY')}: {totalDice || '-'}</span>
-        <span className="gameplay-current-bid__label">{tx('LAST ACTION')}</span>
-        <span className="gameplay-current-bid__copy">{describeLastAction(match, tx)}</span>
-        <div className="gameplay-current-bid__last">
-          {previousBid ? <span>{toNumber(previousBid.quantity, 0)} x</span> : <span>- x</span>}
-          <Die value={previousBid?.face || 1} className="gameplay-current-bid__lastDie" />
+        <span className="gameplay-current-bid__metaLabel gameplay-current-bid__metaLabel--coin">{tx('COIN BET')}</span>
+        <div className="gameplay-current-bid__coinRow">
+          <img className="gameplay-current-bid__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
+          <span className="gameplay-current-bid__coinValue">{formatAmount(currentCoinBet)}</span>
+        </div>
+        <span className="gameplay-current-bid__metaLabel gameplay-current-bid__metaLabel--pot">{tx('TOTAL POT')}</span>
+        <div className="gameplay-current-bid__potRow">
+          <img className="gameplay-current-bid__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
+          <span className="gameplay-current-bid__coinValue gameplay-current-bid__coinValue--pot">{formatAmount(totalPot)}</span>
         </div>
       </div>
 
@@ -690,26 +916,29 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
       <div className="gameplay-bid-selector">
         <img className="gameplay-bid-selector__skin" src={bidSelectorSkin} alt="" draggable="false" />
-        <div className="gameplay-bid-selector__quantityRow">
-          {quantityOptions.map((value) => {
-            const maxQuantity = Math.max(1, Math.min(7, totalDice || 7));
-            const disabled = value > maxQuantity;
-            return (
-              <button
-                key={`qty-${value}`}
-                type="button"
-                className={`gameplay-bid-selector__quantity gameplay-bid-selector__quantity--${value} ${value === selectedQuantity ? 'is-active' : ''}`}
-                onClick={() => setSelectedQuantity(value)}
-                aria-pressed={value === selectedQuantity}
-                disabled={disabled}
-              >
-                {value === selectedQuantity ? (
-                  <img className="gameplay-bid-selector__selectedSkin" src={`${asset}quantity-selected.png`} alt="" draggable="false" />
-                ) : null}
-                <span className="gameplay-bid-selector__quantityText">{value}</span>
-              </button>
-            );
-          })}
+        <div className="gameplay-bid-selector__quantityCaption">{tx('Total dice in play')}: {totalDice || '-'}</div>
+        <div className="gameplay-bid-selector__quantityTrack">
+          <img className="gameplay-bid-selector__quantityTrackSkin" src={`${asset}p4.png`} alt="" draggable="false" />
+          <div className="gameplay-bid-selector__quantityRow">
+            {quantityValues.map((value, index) => {
+              const left = quantityValues.length <= 1 ? 50 : 8 + ((index / (quantityValues.length - 1)) * 84);
+              return (
+                <button
+                  key={`qty-${value}`}
+                  type="button"
+                  className={`gameplay-bid-selector__quantity ${value === selectedQuantity ? 'is-active' : ''}`}
+                  style={{ left: `${left}%` }}
+                  onClick={() => setSelectedQuantity(value)}
+                  aria-pressed={value === selectedQuantity}
+                >
+                  {value === selectedQuantity ? (
+                    <img className="gameplay-bid-selector__selectedSkin" src={`${asset}p5.png`} alt="" draggable="false" />
+                  ) : null}
+                  <span className="gameplay-bid-selector__quantityText">{value}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="gameplay-bid-selector__faceRow">
           {faceOptions.map((value) => {
@@ -723,7 +952,25 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
                 aria-pressed={value === selectedFace}
                 disabled={disabled}
               >
-                <Die value={value} className="gameplay-bid-selector__die" />
+                <Die value={value} variant={value === selectedFace ? 'red' : 'white'} className="gameplay-bid-selector__die" />
+              </button>
+            );
+          })}
+        </div>
+        <div className="gameplay-bid-selector__coinBetRow">
+          {dynamicCoinBetOptions.map((value) => {
+            const disabled = value < minRequiredCoinBet || value > maxAllowedCoinBet;
+            return (
+              <button
+                key={`coin-${value}`}
+                type="button"
+                className={`gameplay-bid-selector__coinBtn ${value === selectedCoinBet ? 'is-active' : ''}`}
+                onClick={() => setSelectedCoinBet(value)}
+                aria-pressed={value === selectedCoinBet}
+                disabled={disabled}
+              >
+                <img className="gameplay-bid-selector__coinBtnSkin" src={`${asset}${value === selectedCoinBet ? 'p1.png' : 'p2.png'}`} alt="" draggable="false" />
+                <span className="gameplay-bid-selector__coinBtnText">{formatAmount(value)}</span>
               </button>
             );
           })}
@@ -734,8 +981,23 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         <img className="gameplay-action-tray__skin" src={`${asset}Panal.png`} alt="" draggable="false" />
       </div>
 
-      <ActionButton className="gameplay-action--raise" skin="B!.png" title="CONFIRM BID" subtitle={bidIsValid ? 'Submit your bid' : 'Bid must be higher'} onClick={submitBid} disabled={bidDisabled} tx={tx} />
+      <ActionButton className="gameplay-action--raise" skin="B!.png" title="CONFIRM BID" subtitle={bidIsValid ? (coinBetIsValid ? 'Submit your bid' : 'Coin bet out of range') : 'Bid must be higher'} onClick={submitBid} disabled={bidDisabled} tx={tx} />
       <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIAR" subtitle="Challenge the bid" onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
+
+      <div className="gameplay-stack-panel">
+        <img className="gameplay-stack-panel__skin" src={`${asset}p3.png`} alt="" draggable="false" />
+        <div className="gameplay-stack-panel__label">{tx('YOUR STACK')}</div>
+        <div className="gameplay-stack-panel__row gameplay-stack-panel__row--stack">
+          <img className="gameplay-stack-panel__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
+          <span className="gameplay-stack-panel__value">{formatAmount(viewerStack)}</span>
+        </div>
+        <div className="gameplay-stack-panel__divider" />
+        <div className="gameplay-stack-panel__label gameplay-stack-panel__label--pot">{tx('TOTAL POT')}</div>
+        <div className="gameplay-stack-panel__row gameplay-stack-panel__row--pot">
+          <img className="gameplay-stack-panel__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
+          <span className="gameplay-stack-panel__value">{formatAmount(totalPot)}</span>
+        </div>
+      </div>
 
       {canUseChat && chatOpen ? (
         <aside id="gameplay-chat-drawer" className="gameplay-chat-drawer" aria-label={tx('Match Chat')}>

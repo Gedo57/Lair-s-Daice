@@ -85,6 +85,7 @@ const createRoomSharedAssets = files(ASSET_FOLDERS.createRoom, [
 ]);
 
 const gameplayDiceAssets = files(ASSET_FOLDERS.gameplay, Array.from({ length: 6 }, (_, index) => `n${index + 1}.png`));
+const gameplayRedDiceAssets = files(ASSET_FOLDERS.gameplay, ['n11.png', 'n22.png', 'n33.png', 'n44.png', 'n55.png', 'n66.png']);
 
 export const ASSET_GROUPS = {
   starter: [
@@ -184,12 +185,18 @@ export const ASSET_GROUPS = {
     file(ASSET_FOLDERS.zh, 'gameplay-bid-panel.png'),
     ...profileHudAssets,
     ...gameplayDiceAssets,
+    ...gameplayRedDiceAssets,
     ...files(ASSET_FOLDERS.gameplay, [
       '11.png',
-      '234.png',
       '4.png',
       'BGBB.png',
       'Panal.png',
+      'PP22.png',
+      'p1.png',
+      'p2.png',
+      'p3.png',
+      'p4.png',
+      'coin.png',
       'quantity-selected.png',
       'tt.png',
       'bb1.png',

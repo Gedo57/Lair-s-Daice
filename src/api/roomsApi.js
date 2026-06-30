@@ -21,6 +21,26 @@ function looksLikeRoomCode(value) {
   return /^LD[-A-Z0-9]*\d/i.test(text) || /^[A-Z0-9]{4,10}$/.test(text);
 }
 
+function numericSetting(settings = {}, keys = [], fallback = undefined) {
+  for (const key of keys) {
+    const value = settings[key];
+    if (value === undefined || value === null || value === '') continue;
+    const numeric = Number(String(value).replace(/,/g, '').trim());
+    if (Number.isFinite(numeric)) return Math.max(0, Math.trunc(numeric));
+  }
+  return fallback;
+}
+
+function cleanCoinBetOptions(options = [], min = 0, max = Infinity) {
+  if (!Array.isArray(options)) return [];
+  return Array.from(new Set(options
+    .map((value) => Number(String(value).replace(/,/g, '').trim()))
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .map((value) => Math.trunc(value))))
+    .filter((value) => value >= min && value <= max)
+    .sort((left, right) => left - right);
+}
+
 function normalizeCreateRoomPayload(settings = {}) {
   const name = settings.name || settings.roomName || settings.title || 'Private Room';
   const tableId = settings.tableId || settings.selectedTableId || settings.tierId || (settings.isPrivate === false ? 'classic' : 'private');
@@ -32,11 +52,19 @@ function normalizeCreateRoomPayload(settings = {}) {
     settings.playMode ||
     (settings.botsEnabled || settings.playWithBots || settings.withBots ? 'bots' : 'normal')
   ).toLowerCase() === 'bots' ? 'bots' : 'normal';
+  const buyInAmount = numericSetting(settings, ['buyInAmount', 'buyInCoins', 'customBuyIn', 'customStake', 'stakeAmount', 'stake', 'entryFee']);
+  const minCoinBet = numericSetting(settings, ['minCoinBet', 'minBidCoins', 'minBet', 'minimumBet']);
+  const maxCoinBet = numericSetting(settings, ['maxCoinBet', 'maxBidCoins', 'maxBet', 'maximumBet']);
+  const defaultCoinBet = numericSetting(settings, ['defaultCoinBet', 'defaultBidCoins', 'defaultBet']);
+  const bidCoinStep = numericSetting(settings, ['bidCoinStep', 'coinBidStep']);
+  const coinBetOptions = cleanCoinBetOptions(settings.coinBetOptions, minCoinBet || 0, maxCoinBet || Infinity);
 
-  return {
+  const payload = {
     name,
     tableId,
     maxPlayers: safeMaxPlayers,
+    selectedPlayers: safeMaxPlayers,
+    requiredPlayers: safeMaxPlayers,
     playersCount: safeMaxPlayers,
     roomMode,
     gameMode: roomMode,
@@ -47,9 +75,34 @@ function normalizeCreateRoomPayload(settings = {}) {
     startingCups: 5,
     startingDice: 5,
     dicePerPlayer: 5,
+    dicePerRound: 5,
     turnTimer: Number(settings.turnTimer || String(settings.selectedTimer || '').replace(/[^0-9]/g, '') || 15) || 15,
     bidStyle: 'Official Rules',
   };
+
+  if (buyInAmount !== undefined) {
+    payload.buyInAmount = buyInAmount;
+    payload.buyInCoins = buyInAmount;
+    payload.customBuyIn = buyInAmount;
+    payload.customStake = buyInAmount;
+    payload.entryFee = buyInAmount;
+  }
+  if (minCoinBet !== undefined) {
+    payload.minCoinBet = minCoinBet;
+    payload.minBidCoins = minCoinBet;
+  }
+  if (maxCoinBet !== undefined) {
+    payload.maxCoinBet = maxCoinBet;
+    payload.maxBidCoins = maxCoinBet;
+  }
+  if (defaultCoinBet !== undefined) {
+    payload.defaultCoinBet = defaultCoinBet;
+    payload.defaultBidCoins = defaultCoinBet;
+  }
+  if (bidCoinStep !== undefined) payload.bidCoinStep = bidCoinStep;
+  if (coinBetOptions.length) payload.coinBetOptions = coinBetOptions;
+
+  return payload;
 }
 
 function normalizeJoinPayload(room = {}) {

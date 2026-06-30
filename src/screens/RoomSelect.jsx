@@ -23,22 +23,73 @@ function formatCardMultiplier(value) {
   return `${Number(number.toFixed(2))}x`;
 }
 
+function firstCardValue(...values) {
+  return values.find((value) => hasCardValue(value));
+}
+
+function formatCardRange(min, max) {
+  const minText = formatCardAmount(min);
+  const maxText = formatCardAmount(max);
+  if (minText === '—' && maxText === '—') return '—';
+  if (minText === maxText || maxText === '—') return minText;
+  if (minText === '—') return maxText;
+  return `${minText}-${maxText}`;
+}
+
 function buildCardInfo(room = {}) {
   const pricing = room.pricing && typeof room.pricing === 'object' ? room.pricing : {};
   const rewards = room.rewards && typeof room.rewards === 'object' ? room.rewards : {};
 
+  const buyInAmount = firstCardValue(pricing.buyInAmount, pricing.entryFee, room.buyInAmount, room.entryFee, room.fee, pricing.buyIn, room.buyIn);
+  const winnerPayout = firstCardValue(
+    rewards.winnerPayoutPreview,
+    rewards.winnerPayout,
+    rewards.winnerReward,
+    pricing.winnerPayoutPreview,
+    pricing.winnerPayout,
+    pricing.winnerReward,
+    room.winnerPayoutPreview,
+    room.winnerPayout,
+    room.winnerReward,
+    room.winReward,
+  );
+  const totalPot = firstCardValue(
+    pricing.grossPotPreview,
+    pricing.grossPot,
+    rewards.grossPotPreview,
+    rewards.grossPot,
+    room.grossPotPreview,
+    room.grossPot,
+    room.totalPotPreview,
+    room.totalPot,
+  );
+  const minCoinBet = firstCardValue(pricing.minCoinBet, pricing.minBidCoins, pricing.stakeMin, room.minCoinBet, room.minBidCoins, room.stakeMin);
+  const maxCoinBet = firstCardValue(pricing.maxCoinBet, pricing.maxBidCoins, pricing.stakeMax, room.maxCoinBet, room.maxBidCoins, room.stakeMax);
+
   return [
-    { label: 'Entry Fee', value: formatCardAmount(pricing.entryFee ?? room.entryFee ?? room.fee) },
-    { label: 'Winner Coins', value: formatCardAmount(rewards.winnerReward ?? room.winnerReward ?? room.winReward) },
+    { label: 'Buy-in', value: formatCardAmount(buyInAmount) },
+    { label: 'Winner Payout', value: formatCardAmount(winnerPayout) },
+    { label: 'Total Pot', value: formatCardAmount(totalPot) },
+    { label: 'Bet Range', value: formatCardRange(minCoinBet, maxCoinBet) },
     { label: 'XP Win', value: formatCardAmount(rewards.xpWin ?? room.xpWin) },
-    { label: 'XP Lose', value: formatCardAmount(rewards.xpLose ?? room.xpLose) },
-    { label: 'Multiplier', value: formatCardMultiplier(rewards.rewardMultiplier ?? room.rewardMultiplier ?? room.multiplier) },
   ];
 }
 
 function buildMatchmakingPayload(room = {}) {
   const pricing = room.pricing && typeof room.pricing === 'object' ? room.pricing : {};
   const rewards = room.rewards && typeof room.rewards === 'object' ? room.rewards : {};
+  const buyInAmount = pricing.buyInAmount ?? pricing.entryFee ?? room.buyInAmount ?? room.entryFee ?? room.fee ?? undefined;
+  const winnerPayout = rewards.winnerPayoutPreview
+    ?? rewards.winnerPayout
+    ?? rewards.winnerReward
+    ?? pricing.winnerPayoutPreview
+    ?? pricing.winnerPayout
+    ?? pricing.winnerReward
+    ?? room.winnerPayoutPreview
+    ?? room.winnerPayout
+    ?? room.winnerReward
+    ?? room.winReward
+    ?? undefined;
 
   return {
     tierId: room.tierId || room.id || room.key,
@@ -49,12 +100,30 @@ function buildMatchmakingPayload(room = {}) {
     pricing,
     rewards,
     buyIn: pricing.buyIn || pricing.buyInRange || room.buyIn || room.buyInLabel || room.entryFeeLabel || undefined,
+    buyInAmount,
+    buyInCoins: buyInAmount,
     minBuyIn: pricing.minBuyIn ?? room.minBuyIn,
     maxBuyIn: pricing.maxBuyIn ?? room.maxBuyIn,
     maxPlayers: room.maxPlayers,
     minPlayers: room.minPlayers,
-    entryFee: pricing.entryFee ?? room.entryFee ?? room.fee ?? undefined,
-    winnerReward: rewards.winnerReward ?? room.winnerReward ?? room.winReward ?? undefined,
+    entryFee: buyInAmount,
+    grossPotPreview: pricing.grossPotPreview ?? rewards.grossPotPreview ?? room.grossPotPreview ?? undefined,
+    platformFeePreview: pricing.platformFeePreview ?? rewards.platformFeePreview ?? room.platformFeePreview ?? undefined,
+    netPotPreview: pricing.netPotPreview ?? rewards.netPotPreview ?? room.netPotPreview ?? undefined,
+    winnerPayoutPreview: rewards.winnerPayoutPreview ?? pricing.winnerPayoutPreview ?? room.winnerPayoutPreview ?? winnerPayout,
+    winnerPayout,
+    winnerReward: winnerPayout,
+    winnerRewardMode: rewards.winnerRewardMode ?? pricing.winnerRewardMode ?? room.winnerRewardMode ?? 'pot',
+    minCoinBet: pricing.minCoinBet ?? pricing.minBidCoins ?? room.minCoinBet ?? room.minBidCoins ?? undefined,
+    minBidCoins: pricing.minCoinBet ?? pricing.minBidCoins ?? room.minCoinBet ?? room.minBidCoins ?? undefined,
+    maxCoinBet: pricing.maxCoinBet ?? pricing.maxBidCoins ?? room.maxCoinBet ?? room.maxBidCoins ?? undefined,
+    maxBidCoins: pricing.maxCoinBet ?? pricing.maxBidCoins ?? room.maxCoinBet ?? room.maxBidCoins ?? undefined,
+    defaultCoinBet: pricing.defaultCoinBet ?? pricing.defaultBidCoins ?? room.defaultCoinBet ?? room.defaultBidCoins ?? undefined,
+    defaultBidCoins: pricing.defaultCoinBet ?? pricing.defaultBidCoins ?? room.defaultCoinBet ?? room.defaultBidCoins ?? undefined,
+    bidCoinStep: pricing.bidCoinStep ?? room.bidCoinStep ?? undefined,
+    coinBetOptions: pricing.coinBetOptions ?? room.coinBetOptions ?? undefined,
+    potMode: pricing.potMode ?? room.potMode ?? undefined,
+    payoutMode: pricing.payoutMode ?? room.payoutMode ?? undefined,
     xpWin: rewards.xpWin ?? room.xpWin ?? undefined,
     xpLose: rewards.xpLose ?? room.xpLose ?? undefined,
     rewardMultiplier: rewards.rewardMultiplier ?? room.rewardMultiplier ?? room.multiplier ?? undefined,
