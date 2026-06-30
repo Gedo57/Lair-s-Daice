@@ -149,6 +149,36 @@ function playerStack(player = {}, fallback = 0) {
   return stackValue(fallback);
 }
 
+function minimumPlayableStack(match = {}) {
+  return Math.max(1, minimumBidCoins(match));
+}
+
+function isBelowMinimumPlayableStack(match = {}, player = {}, stackOverride = null) {
+  const stack = stackOverride === null || stackOverride === undefined
+    ? playerStack(player, matchStartingStack(match))
+    : stackValue(stackOverride);
+  const minimumStack = minimumPlayableStack(match);
+  return stack > 0 && stack < minimumStack;
+}
+
+function isPlayerEliminatedByStack(match = {}, player = {}) {
+  const stack = playerStack(player, matchStartingStack(match));
+  return Boolean(player?.eliminated) || stack <= 0 || isBelowMinimumPlayableStack(match, player, stack);
+}
+
+function markPlayerEliminated(player, reason = 'eliminated') {
+  if (!player) return player;
+  player.eliminated = true;
+  player.active = false;
+  player.lives = 0;
+  player.diceCount = 0;
+  player.dice = [];
+  player.eliminatedAt = player.eliminatedAt || nowIso();
+  player.eliminationReason = player.eliminationReason || reason;
+  if (reason === 'below_minimum_bid') player.bustedBelowMinimumBid = true;
+  return player;
+}
+
 function positiveInt(value, fallback = 0) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return Math.max(0, Math.trunc(Number(fallback) || 0));
@@ -239,9 +269,14 @@ function assertMatchCanAcceptGameplayAction(match) {
 function assertPlayerCanAct(match, userId, { allowForfeit = false } = {}) {
   const player = (match.players || []).find((item) => item.id === userId || item.userId === userId);
   if (!player) throw forbidden('You are not a player in this match');
-  if (player.eliminated || player.active === false || playerStack(player, matchStartingStack(match)) <= 0 || playerLives(player) <= 0) {
+
+  const stack = playerStack(player, matchStartingStack(match));
+  const belowMinimum = isBelowMinimumPlayableStack(match, player, stack);
+  if (belowMinimum) markPlayerEliminated(player, 'below_minimum_bid');
+
+  if (player.eliminated || player.active === false || stack <= 0 || belowMinimum || playerLives(player) <= 0) {
     if (allowForfeit) throw badRequest('Player already forfeited or was eliminated');
-    throw forbidden('Eliminated players cannot act in this match');
+    throw forbidden(belowMinimum ? 'Player stack is below the table minimum bid' : 'Eliminated players cannot act in this match');
   }
   return player;
 }
@@ -739,12 +774,14 @@ function playerLives(player = {}) {
   return Math.max(0, Number.isFinite(lives) ? Math.trunc(lives) : FIXED_DICE_PER_ROUND);
 }
 
-function isActiveContestant(player) {
-  return Boolean(player) && !player.eliminated && playerStack(player) > 0;
+function isActiveContestant(player, match = {}) {
+  if (!player || player.eliminated || player.active === false) return false;
+  const stack = playerStack(player, matchStartingStack(match));
+  return stack >= minimumPlayableStack(match);
 }
 
 function activePlayers(match) {
-  return (match.players || []).filter(isActiveContestant);
+  return (match.players || []).filter((player) => isActiveContestant(player, match));
 }
 
 function nextActiveIndex(match, fromIndex = match.turnIndex) {
@@ -753,7 +790,7 @@ function nextActiveIndex(match, fromIndex = match.turnIndex) {
 
   for (let offset = 1; offset <= players.length; offset += 1) {
     const index = (Number(fromIndex || 0) + offset + players.length) % players.length;
-    if (isActiveContestant(players[index])) return index;
+    if (isActiveContestant(players[index], match)) return index;
   }
 
   return -1;
@@ -764,7 +801,7 @@ function getActivePlayer(match) {
   if (!players.length) return null;
 
   const safeTurnIndex = Math.max(0, Math.min(Number(match.turnIndex || 0), players.length - 1));
-  if (isActiveContestant(players[safeTurnIndex])) return players[safeTurnIndex];
+  if (isActiveContestant(players[safeTurnIndex], match)) return players[safeTurnIndex];
 
   const fallbackIndex = nextActiveIndex(match, safeTurnIndex - 1);
   return fallbackIndex >= 0 ? players[fallbackIndex] : null;
@@ -952,12 +989,14 @@ function buildPlayerProfilePayload(user = {}) {
 function normalizePlayerRuntime(player, match = null) {
   if (!player) return player;
 
-  const startingStack = matchStartingStack(match || {}, player.startingStack ?? player.stack ?? player.currentStack ?? 0);
+  const runtimeMatch = match || {};
+  const startingStack = matchStartingStack(runtimeMatch, player.startingStack ?? player.stack ?? player.currentStack ?? 0);
   const normalizedStack = playerStack(player, startingStack);
-  const eliminated = Boolean(player.eliminated) || normalizedStack <= 0;
+  const belowMinimum = isBelowMinimumPlayableStack(runtimeMatch, player, normalizedStack);
+  const eliminated = Boolean(player.eliminated) || normalizedStack <= 0 || belowMinimum;
 
   player.startingStack = stackValue(player.startingStack, startingStack);
-  player.stack = eliminated ? 0 : normalizedStack;
+  player.stack = normalizedStack;
   player.currentStack = player.stack;
   player.matchStack = player.stack;
   player.coinsStack = player.stack;
@@ -967,6 +1006,11 @@ function normalizePlayerRuntime(player, match = null) {
   player.diceCount = eliminated ? 0 : FIXED_DICE_PER_ROUND;
   player.eliminated = eliminated;
   player.active = !eliminated;
+  if (belowMinimum) {
+    player.bustedBelowMinimumBid = true;
+    player.eliminationReason = player.eliminationReason || 'below_minimum_bid';
+    player.eliminatedAt = player.eliminatedAt || nowIso();
+  }
 
   const dice = Array.isArray(player.dice) ? player.dice : [];
   if (player.eliminated) {
@@ -1029,12 +1073,12 @@ function availableActionsFor(match, viewerId) {
   return actions;
 }
 
-function sanitizePlayer(player, viewerId) {
+function sanitizePlayer(player, viewerId, match = {}) {
   const isViewer = player.id === viewerId || player.userId === viewerId;
   const dice = Array.isArray(player.dice) ? player.dice : [];
-  const stack = playerStack(player);
+  const stack = playerStack(player, matchStartingStack(match));
   const lives = playerLives(player);
-  const eliminated = Boolean(player.eliminated) || stack <= 0;
+  const eliminated = isPlayerEliminatedByStack(match, player);
 
   return {
     id: player.id,
@@ -1067,6 +1111,10 @@ function sanitizePlayer(player, viewerId) {
     lives,
     eliminated,
     active: false,
+    minPlayableStack: minimumPlayableStack(match),
+    minBidCoins: minimumBidCoins(match),
+    bustedBelowMinimumBid: Boolean(player.bustedBelowMinimumBid || isBelowMinimumPlayableStack(match, player, stack)),
+    eliminationReason: player.eliminationReason || (isBelowMinimumPlayableStack(match, player, stack) ? 'below_minimum_bid' : null),
   };
 }
 
@@ -1114,7 +1162,7 @@ function publicMatch(match, viewerId) {
   return {
     ...match,
     players: match.players.map((player) => ({
-      ...sanitizePlayer(player, viewerId),
+      ...sanitizePlayer(player, viewerId, match),
       active: player.id === activePlayerId,
       canAct: player.id === viewerId && playerCanAct(match, viewerId),
     })),
@@ -1125,7 +1173,7 @@ function publicMatch(match, viewerId) {
     playerCount: match.players.length,
     activePlayerId,
     turnPlayerId: activePlayerId,
-    turnPlayer: activePlayer ? sanitizePlayer(activePlayer, viewerId) : null,
+    turnPlayer: activePlayer ? sanitizePlayer(activePlayer, viewerId, match) : null,
     myTurn: activePlayerId === viewerId && match.status === 'active',
     canAct: playerCanAct(match, viewerId),
     availableActions,
@@ -1585,26 +1633,39 @@ function applyStackLoss(match, loserId, amount = null) {
   const beforeStack = playerStack(loser, matchStartingStack(match));
   const stackLost = Math.min(beforeStack, currentRoundStackPenalty(match, amount));
   const afterStack = Math.max(0, beforeStack - stackLost);
+  const minPlayableStack = minimumPlayableStack(match);
+  const bustedBelowMinimumBid = isBelowMinimumPlayableStack(match, loser, afterStack);
+  const eliminated = afterStack <= 0 || bustedBelowMinimumBid;
 
   loser.stack = afterStack;
   loser.currentStack = afterStack;
   loser.matchStack = afterStack;
   loser.coinsStack = afterStack;
   loser.stackLost = Math.max(0, Number(loser.stackLost || 0)) + stackLost;
-  loser.eliminated = afterStack <= 0;
-  loser.active = afterStack > 0;
-  loser.lives = loser.eliminated ? 0 : FIXED_DICE_PER_ROUND;
-  loser.diceCount = loser.eliminated ? 0 : FIXED_DICE_PER_ROUND;
-  loser.dice = loser.eliminated ? [] : rollDice(FIXED_DICE_PER_ROUND);
+  loser.eliminated = eliminated;
+  loser.active = !eliminated;
+  loser.lives = eliminated ? 0 : FIXED_DICE_PER_ROUND;
+  loser.diceCount = eliminated ? 0 : FIXED_DICE_PER_ROUND;
+  loser.dice = eliminated ? [] : rollDice(FIXED_DICE_PER_ROUND);
+  if (bustedBelowMinimumBid) {
+    loser.bustedBelowMinimumBid = true;
+    loser.eliminationReason = loser.eliminationReason || 'below_minimum_bid';
+    loser.eliminatedAt = loser.eliminatedAt || nowIso();
+  }
 
   return {
     loser,
     beforeStack,
     afterStack,
     stackLost,
-    beforeLives: beforeStack > 0 ? FIXED_DICE_PER_ROUND : 0,
-    afterLives: afterStack > 0 ? FIXED_DICE_PER_ROUND : 0,
+    beforeLives: beforeStack >= minPlayableStack ? FIXED_DICE_PER_ROUND : 0,
+    afterLives: eliminated ? 0 : FIXED_DICE_PER_ROUND,
     diceLost: 0,
+    eliminated,
+    minPlayableStack,
+    minBidCoins: minimumBidCoins(match),
+    bustedBelowMinimumBid,
+    eliminationReason: bustedBelowMinimumBid ? 'below_minimum_bid' : (eliminated ? 'stack_zero' : null),
   };
 }
 
@@ -1641,7 +1702,7 @@ function startNextRound(match, preferredStarterId = null) {
     player.revealed = false;
     player.usedRerollThisRound = false;
     player.rerollsUsedThisRound = 0;
-    if (isActiveContestant(player)) {
+    if (isActiveContestant(player, match)) {
       player.dice = rollDice(FIXED_DICE_PER_ROUND);
       player.diceCount = FIXED_DICE_PER_ROUND;
       player.lives = FIXED_DICE_PER_ROUND;
@@ -1649,7 +1710,7 @@ function startNextRound(match, preferredStarterId = null) {
   }
 
   const preferredIndex = match.players.findIndex((player) => player.id === preferredStarterId);
-  if (preferredIndex >= 0 && isActiveContestant(match.players[preferredIndex])) {
+  if (preferredIndex >= 0 && isActiveContestant(match.players[preferredIndex], match)) {
     match.turnIndex = preferredIndex;
   } else {
     const nextIndexFromLoser = nextActiveIndex(match, preferredIndex >= 0 ? preferredIndex : Number(match.turnIndex || 0));
@@ -1756,7 +1817,11 @@ function resolveChallengeRound(match, challengerId, challengeType = 'call_liar')
     stackLost: loss.stackLost,
     beforeStack: loss.beforeStack,
     afterStack: loss.afterStack,
-    eliminated: loss.afterStack <= 0,
+    eliminated: loss.eliminated,
+    minPlayableStack: loss.minPlayableStack,
+    minBidCoins: loss.minBidCoins,
+    bustedBelowMinimumBid: loss.bustedBelowMinimumBid,
+    eliminationReason: loss.eliminationReason,
     revealedDice,
     wildDice: countBreakdown.wildDice,
     exactCount: countBreakdown.exactCount,
@@ -1803,7 +1868,7 @@ function applyReroll(match, userId) {
   assertPlayerTurn(match, userId);
 
   const player = match.players.find((item) => item.id === userId);
-  if (!player || !isActiveContestant(player)) throw badRequest('Invalid reroll player');
+  if (!player || !isActiveContestant(player, match)) throw badRequest('Invalid reroll player');
   if (match.gameRules?.rerollEnabled !== true) throw badRequest('Reroll is disabled in official rules');
   if (player.usedRerollThisRound || Number(player.rerollsUsedThisRound || 0) >= Number(match.gameRules?.rerollLimitPerRound || 1)) {
     throw badRequest('Reroll already used this round');

@@ -502,16 +502,16 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
    x: positive = right, negative = left.
    y: positive = down, negative = up. */
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
-  --gp-actions-left: 40px;
-  --gp-actions-top: 1080px;
+  --gp-actions-left: 440px;
+  --gp-actions-top: 1180px;
   --gp-actions-x: 0px;
   --gp-actions-y: 0px;
-  --gp-actions-scale: 1;
+  --gp-actions-scale: 0.8;
 
-  --gp-action-width: 320px;
-  --gp-action-height: 130px;
+  --gp-action-width: 20px;
+  --gp-action-height: 30px;
   --gp-action-gap-x: 10px;
-  --gp-action-gap-y: 0px;
+  --gp-action-gap-y: -70px;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action-tray {

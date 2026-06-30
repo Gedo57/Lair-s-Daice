@@ -200,6 +200,9 @@ function formatAmount(value, fallback = '0') {
 function getPlayerStack(player, fallback = 0) {
   const values = [
     player?.stack,
+    player?.currentStack,
+    player?.matchStack,
+    player?.coinsStack,
     player?.coins,
     player?.coinBalance,
     player?.walletCoins,
@@ -260,6 +263,22 @@ function getMinimumCoinBet(match = {}) {
     match?.pricing?.minCoinBet,
     match?.pricing?.minBidCoins,
     1,
+  );
+}
+
+function isPlayerEliminatedForMatch(match = {}, player = null) {
+  if (!player) return false;
+  const stack = getPlayerStack(player, 0);
+  const minimumStack = getMinimumCoinBet(match) || 1;
+  const lives = readNumber(player?.lives ?? player?.diceCount);
+
+  return Boolean(
+    player?.eliminated
+      || player?.bustedBelowMinimumBid
+      || player?.eliminationReason === 'below_minimum_bid'
+      || stack <= 0
+      || (stack > 0 && stack < minimumStack)
+      || lives === 0
   );
 }
 
@@ -538,12 +557,12 @@ function isBotsMatch(match) {
   return mode === 'bots' || Boolean(match.botsEnabled || match.playWithBots || match.withBots) || (Array.isArray(match.players) && match.players.some(isBotPlayer));
 }
 
-function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = false }) {
+function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = false, match = null }) {
   if (!player) return null;
 
   const count = getPlayerDiceCount(player, 0);
   const stack = getPlayerStack(player, 0);
-  const isEliminated = Boolean(player?.eliminated || player?.active === false || count <= 0);
+  const isEliminated = isPlayerEliminatedForMatch(match, player);
   const botClass = isBotPlayer(player) ? 'gameplay-player--bot' : '';
 
   return (
@@ -640,7 +659,11 @@ function ActionButton({ className, skin, title, subtitle, onClick, disabled, tx 
 function getActivePlayer(match) {
   if (!match?.players?.length) return null;
   const activeId = match.turnPlayerId || match.activePlayerId;
-  return match.players.find((player) => playerId(player) === activeId) || match.players.find((player) => player.active) || match.players[0];
+  const playablePlayers = match.players.filter((player) => !isPlayerEliminatedForMatch(match, player));
+  return playablePlayers.find((player) => playerId(player) === activeId)
+    || playablePlayers.find((player) => player.active)
+    || playablePlayers[0]
+    || null;
 }
 
 function getViewerPlayer(match, user) {
@@ -818,7 +841,10 @@ function describeRoundResult(roundResult, tx) {
 
   if (Number.isFinite(lostCoins) && lostCoins > 0) {
     const label = isPekChallenge ? tx('Pek/Slam') : tx('Call Liar');
-    return `${bidTruth}. ${label}: ${loserName} ${tx('lost')} ${formatAmount(lostCoins)} ${tx('coins')}.`;
+    const bustSuffix = roundResult.bustedBelowMinimumBid
+      ? ` ${tx('Eliminated because stack is below minimum bid')}.`
+      : '';
+    return `${bidTruth}. ${label}: ${loserName} ${tx('lost')} ${formatAmount(lostCoins)} ${tx('coins')}.${bustSuffix}`;
   }
 
   return `${bidTruth}.`;
@@ -877,7 +903,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const currentBid = match?.currentBid || null;
   const previousBid = match?.previousBid || null;
   const viewerPlayer = getViewerPlayer(match, user);
-  const myTurn = Boolean(match?.myTurn) || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user);
+  const viewerEliminated = isPlayerEliminatedForMatch(match, viewerPlayer);
+  const myTurn = !viewerEliminated && (Boolean(match?.myTurn) || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user));
   const turnDicePlayer = getTurnDicePlayer(match, activePlayer, viewerPlayer, user, myTurn);
   const [turnIntroPhase, setTurnIntroPhase] = useState(TURN_INTRO_PHASE.IDLE);
   const [turnIntroPlayer, setTurnIntroPlayer] = useState(null);
@@ -890,7 +917,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const isTurnIntroPlaying = TURN_INTRO_ACTIVE_PHASES.has(turnIntroPhase);
   const isFinished = match?.status === 'finished';
   const isBusy = Boolean(backendStatus?.loading && String(backendStatus.lastAction || '').startsWith('match.'));
-  const canAct = Boolean(currentMatchId && match && !isFinished && myTurn && !isBusy && !isTurnIntroPlaying);
+  const canAct = Boolean(currentMatchId && match && !isFinished && myTurn && !viewerEliminated && !isBusy && !isTurnIntroPlaying);
   const availableActions = normalizedActionList(match?.availableActions);
   const disabledActions = normalizedActionList(match?.disabledActions);
   const hasServerActionRules = availableActions.length > 0 || disabledActions.length > 0;
@@ -1209,6 +1236,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           player={item.player}
           fallbackName={item.fallbackName}
           isTurnPlayer={samePlayer(item.player, activePlayer)}
+          match={match}
         />
       ))}
 
@@ -1481,6 +1509,11 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       ) : null}
       {isBusy ? (
         <div className="gameplay-status gameplay-status--loading">{tx('Updating match...')}</div>
+      ) : null}
+      {viewerEliminated && !isFinished ? (
+        <div className="gameplay-status gameplay-status--warning">
+          {tx('You are eliminated. Stack is below minimum bid')} ({formatAmount(minRequiredCoinBet)})
+        </div>
       ) : null}
     </section>
   );
