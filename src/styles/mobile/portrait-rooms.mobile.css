@@ -1386,7 +1386,7 @@ html[data-device='mobile'] .tournament-pass-tournaments__cards::-webkit-scrollba
 html[data-device='mobile'] .create-room-block--bid { left: 298px !important; top: 198px !important; width: 250px !important; height: 84px !important; }
 html[data-device='mobile'] .create-room-block--private { left: 0 !important; top: 304px !important; width: 250px !important; height: 88px !important; }
 html[data-device='mobile'] .create-room-block--pekToggle { left: 298px !important; top: 304px !important; width: 250px !important; height: 88px !important; }
-html[data-device='mobile'] .create-room-block--perGame { left: 0 !important; top: 410px !important; width: 548px !important; height: 142px !important; }
+html[data-device='mobile'] .create-room-block--perGame { left: 0 !important; top: 410px !important; width: 548px !important; height: 84px !important; }
 html[data-device='mobile'] .create-room-block--pekPercent { left: 0 !important; top: 574px !important; width: 250px !important; height: 96px !important; }
 html[data-device='mobile'] .create-room-block--mode { left: 298px !important; top: 574px !important; width: 250px !important; height: 88px !important; }
 html[data-device='mobile'] .create-room-block--code { left: 0 !important; top: 676px !important; width: 250px !important; height: 94px !important; }
@@ -1445,14 +1445,7 @@ html[data-device='mobile'] .create-room-stepper--perGame .create-room-stepper__v
   font-size: 22px !important;
 }
 
-html[data-device='mobile'] .create-room-optionRow--perGameChoices {
-  left: 0 !important;
-  right: 0 !important;
-  top: 92px !important;
-  justify-content: center !important;
-  gap: 14px !important;
-  flex-wrap: nowrap !important;
-}
+html[data-device='mobile'] .create-room-optionRow--perGameChoices { display: none !important; }
 
 html[data-device='mobile'] .create-room-optionRow--perGameChoices .create-room-option--wide {
   width: 150px !important;

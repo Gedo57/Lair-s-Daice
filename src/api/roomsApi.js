@@ -24,7 +24,7 @@ function looksLikeRoomCode(value) {
 const MIN_BUY_IN = 500;
 const MIN_RANGE_PER_GAME_BASE = 500;
 const MIN_STATIC_PER_GAME = 100;
-const PEK_PERCENTAGE_OPTIONS = [25, 50, 100];
+const PEK_PERCENTAGE_OPTIONS = [0, 25, 50, 100];
 
 function numericSetting(settings = {}, keys = [], fallback = undefined) {
   for (const key of keys) {

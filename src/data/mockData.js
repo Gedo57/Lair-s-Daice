@@ -127,32 +127,32 @@ export const mockEventMissions = [
 export const mockRooms = [
   {
     id: 'beginner', key: 'beginner', title: 'BEGINNER', card: 'card-1.png', tableArt: '213.png', button: '15.png',
-    pricing: { entryFee: 500, buyInAmount: 500, grossPotPreview: 1000, winnerPayoutPreview: 1000, minCoinBet: 100, maxCoinBet: 500, defaultCoinBet: 100, coinBetOptions: [100, 200, 500] }, rewards: { winnerReward: 1000, winnerPayoutPreview: 1000, xpWin: 50, xpLose: 15, rewardMultiplier: 1 },
-    entryFee: 500, buyInAmount: 500, grossPotPreview: 1000, winnerPayoutPreview: 1000, winnerReward: 1000, minCoinBet: 100, maxCoinBet: 500, defaultCoinBet: 100, coinBetOptions: [100, 200, 500], xpWin: 50, xpLose: 15, rewardMultiplier: 1, minPlayers: 2, maxPlayers: 2,
+    pricing: { entryFee: 500, buyInAmount: 500, grossPotPreview: 1000, winnerPayoutPreview: 1000, minCoinBet: 100, maxCoinBet: 500, defaultCoinBet: 100, coinBetOptions: [100, 200, 500], pekEnabled: false, slamEnabled: false, pekPercentage: 0, slamPercentage: 0 }, rewards: { winnerReward: 1000, winnerPayoutPreview: 1000, xpWin: 50, xpLose: 15, rewardMultiplier: 1 },
+    entryFee: 500, buyInAmount: 500, grossPotPreview: 1000, winnerPayoutPreview: 1000, winnerReward: 1000, minCoinBet: 100, maxCoinBet: 500, defaultCoinBet: 100, coinBetOptions: [100, 200, 500], xpWin: 50, xpLose: 15, rewardMultiplier: 1, pekEnabled: false, slamEnabled: false, pekPercentage: 0, slamPercentage: 0, minPlayers: 2, maxPlayers: 2,
     rows: [{ icon: 'IC1.png', text: '2 Players' }, { icon: 'IC2.png', text: 'Official Rules' }, { icon: 'IC3.png', text: 'Daily Rewards' }],
   },
   {
     id: 'classic', key: 'classic', title: 'CLASSIC', card: 'card-2.png', tableArt: '213124.png', button: '14.png',
-    pricing: { entryFee: 1000, buyInAmount: 1000, grossPotPreview: 4000, winnerPayoutPreview: 4000, minCoinBet: 200, maxCoinBet: 1000, defaultCoinBet: 200, coinBetOptions: [200, 500, 1000] }, rewards: { winnerReward: 4000, winnerPayoutPreview: 4000, xpWin: 90, xpLose: 25, rewardMultiplier: 1.25 },
-    entryFee: 1000, buyInAmount: 1000, grossPotPreview: 4000, winnerPayoutPreview: 4000, winnerReward: 4000, minCoinBet: 200, maxCoinBet: 1000, defaultCoinBet: 200, coinBetOptions: [200, 500, 1000], xpWin: 90, xpLose: 25, rewardMultiplier: 1.25, minPlayers: 4, maxPlayers: 4,
+    pricing: { entryFee: 1000, buyInAmount: 1000, grossPotPreview: 4000, winnerPayoutPreview: 4000, minCoinBet: 200, maxCoinBet: 1000, defaultCoinBet: 200, coinBetOptions: [200, 500, 1000], pekEnabled: true, slamEnabled: true, pekPercentage: 25, slamPercentage: 25 }, rewards: { winnerReward: 4000, winnerPayoutPreview: 4000, xpWin: 90, xpLose: 25, rewardMultiplier: 1.25 },
+    entryFee: 1000, buyInAmount: 1000, grossPotPreview: 4000, winnerPayoutPreview: 4000, winnerReward: 4000, minCoinBet: 200, maxCoinBet: 1000, defaultCoinBet: 200, coinBetOptions: [200, 500, 1000], xpWin: 90, xpLose: 25, rewardMultiplier: 1.25, pekEnabled: true, slamEnabled: true, pekPercentage: 25, slamPercentage: 25, minPlayers: 4, maxPlayers: 4,
     rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC2.png', text: 'Official Rules' }, { icon: 'IC5.png', text: 'Bonus Rewards' }],
   },
   {
     id: 'high-roller', key: 'high-roller', title: 'HIGH ROLLER', card: 'card-3.png', tableArt: '3323423.png', button: '12.png',
-    pricing: { entryFee: 5000, buyInAmount: 5000, grossPotPreview: 20000, winnerPayoutPreview: 20000, minCoinBet: 1000, maxCoinBet: 5000, defaultCoinBet: 1000, coinBetOptions: [1000, 2000, 5000] }, rewards: { winnerReward: 20000, winnerPayoutPreview: 20000, xpWin: 180, xpLose: 55, rewardMultiplier: 2 },
-    entryFee: 5000, buyInAmount: 5000, grossPotPreview: 20000, winnerPayoutPreview: 20000, winnerReward: 20000, minCoinBet: 1000, maxCoinBet: 5000, defaultCoinBet: 1000, coinBetOptions: [1000, 2000, 5000], xpWin: 180, xpLose: 55, rewardMultiplier: 2, minPlayers: 4, maxPlayers: 4,
+    pricing: { entryFee: 5000, buyInAmount: 5000, grossPotPreview: 20000, winnerPayoutPreview: 20000, minCoinBet: 1000, maxCoinBet: 5000, defaultCoinBet: 1000, coinBetOptions: [1000, 2000, 5000], pekEnabled: true, slamEnabled: true, pekPercentage: 50, slamPercentage: 50 }, rewards: { winnerReward: 20000, winnerPayoutPreview: 20000, xpWin: 180, xpLose: 55, rewardMultiplier: 2 },
+    entryFee: 5000, buyInAmount: 5000, grossPotPreview: 20000, winnerPayoutPreview: 20000, winnerReward: 20000, minCoinBet: 1000, maxCoinBet: 5000, defaultCoinBet: 1000, coinBetOptions: [1000, 2000, 5000], xpWin: 180, xpLose: 55, rewardMultiplier: 2, pekEnabled: true, slamEnabled: true, pekPercentage: 50, slamPercentage: 50, minPlayers: 4, maxPlayers: 4,
     rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC4.png', text: 'Official Rules' }, { icon: 'IC5.png', text: 'Premium Rewards' }],
   },
   {
     id: 'vip', key: 'vip', title: 'VIP', card: 'card-4.png', tableArt: '3123213.png', button: '13.png',
-    pricing: { entryFee: 10000, buyInAmount: 10000, grossPotPreview: 40000, winnerPayoutPreview: 40000, minCoinBet: 2000, maxCoinBet: 10000, defaultCoinBet: 2000, coinBetOptions: [2000, 5000, 10000] }, rewards: { winnerReward: 40000, winnerPayoutPreview: 40000, xpWin: 260, xpLose: 80, rewardMultiplier: 3 },
-    entryFee: 10000, buyInAmount: 10000, grossPotPreview: 40000, winnerPayoutPreview: 40000, winnerReward: 40000, minCoinBet: 2000, maxCoinBet: 10000, defaultCoinBet: 2000, coinBetOptions: [2000, 5000, 10000], xpWin: 260, xpLose: 80, rewardMultiplier: 3, minPlayers: 4, maxPlayers: 4,
+    pricing: { entryFee: 10000, buyInAmount: 10000, grossPotPreview: 40000, winnerPayoutPreview: 40000, minCoinBet: 2000, maxCoinBet: 10000, defaultCoinBet: 2000, coinBetOptions: [2000, 5000, 10000], pekEnabled: true, slamEnabled: true, pekPercentage: 100, slamPercentage: 100 }, rewards: { winnerReward: 40000, winnerPayoutPreview: 40000, xpWin: 260, xpLose: 80, rewardMultiplier: 3 },
+    entryFee: 10000, buyInAmount: 10000, grossPotPreview: 40000, winnerPayoutPreview: 40000, winnerReward: 40000, minCoinBet: 2000, maxCoinBet: 10000, defaultCoinBet: 2000, coinBetOptions: [2000, 5000, 10000], xpWin: 260, xpLose: 80, rewardMultiplier: 3, pekEnabled: true, slamEnabled: true, pekPercentage: 100, slamPercentage: 100, minPlayers: 4, maxPlayers: 4,
     rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC4.png', text: 'Official Rules' }, { icon: 'IC6.png', text: 'High Rewards' }],
   },
   {
     id: 'private', key: 'private', title: 'PRIVATE ROOM', card: 'card-5.png', tableArt: '1232131.png', button: 'back-button.png',
-    pricing: { entryFee: 500, buyInAmount: 500, grossPotPreview: 2000, winnerPayoutPreview: 2000, minCoinBet: 100, maxCoinBet: 500, defaultCoinBet: 100, coinBetOptions: [100, 200, 500] }, rewards: { winnerReward: 2000, winnerPayoutPreview: 2000, xpWin: 50, xpLose: 15, rewardMultiplier: 1 },
-    entryFee: 500, buyInAmount: 500, grossPotPreview: 2000, winnerPayoutPreview: 2000, winnerReward: 2000, minCoinBet: 100, maxCoinBet: 500, defaultCoinBet: 100, coinBetOptions: [100, 200, 500], xpWin: 50, xpLose: 15, rewardMultiplier: 1, minPlayers: 4, maxPlayers: 4,
+    pricing: { entryFee: 500, buyInAmount: 500, grossPotPreview: 2000, winnerPayoutPreview: 2000, minCoinBet: 100, maxCoinBet: 500, defaultCoinBet: 100, coinBetOptions: [100, 200, 500], pekEnabled: true, slamEnabled: true, pekPercentage: 25, slamPercentage: 25 }, rewards: { winnerReward: 2000, winnerPayoutPreview: 2000, xpWin: 50, xpLose: 15, rewardMultiplier: 1 },
+    entryFee: 500, buyInAmount: 500, grossPotPreview: 2000, winnerPayoutPreview: 2000, winnerReward: 2000, minCoinBet: 100, maxCoinBet: 500, defaultCoinBet: 100, coinBetOptions: [100, 200, 500], xpWin: 50, xpLose: 15, rewardMultiplier: 1, pekEnabled: true, slamEnabled: true, pekPercentage: 25, slamPercentage: 25, minPlayers: 4, maxPlayers: 4,
     rows: [{ icon: 'IC1.png', text: '4 Players' }, { icon: 'IC1.png', text: 'Invite Friends' }, { icon: 'IC7.png', text: 'Official Rules' }],
   },
 ];

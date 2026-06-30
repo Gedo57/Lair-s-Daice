@@ -241,7 +241,7 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const localCreateError = pekRiskError || insufficientFundsError;
   const createDisabled = isCreating || perGameInvalid || pekRiskInvalid || insufficientFunds;
   const perGameCopy = perGameMode === 'range'
-    ? `Range ${coinBetOptionsForStake.map(formatStakeOption).join(' / ')} • Pick ${formatStakeOption(safeSelectedPerGame)}`
+    ? `Range ${formatStakeOption(perGameBase)}`
     : `Static ${formatStakeOption(safeSelectedPerGame)}`;
   const selectedRulesCopy = `Rules: 5 dice each • Buy-in ${formatStakeOption(selectedBuyIn)} • ${perGameCopy}${pekEnabled ? ` • Pek ${selectedPekPercentage}% = ${formatStakeOption(finalPekAmount)}` : ' • Pek OFF'}`;
 
@@ -473,19 +473,6 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
                   decreaseDisabled={perGameBase <= MIN_RANGE_PER_GAME_BASE}
                   increaseDisabled={perGameBase >= selectedBuyIn}
                 />
-                <div className="create-room-optionRow create-room-optionRow--perGameChoices">
-                  {coinBetOptionsForStake.map((value) => (
-                    <OptionButton
-                      key={`per-game-${value}`}
-                      value={formatStakeOption(value)}
-                      active={value === safeSelectedPerGame}
-                      disabled={pekEnabled && calculateFinalPekAmount(value, selectedPekPercentage) > selectedBuyIn}
-                      className="create-room-option--wide"
-                      tx={tx}
-                      onClick={createSelectedHandler(setSelectedPerGame, value)}
-                    />
-                  ))}
-                </div>
               </>
             ) : (
               <StepperControl

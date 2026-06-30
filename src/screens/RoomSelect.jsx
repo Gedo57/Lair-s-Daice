@@ -2,6 +2,15 @@ import ProfileHud from '../components/ProfileHud.jsx';
 const asset = '/assets/liars-dice/room-select/';
 const sparkles = Array.from({ length: 20 }, (_, index) => index + 1);
 
+const TIER_PEK_PERCENTAGES = {
+  beginner: 0,
+  classic: 25,
+  'high-roller': 50,
+  highroller: 50,
+  high_roller: 50,
+  vip: 100,
+};
+
 function hasCardValue(value) {
   return value !== undefined && value !== null && value !== '';
 }
@@ -21,6 +30,36 @@ function formatCardMultiplier(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return String(value);
   return `${Number(number.toFixed(2))}x`;
+}
+
+function normalizeRoomKey(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+function formatCardPercent(value) {
+  if (!hasCardValue(value)) return '—';
+  const number = Number(String(value).replace(/[^0-9.-]/g, ''));
+  if (!Number.isFinite(number)) return String(value);
+  return `${Math.max(0, Math.trunc(number))}%`;
+}
+
+function resolveTierPekPercentage(room = {}, pricing = {}) {
+  const direct = firstCardValue(
+    pricing.pekPercentage,
+    pricing.slamPercentage,
+    room.pekPercentage,
+    room.slamPercentage,
+    pricing.pekPercent,
+    room.pekPercent,
+  );
+  if (hasCardValue(direct)) return direct;
+
+  const keys = [room.key, room.id, room.tableId, room.tier, room.tableTier, room.title].map(normalizeRoomKey);
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(TIER_PEK_PERCENTAGES, key)) return TIER_PEK_PERCENTAGES[key];
+  }
+
+  return room.key === 'private' ? 25 : 0;
 }
 
 function firstCardValue(...values) {
@@ -65,12 +104,14 @@ function buildCardInfo(room = {}) {
   );
   const minCoinBet = firstCardValue(pricing.minCoinBet, pricing.minBidCoins, pricing.stakeMin, room.minCoinBet, room.minBidCoins, room.stakeMin);
   const maxCoinBet = firstCardValue(pricing.maxCoinBet, pricing.maxBidCoins, pricing.stakeMax, room.maxCoinBet, room.maxBidCoins, room.stakeMax);
+  const pekPercentage = resolveTierPekPercentage(room, pricing);
 
   return [
     { label: 'Buy-in', value: formatCardAmount(buyInAmount) },
     { label: 'Winner Payout', value: formatCardAmount(winnerPayout) },
     { label: 'Total Pot', value: formatCardAmount(totalPot) },
     { label: 'Bet Range', value: formatCardRange(minCoinBet, maxCoinBet) },
+    { label: 'Pek', value: formatCardPercent(pekPercentage) },
     { label: 'XP Win', value: formatCardAmount(rewards.xpWin ?? room.xpWin) },
   ];
 }
@@ -79,6 +120,16 @@ function buildMatchmakingPayload(room = {}) {
   const pricing = room.pricing && typeof room.pricing === 'object' ? room.pricing : {};
   const rewards = room.rewards && typeof room.rewards === 'object' ? room.rewards : {};
   const buyInAmount = pricing.buyInAmount ?? pricing.entryFee ?? room.buyInAmount ?? room.entryFee ?? room.fee ?? undefined;
+  const pekPercentage = Number(resolveTierPekPercentage(room, pricing));
+  const pekEnabled = Boolean(pricing.pekEnabled ?? pricing.slamEnabled ?? room.pekEnabled ?? room.slamEnabled ?? pekPercentage > 0);
+  const normalizedPricing = {
+    ...pricing,
+    pekEnabled,
+    slamEnabled: pekEnabled,
+    pekPercentage,
+    slamPercentage: pekPercentage,
+  };
+
   const winnerPayout = rewards.winnerPayoutPreview
     ?? rewards.winnerPayout
     ?? rewards.winnerReward
@@ -97,7 +148,7 @@ function buildMatchmakingPayload(room = {}) {
     key: room.key,
     mode: room.mode || room.key || room.title,
     title: room.title || room.name || room.label,
-    pricing,
+    pricing: normalizedPricing,
     rewards,
     buyIn: pricing.buyIn || pricing.buyInRange || room.buyIn || room.buyInLabel || room.entryFeeLabel || undefined,
     buyInAmount,
@@ -122,6 +173,10 @@ function buildMatchmakingPayload(room = {}) {
     defaultBidCoins: pricing.defaultCoinBet ?? pricing.defaultBidCoins ?? room.defaultCoinBet ?? room.defaultBidCoins ?? undefined,
     bidCoinStep: pricing.bidCoinStep ?? room.bidCoinStep ?? undefined,
     coinBetOptions: pricing.coinBetOptions ?? room.coinBetOptions ?? undefined,
+    pekEnabled,
+    slamEnabled: pekEnabled,
+    pekPercentage,
+    slamPercentage: pekPercentage,
     potMode: pricing.potMode ?? room.potMode ?? undefined,
     payoutMode: pricing.payoutMode ?? room.payoutMode ?? undefined,
     xpWin: rewards.xpWin ?? room.xpWin ?? undefined,

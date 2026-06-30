@@ -487,11 +487,7 @@ html[data-device='mobile'] .create-room-stepper--perGame .create-room-stepper__b
   font-size: 21px;
 }
 
-html[data-device='mobile'] .create-room-optionRow--perGameChoices {
-  left: 0;
-  top: 63px;
-  gap: 7px;
-}
+html[data-device='mobile'] .create-room-optionRow--perGameChoices { display: none; }
 
 html[data-device='mobile'] .create-room-stepper--pekPercent {
   left: 21px;
@@ -522,7 +518,7 @@ html[data-device='mobile'] .create-room-stepper:hover {
 
 html[data-device='mobile'] .create-room-block--bid { left: 0; top: 128px; width: 225px; height: 64px; }
 html[data-device='mobile'] .create-room-block--private { left: 390px; top: 128px; width: 175px; height: 58px; }
-html[data-device='mobile'] .create-room-block--perGame { left: 0; top: 190px; width: 355px; height: 106px; }
+html[data-device='mobile'] .create-room-block--perGame { left: 0; top: 190px; width: 355px; height: 64px; }
 html[data-device='mobile'] .create-room-block--pekToggle { left: 375px; top: 202px; width: 150px; height: 58px; }
 html[data-device='mobile'] .create-room-block--pekPercent { left: 68px; top: 300px; width: 200px; height: 82px; }
 html[data-device='mobile'] .create-room-block--mode { left: 340px; top: 300px; width: 220px; height: 58px; }

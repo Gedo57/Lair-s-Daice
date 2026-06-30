@@ -466,11 +466,7 @@ html[data-device='desktop'] .create-room-stepper--staticPerGame {
   top: 22px;
 }
 
-html[data-device='desktop'] .create-room-optionRow--perGameChoices {
-  left: 0;
-  top: 63px;
-  gap: 7px;
-}
+html[data-device='desktop'] .create-room-optionRow--perGameChoices { display: none; }
 
 html[data-device='desktop'] .create-room-stepper--pekPercent {
   left: 21px;
@@ -501,7 +497,7 @@ html[data-device='desktop'] .create-room-stepper:hover {
 
 html[data-device='desktop'] .create-room-block--bid { left: -70px; top: 128px; width: 225px; height: 64px; }
 html[data-device='desktop'] .create-room-block--private { left: 320px; top: 128px; width: 175px; height: 58px; }
-html[data-device='desktop'] .create-room-block--perGame { left: -70px; top: 190px; width: 355px; height: 106px; }
+html[data-device='desktop'] .create-room-block--perGame { left: -70px; top: 190px; width: 355px; height: 64px; }
 html[data-device='desktop'] .create-room-block--pekToggle { left: 315px; top: 202px; width: 150px; height: 58px; }
 html[data-device='desktop'] .create-room-block--pekPercent { left: -70px; top: 300px; width: 200px; height: 82px; }
 html[data-device='desktop'] .create-room-block--mode { left: 275px; top: 300px; width: 220px; height: 58px; }
