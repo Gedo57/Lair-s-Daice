@@ -7,6 +7,25 @@ const asset = '/assets/liars-dice/gameplay/';
 const FALLBACK_DICE = [4, 2, 5, 5, 1, 1];
 const faceOptions = [1, 2, 3, 4, 5, 6];
 const DEFAULT_COIN_BET_OPTIONS = [100, 200, 500, 1000];
+const TURN_INTRO_PHASE = Object.freeze({
+  IDLE: 'idle',
+  SHAKE: 'shake',
+  CENTER: 'center',
+  FLY: 'fly',
+  DONE: 'done',
+});
+const TURN_INTRO_TIMINGS = {
+  shakeMs: 650,
+  centerMs: 600,
+  flyMs: 500,
+  settleMs: 150,
+};
+const TURN_INTRO_ACTIVE_PHASES = new Set([
+  TURN_INTRO_PHASE.SHAKE,
+  TURN_INTRO_PHASE.CENTER,
+  TURN_INTRO_PHASE.FLY,
+  TURN_INTRO_PHASE.DONE,
+]);
 const PANEL_SKINS = {
   left: 'bb3.png',
   center: 'bb2.png',
@@ -47,10 +66,123 @@ function playerIdentityValues(player) {
 }
 
 function samePlayer(left, right) {
+  if (!left || !right) return false;
+
   const leftIds = playerIdentityValues(left);
   const rightIds = playerIdentityValues(right);
-  if (!leftIds.length || !rightIds.length) return false;
-  return leftIds.some((id) => rightIds.includes(id));
+  if (leftIds.length && rightIds.length && leftIds.some((id) => rightIds.includes(id))) return true;
+
+  // Some guest/bot payloads arrive without stable ids. In that case, keep turn detection usable by name.
+  const leftName = playerName(left, '').trim().toLowerCase();
+  const rightName = playerName(right, '').trim().toLowerCase();
+  return Boolean(leftName && rightName && leftName === rightName);
+}
+
+const PLAYER_DICE_KEYS = [
+  'dice',
+  'diceValues',
+  'diceValue',
+  'currentDice',
+  'rolledDice',
+  'rolls',
+  'diceRolls',
+  'hand',
+  'handDice',
+  'ownDice',
+  'privateDice',
+  'visibleDice',
+  'viewerDice',
+  'myDice',
+];
+
+const PLAYER_DICE_COUNT_KEYS = [
+  'diceCount',
+  'lives',
+  'diceLeft',
+  'remainingDice',
+  'remainingDiceCount',
+  'diceTotal',
+  'totalDice',
+  'handSize',
+];
+
+const MATCH_VIEWER_DICE_KEYS = [
+  'myDice',
+  'viewerDice',
+  'ownDice',
+  'privateDice',
+  'currentPlayerDice',
+  'activePlayerDice',
+  'playerDice',
+];
+
+function readDiceArray(source, keys = PLAYER_DICE_KEYS) {
+  if (!source || typeof source !== 'object') return [];
+
+  for (const key of keys) {
+    const value = source[key];
+    if (Array.isArray(value)) {
+      const dice = value.map((item) => Number(item)).filter((item) => Number.isInteger(item) && item >= 1 && item <= 6);
+      if (dice.length) return dice;
+    }
+  }
+
+  const nestedSources = [source.state, source.roundState, source.privateState, source.publicState, source.playerState].filter(Boolean);
+  for (const nestedSource of nestedSources) {
+    const dice = readDiceArray(nestedSource, keys);
+    if (dice.length) return dice;
+  }
+
+  return [];
+}
+
+function getPlayerDiceValues(player) {
+  return readDiceArray(player);
+}
+
+function getMatchViewerDiceValues(match) {
+  return readDiceArray(match, MATCH_VIEWER_DICE_KEYS);
+}
+
+function getPlayerDiceCount(player, fallback = 0) {
+  if (!player || typeof player !== 'object') return fallback;
+
+  for (const key of PLAYER_DICE_COUNT_KEYS) {
+    const count = Number(player[key]);
+    if (Number.isFinite(count) && count > 0) return Math.trunc(count);
+  }
+
+  const dice = getPlayerDiceValues(player);
+  if (dice.length) return dice.length;
+
+  return fallback;
+}
+
+function getTurnDicePlayer(match, activePlayer, viewerPlayer, user, myTurn) {
+  const activeDice = getPlayerDiceValues(activePlayer);
+  const viewerDice = getPlayerDiceValues(viewerPlayer);
+  const matchViewerDice = getMatchViewerDiceValues(match);
+  const shouldUseViewerDice = Boolean(myTurn || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user));
+
+  const dice = activeDice.length
+    ? activeDice
+    : shouldUseViewerDice && viewerDice.length
+      ? viewerDice
+      : shouldUseViewerDice && matchViewerDice.length
+        ? matchViewerDice
+        : [];
+
+  const count = getPlayerDiceCount(activePlayer, getPlayerDiceCount(viewerPlayer, dice.length || 0));
+
+  return {
+    ...(activePlayer || viewerPlayer || user || {}),
+    ...(shouldUseViewerDice && viewerPlayer ? {
+      diceCount: getPlayerDiceCount(viewerPlayer, count),
+      lives: viewerPlayer.lives ?? viewerPlayer.diceCount ?? count,
+    } : {}),
+    dice,
+    diceCount: count || dice.length || (shouldUseViewerDice ? 5 : 0),
+  };
 }
 
 function formatTimer(value) {
@@ -232,6 +364,78 @@ function getQuantityValues(totalDice) {
   return Array.from({ length: max }, (_, index) => index + 1);
 }
 
+
+function turnIntroKeyPart(value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.toISOString() : '';
+  return String(value);
+}
+
+function firstTurnIntroKeyPart(...values) {
+  for (const value of values) {
+    const normalized = turnIntroKeyPart(value);
+    if (normalized) return normalized;
+  }
+  return '';
+}
+
+function hasTurnTimerStarted(match) {
+  if (!match || match.status !== 'active') return false;
+  if (match.turnStartedAt || match.turnDeadlineAt) return true;
+
+  const remainingMs = Number(match.turnTimeRemainingMs);
+  if (Number.isFinite(remainingMs) && remainingMs > 0) return true;
+
+  // Local/bot matches often only expose a live turnTimer. Treat it as the timer-start signal.
+  const timerSeconds = Number(match.turnTimer ?? match.turnSeconds ?? match.timer);
+  if (Number.isFinite(timerSeconds) && timerSeconds > 0) return true;
+
+  return false;
+}
+
+function getTurnIntroKey(match, activePlayer) {
+  if (!match || match.status !== 'active' || !activePlayer || !hasTurnTimerStarted(match)) return '';
+
+  const matchKey = firstTurnIntroKeyPart(match.id, match.matchId, match._id, 'local-match');
+  const roundKey = firstTurnIntroKeyPart(match.roundId, match.roundNumber, match.round, 'round-1');
+  const playerKey = firstTurnIntroKeyPart(...playerIdentityValues(activePlayer), playerName(activePlayer, 'active-player'));
+  const explicitTurnKey = firstTurnIntroKeyPart(
+    match.turnId,
+    match.currentTurnId,
+    match.turnSequence,
+    match.turnNumber,
+    match.turnIndex,
+    match.turnStartedAt,
+    match.turnDeadlineAt,
+  );
+
+  if (explicitTurnKey) return [matchKey, roundKey, playerKey, explicitTurnKey].join('::');
+
+  const bid = match.currentBid || {};
+  const lastAction = match.lastAction || {};
+  const fallbackTurnKey = [
+    firstTurnIntroKeyPart(lastAction.id, lastAction.actionId, lastAction.createdAt, lastAction.updatedAt, lastAction.type),
+    firstTurnIntroKeyPart(lastAction.by, lastAction.playerId, lastAction.actorId),
+    firstTurnIntroKeyPart(bid.id, bid.bidId, bid.createdAt, bid.updatedAt),
+    firstTurnIntroKeyPart(bid.by, bid.playerId, bid.actorId),
+    firstTurnIntroKeyPart(bid.quantity),
+    firstTurnIntroKeyPart(bid.face),
+    firstTurnIntroKeyPart(match.actionSequence, match.actionCount, match.version),
+  ].filter(Boolean).join(':') || 'initial-turn';
+
+  return [matchKey, roundKey, playerKey, fallbackTurnKey].join('::');
+}
+
+
+function getTurnIntroResetKey(match) {
+  if (!match) return 'no-match';
+  return [
+    firstTurnIntroKeyPart(match.id, match.matchId, match._id, 'local-match'),
+    firstTurnIntroKeyPart(match.roundId, match.roundNumber, match.round, 'round-1'),
+    firstTurnIntroKeyPart(match.status, 'unknown-status'),
+  ].join('::');
+}
+
 function getLiveTurnSeconds(match, tick = Date.now()) {
   if (!match || match.status !== 'active') return toNumber(match?.turnTimer, 15);
 
@@ -258,14 +462,14 @@ function HiddenDie({ className = '' }) {
 }
 
 function renderDice(player, className, max = 6) {
-  const visibleDice = Array.isArray(player?.dice) ? player.dice.filter((value) => Number(value) >= 1) : [];
+  const visibleDice = getPlayerDiceValues(player);
   if (visibleDice.length) {
     return visibleDice.slice(0, max).map((value, index) => (
       <Die key={`${playerId(player) || playerName(player)}-${index}-${value}`} value={value} className={className} />
     ));
   }
 
-  const hiddenCount = Math.min(toNumber(player?.diceCount || player?.lives, 0), max);
+  const hiddenCount = Math.min(getPlayerDiceCount(player, 0), max);
   return Array.from({ length: hiddenCount }, (_, index) => (
     <HiddenDie key={`${playerId(player) || playerName(player)}-hidden-${index}`} className={className} />
   ));
@@ -285,7 +489,7 @@ function isBotsMatch(match) {
 function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = false }) {
   if (!player) return null;
 
-  const count = toNumber(player?.diceCount ?? player?.lives ?? player?.dice?.length, 0);
+  const count = getPlayerDiceCount(player, 0);
   const stack = getPlayerStack(player, 0);
   const isEliminated = Boolean(player?.eliminated || player?.active === false || count <= 0);
   const botClass = isBotPlayer(player) ? 'gameplay-player--bot' : '';
@@ -556,6 +760,21 @@ function isValidBid(currentBid, quantity, face) {
   return quantity > currentQuantity || (quantity === currentQuantity && face > currentFace);
 }
 
+function TurnIntroOverlay({ player, phase }) {
+  if (!player || phase === TURN_INTRO_PHASE.IDLE) return null;
+
+  return (
+    <div className={`gameplay-turn-intro gameplay-turn-intro--${phase}`} aria-hidden="true">
+      <div className="gameplay-turn-intro__cupWrap">
+        <img className="gameplay-turn-intro__cup" src={`${asset}cup.png`} alt="" draggable="false" />
+      </div>
+      <div className="gameplay-turn-intro__diceWrap">
+        {renderDice(player, 'gameplay-turn-intro__die', 5)}
+      </div>
+    </div>
+  );
+}
+
 export default function Gameplay({ navigation, data, backendActions, backendStatus, i18n }) {
   const tx = i18n?.tx || ((value) => value);
   const isChinese = i18n?.language === 'zh';
@@ -567,14 +786,24 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const panelItems = getPanelItems(match, user);
   const tablePlayerCount = getTablePlayerCount(match, panelItems.length || 2);
   const botsMatch = isBotsMatch(match);
-  const totalDice = toNumber(match?.totalDiceInPlay, (match?.players || []).reduce((sum, player) => sum + toNumber(player?.diceCount || player?.dice?.length, 0), 0));
+  const totalDice = toNumber(match?.totalDiceInPlay, (match?.players || []).reduce((sum, player) => sum + getPlayerDiceCount(player, 0), 0));
   const currentBid = match?.currentBid || null;
   const previousBid = match?.previousBid || null;
   const viewerPlayer = getViewerPlayer(match, user);
   const myTurn = Boolean(match?.myTurn) || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user);
+  const turnDicePlayer = getTurnDicePlayer(match, activePlayer, viewerPlayer, user, myTurn);
+  const [turnIntroPhase, setTurnIntroPhase] = useState(TURN_INTRO_PHASE.IDLE);
+  const [turnIntroPlayer, setTurnIntroPlayer] = useState(null);
+  const completedTurnIntroKeyRef = useRef('');
+  const activeTurnIntroKeyRef = useRef('');
+  const turnIntroTimersRef = useRef([]);
+  const turnIntroRunIdRef = useRef(0);
+  const turnIntroKey = getTurnIntroKey(match, activePlayer);
+  const turnIntroResetKey = getTurnIntroResetKey(match);
+  const isTurnIntroPlaying = TURN_INTRO_ACTIVE_PHASES.has(turnIntroPhase);
   const isFinished = match?.status === 'finished';
   const isBusy = Boolean(backendStatus?.loading && String(backendStatus.lastAction || '').startsWith('match.'));
-  const canAct = Boolean(currentMatchId && match && !isFinished && myTurn && !isBusy);
+  const canAct = Boolean(currentMatchId && match && !isFinished && myTurn && !isBusy && !isTurnIntroPlaying);
   const availableActions = normalizedActionList(match?.availableActions);
   const disabledActions = normalizedActionList(match?.disabledActions);
   const hasServerActionRules = availableActions.length > 0 || disabledActions.length > 0;
@@ -602,6 +831,89 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     participants: [],
     error: null,
   });
+
+  const clearTurnIntroTimers = () => {
+    turnIntroRunIdRef.current += 1;
+    activeTurnIntroKeyRef.current = '';
+
+    if (typeof window === 'undefined') {
+      turnIntroTimersRef.current = [];
+      return;
+    }
+
+    turnIntroTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    turnIntroTimersRef.current = [];
+  };
+
+  const stopTurnIntro = () => {
+    clearTurnIntroTimers();
+    setTurnIntroPhase(TURN_INTRO_PHASE.IDLE);
+    setTurnIntroPlayer(null);
+  };
+
+  useEffect(() => {
+    return () => clearTurnIntroTimers();
+    // This cleanup only needs the timer ref from the initial render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!turnIntroKey) {
+      completedTurnIntroKeyRef.current = '';
+      activeTurnIntroKeyRef.current = '';
+      stopTurnIntro();
+      return;
+    }
+
+    if (completedTurnIntroKeyRef.current === turnIntroKey || activeTurnIntroKeyRef.current === turnIntroKey) return;
+
+    clearTurnIntroTimers();
+    activeTurnIntroKeyRef.current = turnIntroKey;
+    const runId = turnIntroRunIdRef.current;
+    const introPlayerSnapshot = turnDicePlayer || activePlayer || null;
+    setTurnIntroPlayer(introPlayerSnapshot);
+    setTurnIntroPhase(TURN_INTRO_PHASE.SHAKE);
+
+    if (typeof window === 'undefined') {
+      setTurnIntroPhase(TURN_INTRO_PHASE.IDLE);
+      setTurnIntroPlayer(null);
+      return;
+    }
+
+    const setPhaseSafely = (phase) => {
+      if (turnIntroRunIdRef.current !== runId || activeTurnIntroKeyRef.current !== turnIntroKey) return;
+      setTurnIntroPhase(phase);
+    };
+
+    const finishSafely = () => {
+      if (turnIntroRunIdRef.current !== runId || activeTurnIntroKeyRef.current !== turnIntroKey) return;
+      completedTurnIntroKeyRef.current = turnIntroKey;
+      activeTurnIntroKeyRef.current = '';
+      setTurnIntroPhase(TURN_INTRO_PHASE.IDLE);
+      setTurnIntroPlayer(null);
+      turnIntroTimersRef.current = [];
+    };
+
+    const centerAt = TURN_INTRO_TIMINGS.shakeMs;
+    const flyAt = centerAt + TURN_INTRO_TIMINGS.centerMs;
+    const doneAt = flyAt + TURN_INTRO_TIMINGS.flyMs;
+    const idleAt = doneAt + TURN_INTRO_TIMINGS.settleMs;
+
+    turnIntroTimersRef.current = [
+      window.setTimeout(() => setPhaseSafely(TURN_INTRO_PHASE.CENTER), centerAt),
+      window.setTimeout(() => setPhaseSafely(TURN_INTRO_PHASE.FLY), flyAt),
+      window.setTimeout(() => setPhaseSafely(TURN_INTRO_PHASE.DONE), doneAt),
+      window.setTimeout(finishSafely, idleAt),
+    ];
+  }, [turnIntroKey, turnDicePlayer, activePlayer]);
+
+  useEffect(() => {
+    if (!match || match.status !== 'active') {
+      completedTurnIntroKeyRef.current = '';
+      activeTurnIntroKeyRef.current = '';
+      stopTurnIntro();
+    }
+  }, [turnIntroResetKey]);
 
   useEffect(() => {
     if (!roundResult || isFinished) {
@@ -718,15 +1030,21 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     if (isFinished) navigation?.goWin?.();
   }, [isFinished, navigation]);
 
-  const submitBid = () => backendActions?.submitGameAction?.({
-    matchId: currentMatchId,
-    type: 'bid',
-    bid: { quantity: selectedQuantity, face: selectedFace, coinBet: selectedCoinBet, coinAmount: selectedCoinBet, betAmount: selectedCoinBet },
-    coinBet: selectedCoinBet,
-    betAmount: selectedCoinBet,
-  });
+  const submitBid = () => {
+    if (!canSubmitBid || isTurnIntroPlaying) return;
+    backendActions?.submitGameAction?.({
+      matchId: currentMatchId,
+      type: 'bid',
+      bid: { quantity: selectedQuantity, face: selectedFace, coinBet: selectedCoinBet, coinAmount: selectedCoinBet, betAmount: selectedCoinBet },
+      coinBet: selectedCoinBet,
+      betAmount: selectedCoinBet,
+    });
+  };
 
-  const submitSimpleAction = (type) => backendActions?.submitGameAction?.({ matchId: currentMatchId, type });
+  const submitSimpleAction = (type) => {
+    if (!canAct || isTurnIntroPlaying) return;
+    backendActions?.submitGameAction?.({ matchId: currentMatchId, type });
+  };
   const submitLeaveMatch = () => {
     if (!currentMatchId || isBusy) return;
     const confirmed = typeof window === 'undefined'
@@ -778,9 +1096,16 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const currentCoinBet = getMatchCoinBet(match);
   const totalPot = getTotalPot(match);
   const viewerStack = getPlayerStack(viewerPlayer || user, 0);
+  const turnIntroDisplayPlayer = turnIntroPlayer || turnDicePlayer || activePlayer || viewerPlayer;
 
   return (
-    <section className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'}`} aria-label={tx('Gameplay')}>
+    <section
+      className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''}`}
+      data-turn-intro-phase={turnIntroPhase}
+      data-turn-intro-player={playerId(turnIntroPlayer) || playerName(turnIntroPlayer, '') || undefined}
+      data-turn-intro-count={tablePlayerCount}
+      aria-label={tx('Gameplay')}
+    >
       {panelItems.map((item) => (
         <PlayerPanel
           key={`${item.slot}-${playerId(item.player) || playerName(item.player, item.fallbackName)}`}
@@ -799,10 +1124,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         <span className="gameplay-turnbar__title">{tx(myTurn ? 'YOUR TURN' : `${turnName}’S TURN`)}</span>
         <div className="gameplay-turnbar__countRow">
           <Die value={4} className="gameplay-turnbar__countDie" />
-          <span className="gameplay-turnbar__countValue">{toNumber(activePlayer?.diceCount ?? activePlayer?.lives ?? activePlayer?.dice?.length, 0) || '-'}</span>
+          <span className="gameplay-turnbar__countValue">{getPlayerDiceCount(turnDicePlayer || activePlayer, 0) || '-'}</span>
         </div>
-        <div className="gameplay-turnbar__diceRow">
-          {renderDice(activePlayer || viewerPlayer, 'gameplay-turnbar__die', 5)}
+        <div className={`gameplay-turnbar__diceRow ${isTurnIntroPlaying ? 'is-turn-intro-waiting' : ''}`}>
+          {renderDice(turnDicePlayer || activePlayer || viewerPlayer, 'gameplay-turnbar__die', 5)}
         </div>
       </div>
 
@@ -914,7 +1239,9 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         </div>
       ) : null}
 
-      <div className={`gameplay-cups gameplay-cups--count-${tablePlayerCount}`} aria-hidden="true">
+      <TurnIntroOverlay key={turnIntroKey || 'turn-intro-idle'} player={turnIntroDisplayPlayer} phase={turnIntroPhase} />
+
+      <div className={`gameplay-cups gameplay-cups--count-${tablePlayerCount} ${isTurnIntroPlaying ? 'is-turn-intro-hidden' : ''}`} aria-hidden="true">
         {renderCupSlots(tablePlayerCount)}
       </div>
 
