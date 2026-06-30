@@ -299,6 +299,9 @@ function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = fal
         <img className="gameplay-player__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
         <span className="gameplay-player__coinValue">{formatAmount(stack)}</span>
       </div>
+      <div className="gameplay-player__diceRow">
+        {renderDice(player, 'gameplay-player__miniDie', 5)}
+      </div>
     </div>
   );
 }
