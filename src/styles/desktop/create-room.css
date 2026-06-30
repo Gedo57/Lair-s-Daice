@@ -86,7 +86,7 @@ html[data-device='desktop'] .create-room-board__skin {
 
 html[data-device='desktop'] .create-room-character {
   position: absolute;
-  left: 36px;
+  left: -5px;
   bottom: 14px;
   width: 315px;
   height: 430px;
@@ -124,9 +124,9 @@ html[data-device='desktop'] .create-room-block--name { left: 0; top: 0; width: 1
 html[data-device='desktop'] .create-room-block--players { left: 242px; top: 0; width: 210px; height: 58px; }
 html[data-device='desktop'] .create-room-block--cups { left: 0; top: 64px; width: 190px; height: 58px; }
 html[data-device='desktop'] .create-room-block--timer { left: 242px; top: 64px; width: 210px; height: 58px; }
-html[data-device='desktop'] .create-room-block--bid { left: 0; top: 128px; width: 200px; height: 58px; }
-html[data-device='desktop'] .create-room-block--private { left: 260px; top: 128px; width: 175px; height: 58px; }
-html[data-device='desktop'] .create-room-block--code { left: 0; top: 158px; width: 210px; height: 72px; }
+html[data-device='desktop'] .create-room-block--bid { left: -70px; top: 128px; width: 200px; height: 58px; }
+html[data-device='desktop'] .create-room-block--private { left: 320px; top: 128px; width: 175px; height: 58px; }
+html[data-device='desktop'] .create-room-block--code { left: 0; top: 230px; width: 210px; height: 72px; }
 
 html[data-device='desktop'] .create-room-input,
 html[data-device='desktop'] .create-room-codeWrap {
