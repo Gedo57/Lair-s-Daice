@@ -828,3 +828,8 @@ html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app
 html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--6 { left: 314px !important; top: 68px !important; }
 html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__quantity--7 { left: 366px !important; top: 81px !important; }
 html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector__faceRow { left: 44px !important; top: 133px !important; gap: 18px !important; }
+
+/* Pek/Slam portrait action label patch */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--slam .gameplay-action__title {
+  font-size: 25px !important;
+}

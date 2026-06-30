@@ -71,7 +71,7 @@ export const translations = {
       'NORMAL': '真人',
       'BOTS': '机器人',
       'START SOLO': '单人开始',
-      'Bots mode starts immediately with CPU players.': '机器人模式会立即开始，并自动填充玩家。',
+      'Bots mode starts immediately with Bots.': '机器人模式会立即开始，并自动填充机器人玩家。',
       'Emma’s Room': '艾玛的房间',
       'PLAYERS': '玩家',
       'STARTING CUPS': '起始杯数',

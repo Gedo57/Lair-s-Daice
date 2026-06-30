@@ -59,6 +59,36 @@ function playerReady(room = {}, playerId) {
   return readyPlayers.some((id) => normalizeId(id) === normalizeId(playerId));
 }
 
+function readNumber(value, fallback = undefined) {
+  if (value === undefined || value === null || value === '') return fallback;
+  const sanitized = typeof value === 'string' ? value.replace(/,/g, '').trim() : value;
+  const number = Number(sanitized);
+  return Number.isFinite(number) ? Math.trunc(number) : fallback;
+}
+
+function formatAmount(value, fallback = '—') {
+  const number = readNumber(value);
+  if (!Number.isFinite(number)) return fallback;
+  return number.toLocaleString('en-US');
+}
+
+function getRoomPerGameAmount(room = {}) {
+  return readNumber(
+    room.perGameAmount ?? room.perGameCoins ?? room.roundStake ?? room.defaultCoinBet ?? room.defaultBidCoins ?? room.pricing?.perGameAmount ?? room.pricing?.roundStake,
+    undefined,
+  );
+}
+
+function getRoomPek(room = {}) {
+  const perGameAmount = getRoomPerGameAmount(room) || 0;
+  const percentage = readNumber(room.pekPercentage ?? room.slamPercentage ?? room.pricing?.pekPercentage ?? room.pricing?.slamPercentage, 100);
+  const safePercentage = [25, 50, 100].includes(percentage) ? percentage : 100;
+  const enabled = Boolean(room.pekEnabled ?? room.slamEnabled ?? room.pricing?.pekEnabled ?? room.pricing?.slamEnabled ?? false);
+  const finalAmount = readNumber(room.finalPekAmount ?? room.finalSlamAmount ?? room.pricing?.finalPekAmount ?? room.pricing?.finalSlamAmount, perGameAmount + Math.floor((perGameAmount * safePercentage) / 100));
+  return { enabled, percentage: safePercentage, finalAmount };
+}
+
+
 export default function RoomLobby({ navigation, data, backendActions, backendStatus, i18n }) {
   const tx = i18n?.tx || ((value) => value);
   const user = data?.user || {};
@@ -84,6 +114,8 @@ export default function RoomLobby({ navigation, data, backendActions, backendSta
   const isRefreshing = backendStatus?.loading && ['rooms.get', 'rooms.my', 'rooms.refresh'].includes(backendStatus?.lastAction);
   const canStart = Boolean(room?.roomId || room?.id || roomCode) && isHost && isFull && allReady && !isCountdown;
   const roomId = room?.roomId || room?.id || roomCode || null;
+  const perGameAmount = getRoomPerGameAmount(room || {});
+  const pekInfo = getRoomPek(room || {});
 
   const startButtonText = useMemo(() => {
     if (isCountdown) return `STARTING IN ${countdown}`;
@@ -177,7 +209,10 @@ export default function RoomLobby({ navigation, data, backendActions, backendSta
             <div className="room-lobby-info"><span>{tx('PLAYERS')}</span><strong>{room.playerCount || players.length || 1} / {room.maxPlayers || 4}</strong></div>
             <div className="room-lobby-info"><span>{tx('STATUS')}</span><strong>{tx(isCountdown ? `STARTING ${countdown}` : String(room.status || 'waiting').toUpperCase())}</strong></div>
             <div className="room-lobby-info"><span>{tx('READY')}</span><strong>{(room.readyPlayers || []).length} / {room.maxPlayers || 4}</strong></div>
-            <div className="room-lobby-info"><span>{tx('TIMER')}</span><strong>{room.turnTimer || room.selectedTimer || '15s'}</strong></div>
+            <div className="room-lobby-info"><span>{tx('TIMER')}</span><strong>{room.turnTimer || room.selectedTimer || '30s'}</strong></div>
+            <div className="room-lobby-info"><span>{tx('BUY-IN')}</span><strong>{formatAmount(room.buyInAmount || room.entryFee || room.pricing?.buyInAmount)}</strong></div>
+            <div className="room-lobby-info"><span>{tx('PER GAME')}</span><strong>{formatAmount(perGameAmount)}</strong></div>
+            <div className="room-lobby-info"><span>{tx('PEK / SLAM')}</span><strong>{pekInfo.enabled ? `${pekInfo.percentage}% / ${formatAmount(pekInfo.finalAmount)}` : tx('OFF')}</strong></div>
           </div>
 
           {isCountdown ? (

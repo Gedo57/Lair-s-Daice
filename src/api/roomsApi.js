@@ -41,6 +41,21 @@ function cleanCoinBetOptions(options = [], min = 0, max = Infinity) {
     .sort((left, right) => left - right);
 }
 
+
+function normalizePekPercentage(value, fallback = 100) {
+  const number = Number(String(value || '').replace(/[^0-9]/g, '').trim());
+  return [25, 50, 100].includes(number) ? number : fallback;
+}
+
+function booleanSetting(value, fallback = false) {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (value === true || value === 1 || value === '1') return true;
+  const normalized = String(value).trim().toLowerCase();
+  if (['true', 'on', 'yes', 'enabled'].includes(normalized)) return true;
+  if (['false', 'off', 'no', 'disabled', '0'].includes(normalized)) return false;
+  return fallback;
+}
+
 function normalizeCreateRoomPayload(settings = {}) {
   const name = settings.name || settings.roomName || settings.title || 'Private Room';
   const isPrivate = settings.isPrivate !== false && String(settings.isPrivate).toLowerCase() !== 'false';
@@ -56,11 +71,16 @@ function normalizeCreateRoomPayload(settings = {}) {
     (settings.botsEnabled || settings.playWithBots || settings.withBots ? 'bots' : 'normal')
   ).toLowerCase() === 'bots' ? 'bots' : 'normal';
   const buyInAmount = numericSetting(settings, ['buyInAmount', 'buyInCoins', 'customBuyIn', 'customStake', 'stakeAmount', 'stake', 'entryFee']);
-  const minCoinBet = numericSetting(settings, ['minCoinBet', 'minBidCoins', 'minBet', 'minimumBet']);
-  const maxCoinBet = numericSetting(settings, ['maxCoinBet', 'maxBidCoins', 'maxBet', 'maximumBet']);
-  const defaultCoinBet = numericSetting(settings, ['defaultCoinBet', 'defaultBidCoins', 'defaultBet']);
+  const perGameAmount = numericSetting(settings, ['perGameAmount', 'perGameCoins', 'roundStake', 'roundStakeAmount', 'baseStake', 'baseBet', 'gameAmount', 'gameStake', 'defaultCoinBet', 'defaultBidCoins']);
+  const fixedPerGameAmount = perGameAmount !== undefined ? perGameAmount : numericSetting(settings, ['minCoinBet', 'minBidCoins', 'minBet', 'minimumBet']);
+  const minCoinBet = fixedPerGameAmount;
+  const maxCoinBet = fixedPerGameAmount;
+  const defaultCoinBet = fixedPerGameAmount;
   const bidCoinStep = numericSetting(settings, ['bidCoinStep', 'coinBidStep']);
-  const coinBetOptions = cleanCoinBetOptions(settings.coinBetOptions, minCoinBet || 0, maxCoinBet || Infinity);
+  const coinBetOptions = fixedPerGameAmount !== undefined ? [fixedPerGameAmount] : cleanCoinBetOptions(settings.coinBetOptions, minCoinBet || 0, maxCoinBet || Infinity);
+  const pekEnabled = booleanSetting(settings.pekEnabled ?? settings.slamEnabled ?? settings.pekMode ?? settings.slamMode, false);
+  const pekPercentage = normalizePekPercentage(settings.pekPercentage ?? settings.slamPercentage ?? settings.pekPercent ?? settings.slamPercent, 100);
+  const finalPekAmount = fixedPerGameAmount !== undefined ? fixedPerGameAmount + Math.floor((fixedPerGameAmount * pekPercentage) / 100) : undefined;
 
   const payload = {
     name,
@@ -81,7 +101,7 @@ function normalizeCreateRoomPayload(settings = {}) {
     startingDice: 5,
     dicePerPlayer: 5,
     dicePerRound: 5,
-    turnTimer: Number(settings.turnTimer || String(settings.selectedTimer || '').replace(/[^0-9]/g, '') || 15) || 15,
+    turnTimer: Number(settings.turnTimer || String(settings.selectedTimer || '').replace(/[^0-9]/g, '') || 30) || 30,
     bidStyle: 'Official Rules',
   };
 
@@ -92,20 +112,41 @@ function normalizeCreateRoomPayload(settings = {}) {
     payload.customStake = buyInAmount;
     payload.entryFee = buyInAmount;
   }
-  if (minCoinBet !== undefined) {
-    payload.minCoinBet = minCoinBet;
-    payload.minBidCoins = minCoinBet;
+  if (fixedPerGameAmount !== undefined) {
+    payload.perGameAmount = fixedPerGameAmount;
+    payload.perGameCoins = fixedPerGameAmount;
+    payload.roundStake = fixedPerGameAmount;
+    payload.minCoinBet = fixedPerGameAmount;
+    payload.minBidCoins = fixedPerGameAmount;
+    payload.maxCoinBet = fixedPerGameAmount;
+    payload.maxBidCoins = fixedPerGameAmount;
+    payload.defaultCoinBet = fixedPerGameAmount;
+    payload.defaultBidCoins = fixedPerGameAmount;
+    payload.coinBetOptions = [fixedPerGameAmount];
+  } else {
+    if (minCoinBet !== undefined) {
+      payload.minCoinBet = minCoinBet;
+      payload.minBidCoins = minCoinBet;
+    }
+    if (maxCoinBet !== undefined) {
+      payload.maxCoinBet = maxCoinBet;
+      payload.maxBidCoins = maxCoinBet;
+    }
+    if (defaultCoinBet !== undefined) {
+      payload.defaultCoinBet = defaultCoinBet;
+      payload.defaultBidCoins = defaultCoinBet;
+    }
+    if (coinBetOptions.length) payload.coinBetOptions = coinBetOptions;
   }
-  if (maxCoinBet !== undefined) {
-    payload.maxCoinBet = maxCoinBet;
-    payload.maxBidCoins = maxCoinBet;
-  }
-  if (defaultCoinBet !== undefined) {
-    payload.defaultCoinBet = defaultCoinBet;
-    payload.defaultBidCoins = defaultCoinBet;
+  payload.pekEnabled = pekEnabled;
+  payload.slamEnabled = pekEnabled;
+  payload.pekPercentage = pekPercentage;
+  payload.slamPercentage = pekPercentage;
+  if (finalPekAmount !== undefined) {
+    payload.finalPekAmount = finalPekAmount;
+    payload.finalSlamAmount = finalPekAmount;
   }
   if (bidCoinStep !== undefined) payload.bidCoinStep = bidCoinStep;
-  if (coinBetOptions.length) payload.coinBetOptions = coinBetOptions;
 
   return payload;
 }

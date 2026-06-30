@@ -361,3 +361,19 @@ html[data-device='desktop'] .create-room-bottom__text {
 html[data-device='desktop'] .create-room-bottom--back .create-room-bottom__text {
   color: #fff8e6;
 }
+
+/* Pek/Slam room preset betting patch */
+html[data-device='desktop'] .create-room-block--bid { left: -70px; top: 128px; width: 470px; }
+html[data-device='desktop'] .create-room-block--perGame { left: -70px; top: 188px; width: 330px; height: 58px; }
+html[data-device='desktop'] .create-room-block--pekToggle { left: 305px; top: 188px; width: 150px; height: 58px; }
+html[data-device='desktop'] .create-room-block--pekPercent { left: 0; top: 248px; width: 260px; height: 72px; }
+html[data-device='desktop'] .create-room-block--mode { left: 275px; top: 248px; width: 220px; height: 58px; }
+html[data-device='desktop'] .create-room-block--private { left: 320px; top: 128px; width: 175px; height: 58px; }
+html[data-device='desktop'] .create-room-block--code { left: 0; top: 314px; width: 210px; height: 72px; }
+html[data-device='desktop'] .create-room-invite { left: 276px; top: 334px; }
+html[data-device='desktop'] .create-room-rules { top: 382px; max-width: 500px; font-size: 11px; }
+html[data-device='desktop'] .create-room-pekToggle { position: absolute; left: 45px; top: 23px; }
+html[data-device='desktop'] .create-room-option--percent { width: 70px; }
+html[data-device='desktop'] .create-room-option.is-disabled,
+html[data-device='desktop'] .create-room-block--pekPercent.is-disabled { opacity: .55; }
+html[data-device='desktop'] .create-room-pekPreview { position: absolute; left: 0; top: 61px; width: 240px; text-align: center; font: 900 11px/1 Arial, sans-serif; color: #5b3210; }

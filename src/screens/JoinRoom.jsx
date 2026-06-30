@@ -38,6 +38,7 @@ function RecentRoom({ room, tx, onJoin }) {
       <span className="join-room-recent__code">{room.code}</span>
       <span className="join-room-recent__name">{tx(room.name)}</span>
       <span className="join-room-recent__players">{room.players}</span>
+      <span className="join-room-recent__summary">{tx(room.betSummary)}</span>
       <span className="join-room-recent__join">{tx('JOIN')}</span>
     </button>
   );
@@ -46,6 +47,34 @@ function RecentRoom({ room, tx, onJoin }) {
 function getRoomJoinCode(room = {}) {
   return room.roomCode || room.code || room.roomId || room.id || null;
 }
+
+function readNumber(value, fallback = undefined) {
+  if (value === undefined || value === null || value === '') return fallback;
+  const sanitized = typeof value === 'string' ? value.replace(/,/g, '').trim() : value;
+  const number = Number(sanitized);
+  return Number.isFinite(number) ? Math.trunc(number) : fallback;
+}
+
+function formatAmount(value, fallback = '—') {
+  const number = readNumber(value);
+  if (!Number.isFinite(number)) return fallback;
+  return number.toLocaleString('en-US');
+}
+
+function buildBetSummary(room = {}) {
+  const buyIn = readNumber(room.buyInAmount ?? room.entryFee ?? room.pricing?.buyInAmount);
+  const perGame = readNumber(room.perGameAmount ?? room.roundStake ?? room.defaultCoinBet ?? room.pricing?.perGameAmount ?? room.pricing?.roundStake);
+  const pekEnabled = Boolean(room.pekEnabled ?? room.slamEnabled ?? room.pricing?.pekEnabled ?? room.pricing?.slamEnabled ?? false);
+  const percentage = readNumber(room.pekPercentage ?? room.slamPercentage ?? room.pricing?.pekPercentage ?? room.pricing?.slamPercentage, 100);
+  const safePercentage = [25, 50, 100].includes(percentage) ? percentage : 100;
+  const finalPek = readNumber(room.finalPekAmount ?? room.finalSlamAmount ?? room.pricing?.finalPekAmount ?? room.pricing?.finalSlamAmount, perGame ? perGame + Math.floor((perGame * safePercentage) / 100) : undefined);
+  const parts = [];
+  if (Number.isFinite(buyIn)) parts.push(`Buy-in ${formatAmount(buyIn)}`);
+  if (Number.isFinite(perGame)) parts.push(`Game ${formatAmount(perGame)}`);
+  parts.push(pekEnabled ? `Pek ${safePercentage}% / ${formatAmount(finalPek)}` : 'Pek OFF');
+  return parts.join(' • ');
+}
+
 
 function normalizeAvailableRoom(room = {}) {
   if (!room || typeof room !== 'object') return null;
@@ -69,6 +98,7 @@ function normalizeAvailableRoom(room = {}) {
     code,
     name: room.name || room.title || 'Private Room',
     players: `${Number.isFinite(playerCount) ? playerCount : 0} / ${Number.isFinite(maxPlayers) ? maxPlayers : 4}`,
+    betSummary: buildBetSummary(room),
   };
 }
 

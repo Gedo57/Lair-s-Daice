@@ -1143,3 +1143,9 @@ html[data-device='mobile'] .gameplay-bid-selector__quantityValueMax {
   font-weight: 900;
   opacity: .9;
 }
+
+/* Pek/Slam action button patch */
+html[data-device='mobile'] .gameplay-action--raise { left: 345px; }
+html[data-device='mobile'] .gameplay-action--call { left: 528px; }
+html[data-device='mobile'] .gameplay-action--slam { left: 711px; }
+html[data-device='mobile'] .gameplay-action--slam .gameplay-action__title { left: 51px; top: 30px; font-size: 14px; }

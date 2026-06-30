@@ -186,7 +186,7 @@ function getTurnDicePlayer(match, activePlayer, viewerPlayer, user, myTurn) {
 }
 
 function formatTimer(value) {
-  const timer = toNumber(value, 15);
+  const timer = toNumber(value, 30);
   return `${Math.max(0, Math.trunc(timer))}s`;
 }
 
@@ -320,6 +320,58 @@ function getMatchCoinBet(match) {
   return current ?? getMinimumCoinBet(match);
 }
 
+function getPerGameAmount(match = {}) {
+  return firstPositiveNumber(
+    match?.perGameAmount,
+    match?.perGameCoins,
+    match?.roundStake,
+    match?.pricing?.perGameAmount,
+    match?.pricing?.roundStake,
+    match?.gameRules?.perGameAmount,
+    match?.gameRules?.roundStake,
+    getMatchCoinBet(match),
+  );
+}
+
+function normalizePekPercentage(value, fallback = 100) {
+  const number = Math.trunc(Number(value));
+  return [25, 50, 100].includes(number) ? number : fallback;
+}
+
+function getPekSettings(match = {}) {
+  const pricing = match?.pricing || {};
+  const rules = match?.gameRules || match?.rules || {};
+  const pekEnabled = Boolean(
+    match?.pekEnabled ??
+    match?.slamEnabled ??
+    pricing.pekEnabled ??
+    pricing.slamEnabled ??
+    rules.pekEnabled ??
+    rules.slamEnabled ??
+    false,
+  );
+  const perGameAmount = getPerGameAmount(match) || 0;
+  const pekPercentage = normalizePekPercentage(
+    match?.pekPercentage ??
+    match?.slamPercentage ??
+    pricing.pekPercentage ??
+    pricing.slamPercentage ??
+    rules.pekPercentage ??
+    rules.slamPercentage,
+    100,
+  );
+  const finalPekAmount = firstPositiveNumber(
+    match?.finalPekAmount,
+    match?.finalSlamAmount,
+    pricing.finalPekAmount,
+    pricing.finalSlamAmount,
+    rules.finalPekAmount,
+    rules.finalSlamAmount,
+  ) ?? (perGameAmount + Math.floor((perGameAmount * pekPercentage) / 100));
+
+  return { pekEnabled, perGameAmount, pekPercentage, finalPekAmount };
+}
+
 function readPotValue(value) {
   if (value && typeof value === 'object') {
     return firstPositiveNumber(
@@ -437,7 +489,7 @@ function getTurnIntroResetKey(match) {
 }
 
 function getLiveTurnSeconds(match, tick = Date.now()) {
-  if (!match || match.status !== 'active') return toNumber(match?.turnTimer, 15);
+  if (!match || match.status !== 'active') return toNumber(match?.turnTimer, 30);
 
   if (match.turnDeadlineAt) {
     const deadline = new Date(match.turnDeadlineAt).getTime();
@@ -448,7 +500,7 @@ function getLiveTurnSeconds(match, tick = Date.now()) {
     return Math.max(0, Math.ceil(Number(match.turnTimeRemainingMs) / 1000));
   }
 
-  return toNumber(match.turnTimer, 15);
+  return toNumber(match.turnTimer, 30);
 }
 
 function Die({ value, className = '', variant = 'white' }) {
@@ -605,6 +657,26 @@ function getViewerPlayer(match, user) {
   return match.players.find((player) => !player?.isBot) || match.players[0];
 }
 
+function getBidderPlayer(match) {
+  if (!match?.players?.length || !match?.currentBid) return null;
+  const bidRefs = [
+    match.currentBid.playerId,
+    match.currentBid.userId,
+    match.currentBid.bidderUserId,
+  ].filter(Boolean).map(String);
+
+  return match.players.find((player) => playerIdentityValues(player).some((id) => bidRefs.includes(id))) || null;
+}
+
+function getPekStackBlockReason({ pekSettings, viewerPlayer, bidderPlayer, tx }) {
+  if (!pekSettings?.pekEnabled) return '';
+  const required = Number(pekSettings.finalPekAmount || 0);
+  if (!required) return '';
+  if (getPlayerStack(viewerPlayer, 0) < required) return tx(`Need ${formatAmount(required)} stack`);
+  if (bidderPlayer && getPlayerStack(bidderPlayer, 0) < required) return tx(`Bidder needs ${formatAmount(required)} stack`);
+  return '';
+}
+
 function getPanelItems(match, user) {
   const players = Array.isArray(match?.players) ? match.players.filter(Boolean) : [];
   const viewer = getViewerPlayer(match, user) || {
@@ -674,7 +746,7 @@ function describeLastAction(match, tx) {
   const actor = getActorName(match, action.by || action.playerId);
   if (action.type === 'bid') return `${actor} ${tx('raised the bid')}`;
   if (action.type === 'call_liar' || action.type === 'call_lira') return `${actor} ${tx('called liar')}`;
-  if (action.type === 'slam') return `${actor} ${tx('used slam')}`;
+  if (action.type === 'pek' || action.type === 'call_pek' || action.type === 'slam' || action.type === 'call_slam') return `${actor} ${tx('called Pek/Slam')}`;
   if (action.type === 'reroll') return `${actor} ${tx('re-rolled dice')}`;
   if (action.type === 'finish') return `${actor} ${tx('finished the match')}`;
   return tx('Match updated');
@@ -732,9 +804,24 @@ function describeRoundResult(roundResult, tx) {
   }
 
   const loserName = roundResult.loserName || tx('Player');
-  const diceLost = toNumber(roundResult.diceLost, 1);
   const bidTruth = roundResult.bidWasTrue ? tx('Bid was true') : tx('Bid was false');
-  return `${bidTruth}. ${loserName} ${tx('lost')} ${diceLost} ${diceLost === 1 ? tx('die') : tx('dice')}.`;
+  const challengeType = String(roundResult.challengeType || roundResult.actionType || '').toLowerCase();
+  const isPekChallenge = ['pek', 'call_pek', 'slam', 'call_slam'].includes(challengeType) || roundResult.isPek || roundResult.isSlam;
+  const lostCoins = firstPositiveNumber(
+    roundResult.challengeAmount,
+    roundResult.riskAmount,
+    roundResult.stackLost,
+    roundResult.lossAmount,
+    roundResult.finalPekAmount,
+    roundResult.finalSlamAmount,
+  );
+
+  if (Number.isFinite(lostCoins) && lostCoins > 0) {
+    const label = isPekChallenge ? tx('Pek/Slam') : tx('Call Liar');
+    return `${bidTruth}. ${label}: ${loserName} ${tx('lost')} ${formatAmount(lostCoins)} ${tx('coins')}.`;
+  }
+
+  return `${bidTruth}.`;
 }
 
 function roundResultTitle(roundResult, tx) {
@@ -809,6 +896,13 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const hasServerActionRules = availableActions.length > 0 || disabledActions.length > 0;
   const canSubmitBid = canAct && (!hasServerActionRules || availableActions.includes('bid')) && !disabledActions.includes('bid');
   const canCallLiar = canAct && Boolean(currentBid) && (!hasServerActionRules || availableActions.includes('call_liar') || availableActions.includes('call_lira')) && !disabledActions.includes('call_liar') && !disabledActions.includes('call_lira');
+  const pekSettings = getPekSettings(match);
+  const bidderPlayer = getBidderPlayer(match);
+  const pekStackBlockReason = getPekStackBlockReason({ pekSettings, viewerPlayer, bidderPlayer, tx });
+  const pekActionAliases = ['call_pek', 'pek', 'call_slam', 'slam'];
+  const serverAllowsPek = !hasServerActionRules || pekActionAliases.some((action) => availableActions.includes(action));
+  const serverDisablesPek = pekActionAliases.some((action) => disabledActions.includes(action));
+  const canCallPek = canAct && Boolean(currentBid) && pekSettings.pekEnabled && serverAllowsPek && !serverDisablesPek && !pekStackBlockReason;
   const roundResult = getMatchRoundResult(match, data);
   const roundResultKey = getRoundResultKey(roundResult);
   const revealedRows = revealedDiceRows(roundResult);
@@ -1091,6 +1185,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const decreaseQuantity = () => setSelectedQuantity((value) => Math.max(quantityMin, toNumber(value, quantityMin) - 1));
   const increaseQuantity = () => setSelectedQuantity((value) => Math.min(quantityMax, toNumber(value, quantityMin) + 1));
   const challengeDisabled = !canCallLiar;
+  const pekDisabled = !canCallPek;
   const bidDisabled = !canSubmitBid || !bidIsValid || !coinBetIsValid;
   const turnName = playerName(activePlayer, myTurn ? 'You' : 'Player');
   const currentCoinBet = getMatchCoinBet(match);
@@ -1317,7 +1412,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       </div>
 
       <ActionButton className="gameplay-action--raise" skin="B!.png" title="CONFIRM BID" subtitle={bidIsValid ? (coinBetIsValid ? 'Submit your bid' : 'Coin bet out of range') : 'Bid must be higher'} onClick={submitBid} disabled={bidDisabled} tx={tx} />
-      <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIAR" subtitle="Challenge the bid" onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
+      <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIAR" subtitle={`Risk ${formatAmount(pekSettings.perGameAmount || currentCoinBet)}`} onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
+      {pekSettings.pekEnabled ? (
+        <ActionButton className="gameplay-action--slam" skin="B3.png" title="PEK / SLAM" subtitle={pekStackBlockReason || `Risk ${formatAmount(pekSettings.finalPekAmount)}`} onClick={() => submitSimpleAction('call_pek')} disabled={pekDisabled} tx={tx} />
+      ) : null}
 
       <div className="gameplay-stack-panel">
         <img className="gameplay-stack-panel__skin" src={`${asset}p3.png`} alt="" draggable="false" />

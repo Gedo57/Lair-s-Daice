@@ -109,3 +109,8 @@ html[data-device='desktop'] .room-lobby-refresh {
   font-weight: 900;
   box-shadow: 0 2px 5px rgba(0,0,0,.18);
 }
+
+/* Pek/Slam lobby betting summary patch */
+html[data-device='desktop'] .room-lobby-infoGrid { left: 8px; top: 158px; width: 440px; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+html[data-device='desktop'] .room-lobby-info strong { font-size: 13px; }
+html[data-device='desktop'] .room-lobby-playerList { top: 302px; height: 80px; }

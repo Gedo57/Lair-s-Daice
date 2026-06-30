@@ -10,6 +10,7 @@ const COIN_BET_BY_STAKE = {
   5000: [1000, 2000, 5000],
   10000: [2000, 5000, 10000],
 };
+const PEK_PERCENTAGE_OPTIONS = [25, 50, 100];
 
 function formatStakeOption(value) {
   const number = Number(value);
@@ -26,6 +27,25 @@ function normalizeStake(value, fallback = 500) {
 
 function buildCoinBetOptionsForStake(stake) {
   return COIN_BET_BY_STAKE[stake] || COIN_BET_BY_STAKE[500];
+}
+
+function normalizePerGameAmount(value, stake) {
+  const options = buildCoinBetOptionsForStake(stake);
+  const number = Number(String(value || '').replace(/,/g, ''));
+  if (Number.isFinite(number) && options.includes(number)) return number;
+  return options[0];
+}
+
+function normalizePekPercentage(value, fallback = 100) {
+  const number = Number(String(value || '').replace(/[^0-9]/g, ''));
+  if (PEK_PERCENTAGE_OPTIONS.includes(number)) return number;
+  return PEK_PERCENTAGE_OPTIONS.includes(fallback) ? fallback : 100;
+}
+
+function calculateFinalPekAmount(perGameAmount, percentage) {
+  const base = Number(perGameAmount) || 0;
+  const percent = normalizePekPercentage(percentage, 100);
+  return base + Math.floor((base * percent) / 100);
 }
 
 function TopHud({ user, wallet }) {
@@ -48,9 +68,9 @@ function TopHud({ user, wallet }) {
   );
 }
 
-function OptionButton({ value, active = false, className = '', tx, onClick }) {
+function OptionButton({ value, active = false, disabled = false, className = '', tx, onClick }) {
   return (
-    <button className={`create-room-option ${active ? 'is-active' : ''} ${className}`} type="button" onClick={onClick}>
+    <button className={`create-room-option ${active ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''} ${className}`} type="button" onClick={onClick} disabled={disabled}>
       <img className="create-room-option__skin" src={`${asset}${active ? 'b2.png' : 'b1.png'}`} alt="" draggable="false" />
       <span className="create-room-option__text">{tx(value)}</span>
     </button>
@@ -74,14 +94,22 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const [roomName, setRoomName] = useState(settings.roomName || `${user?.displayName || user?.username || 'Player'}’s Room`);
   const [selectedPlayers, setSelectedPlayers] = useState(settings.selectedPlayers || '2');
   const [selectedCups, setSelectedCups] = useState('5');
-  const [selectedTimer, setSelectedTimer] = useState(settings.selectedTimer || '15s');
+  const [selectedTimer, setSelectedTimer] = useState(settings.selectedTimer || '30s');
   const [selectedRoomMode, setSelectedRoomMode] = useState(String(settings.selectedRoomMode || settings.roomMode || 'normal').toLowerCase() === 'bots' ? 'bots' : 'normal');
   const [selectedBuyIn, setSelectedBuyIn] = useState(normalizeStake(settings.buyInAmount || settings.buyInCoins || settings.customBuyIn || settings.customStake || settings.entryFee, 500));
+  const [selectedPerGame, setSelectedPerGame] = useState(() => normalizePerGameAmount(settings.perGameAmount || settings.roundStake || settings.perGameCoins || settings.defaultCoinBet || settings.defaultBidCoins, normalizeStake(settings.buyInAmount || settings.buyInCoins || settings.customBuyIn || settings.customStake || settings.entryFee, 500)));
+  const [pekEnabled, setPekEnabled] = useState(Boolean(settings.pekEnabled ?? settings.slamEnabled ?? false));
+  const [selectedPekPercentage, setSelectedPekPercentage] = useState(normalizePekPercentage(settings.pekPercentage || settings.slamPercentage || settings.pekPercent || settings.slamPercent, 100));
   const [isPrivate, setIsPrivate] = useState(settings.isPrivate ?? true);
 
   const isBotsMode = selectedRoomMode === 'bots';
   const coinBetOptionsForStake = buildCoinBetOptionsForStake(selectedBuyIn);
-  const selectedRulesCopy = 'Rules: 5 dice each • 1s are wild until 1s are called • bid or call liar only';
+  const finalPekAmount = calculateFinalPekAmount(selectedPerGame, selectedPekPercentage);
+  const pekRiskInvalid = pekEnabled && finalPekAmount > selectedBuyIn;
+  const pekRiskError = pekRiskInvalid
+    ? `Pek/Slam risk ${formatStakeOption(finalPekAmount)} must not be greater than buy-in ${formatStakeOption(selectedBuyIn)}`
+    : '';
+  const selectedRulesCopy = `Rules: 5 dice each • Per game ${formatStakeOption(selectedPerGame)}${pekEnabled ? ` • Pek ${selectedPekPercentage}% = ${formatStakeOption(finalPekAmount)}` : ' • Pek OFF'}`;
 
   const currentSettings = {
     ...settings,
@@ -94,20 +122,31 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
     startingDice: 5,
     dicePerPlayer: 5,
     selectedTimer,
-    turnTimer: Number(String(selectedTimer).replace(/[^0-9]/g, '')) || 15,
+    turnTimer: Number(String(selectedTimer).replace(/[^0-9]/g, '')) || 30,
     buyInAmount: selectedBuyIn,
     buyInCoins: selectedBuyIn,
     customBuyIn: selectedBuyIn,
     customStake: selectedBuyIn,
     entryFee: selectedBuyIn,
-    minCoinBet: coinBetOptionsForStake[0],
-    minBidCoins: coinBetOptionsForStake[0],
-    maxCoinBet: coinBetOptionsForStake[coinBetOptionsForStake.length - 1],
-    maxBidCoins: coinBetOptionsForStake[coinBetOptionsForStake.length - 1],
-    defaultCoinBet: coinBetOptionsForStake[0],
-    defaultBidCoins: coinBetOptionsForStake[0],
+    perGameAmount: selectedPerGame,
+    perGameCoins: selectedPerGame,
+    roundStake: selectedPerGame,
+    minCoinBet: selectedPerGame,
+    minBidCoins: selectedPerGame,
+    maxCoinBet: selectedPerGame,
+    maxBidCoins: selectedPerGame,
+    defaultCoinBet: selectedPerGame,
+    defaultBidCoins: selectedPerGame,
     bidCoinStep: selectedBuyIn >= 5000 ? 500 : 100,
-    coinBetOptions: coinBetOptionsForStake,
+    coinBetOptions: [selectedPerGame],
+    pekEnabled,
+    slamEnabled: pekEnabled,
+    pekPercentage: selectedPekPercentage,
+    slamPercentage: selectedPekPercentage,
+    finalPekAmount,
+    finalSlamAmount: finalPekAmount,
+    requiredPekCoverAmount: pekEnabled ? finalPekAmount : selectedPerGame,
+    maxChallengeAmount: pekEnabled ? finalPekAmount : selectedPerGame,
     bidStyle: 'Official Rules',
     selectedRoomMode,
     roomMode: selectedRoomMode,
@@ -121,6 +160,11 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
 
   const roomCode = getVisibleRoomCode(data, settings);
   const createSelectedHandler = (setter, value) => () => setter(value);
+  const handleBuyInSelect = (value) => () => {
+    setSelectedBuyIn(value);
+    const nextOptions = buildCoinBetOptionsForStake(value);
+    setSelectedPerGame((current) => (nextOptions.includes(current) ? current : nextOptions[0]));
+  };
 
   const copyCode = async () => {
     if (!roomCode || roomCode === 'CREATE FIRST') return;
@@ -192,10 +236,59 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
                   active={value === selectedBuyIn}
                   className="create-room-option--wide"
                   tx={tx}
-                  onClick={createSelectedHandler(setSelectedBuyIn, value)}
+                  onClick={handleBuyInSelect(value)}
                 />
               ))}
             </div>
+          </div>
+
+          <div className="create-room-block create-room-block--perGame">
+            <span className="create-room-label">{tx('PER GAME')}</span>
+            <div className="create-room-optionRow create-room-optionRow--perGame">
+              {coinBetOptionsForStake.map((value) => (
+                <OptionButton
+                  key={`per-game-${value}`}
+                  value={formatStakeOption(value)}
+                  active={value === selectedPerGame}
+                  disabled={pekEnabled && calculateFinalPekAmount(value, selectedPekPercentage) > selectedBuyIn}
+                  className="create-room-option--wide"
+                  tx={tx}
+                  onClick={createSelectedHandler(setSelectedPerGame, value)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="create-room-block create-room-block--pekToggle">
+            <span className="create-room-label">{tx('PEK / SLAM')}</span>
+            <button
+              className={`create-room-privateToggle create-room-pekToggle ${pekEnabled ? 'is-on' : 'is-off'}`}
+              type="button"
+              onClick={() => setPekEnabled((value) => !value)}
+              aria-pressed={pekEnabled}
+              aria-label={pekEnabled ? tx('Pek on') : tx('Pek off')}
+            >
+              <img src={`${asset}${pekEnabled ? 'on.png' : 'off.png'}`} alt="" draggable="false" />
+            </button>
+          </div>
+
+          <div className={`create-room-block create-room-block--pekPercent ${pekEnabled ? '' : 'is-disabled'}`}>
+            <span className="create-room-label">{tx('PEK AMOUNT')}</span>
+            <div className="create-room-optionRow create-room-optionRow--pekPercent">
+              {PEK_PERCENTAGE_OPTIONS.map((value) => (
+                <OptionButton
+                  key={`pek-${value}`}
+                  value={`${value}%`}
+                  active={value === selectedPekPercentage}
+                  disabled={!pekEnabled || calculateFinalPekAmount(selectedPerGame, value) > selectedBuyIn}
+                  className="create-room-option--percent"
+                  tx={tx}
+                  onClick={createSelectedHandler(setSelectedPekPercentage, value)}
+                />
+              ))}
+            </div>
+            <span className="create-room-pekPreview">{tx('Risk')}: {formatStakeOption(finalPekAmount)}</span>
+            {pekRiskInvalid ? <span className="create-room-pekPreview" style={{ top: '28px', color: '#8a1a11' }}>{tx(pekRiskError)}</span> : null}
           </div>
 
           <div className="create-room-block create-room-block--mode">
@@ -235,15 +328,18 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
             <span className="create-room-invite__text">{tx(data?.currentRoom ? 'OPEN LOBBY' : 'INVITE FRIENDS')}</span>
           </button>
 
-          <span className="create-room-rules">{tx(isBotsMode ? 'Bots mode starts immediately with CPU players.' : selectedRulesCopy)}</span>
+          <span className="create-room-rules">{tx(isBotsMode ? 'Bots mode starts immediately with Bots.' : selectedRulesCopy)}</span>
 
           {backendStatus?.error && backendStatus?.lastAction === 'rooms.create' ? <span className="create-room-rules" style={{ top: '366px', color: '#8a1a11' }}>{backendStatus.error}</span> : null}
 
           <button
             className="create-room-bottom create-room-bottom--create"
             type="button"
-            onClick={() => backendActions?.createRoom?.(currentSettings) || navigation.goRoomLobby()}
-            disabled={isCreating}
+            onClick={() => {
+              if (pekRiskInvalid) return;
+              backendActions?.createRoom?.(currentSettings) || navigation.goRoomLobby();
+            }}
+            disabled={isCreating || pekRiskInvalid}
           >
             <img className="create-room-bottom__skin" src={`${asset}b3.png`} alt="" draggable="false" />
             <span className="create-room-bottom__text">{tx(isCreating ? 'CREATING...' : isBotsMode ? 'START SOLO' : 'CREATE ROOM')}</span>

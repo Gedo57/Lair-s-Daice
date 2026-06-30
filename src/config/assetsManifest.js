@@ -204,6 +204,7 @@ export const ASSET_GROUPS = {
       'bb3.png',
       'B!.png',
       'B2.png',
+      'B3.png',
     ]),
   ],
 

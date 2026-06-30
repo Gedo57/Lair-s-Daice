@@ -17,7 +17,8 @@ export const mockGameData = {
     challengeType: 'call_lira',
     bidWasTrue: true,
     loserName: 'You',
-    diceLost: 1,
+    challengeAmount: 100,
+    stackLost: 100,
     bid: { quantity: 4, face: 1 },
     actualCount: 4,
     revealedDice: [
@@ -50,7 +51,8 @@ export const mockGameData = {
       challengeType: 'call_lira',
       bidWasTrue: true,
       loserName: 'You',
-      diceLost: 1,
+      challengeAmount: 100,
+      stackLost: 100,
       bid: { quantity: 4, face: 1 },
       actualCount: 4,
       revealedDice: [

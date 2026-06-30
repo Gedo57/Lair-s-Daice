@@ -338,3 +338,7 @@ html[data-device='desktop'] .join-room-bottom__text {
 html[data-device='desktop'] .join-room-bottom--refresh {
   width: 185px;
 }
+
+/* Pek/Slam available-room summary patch */
+html[data-device='desktop'] .join-room-recent { height: 42px; flex-basis: 42px; }
+html[data-device='desktop'] .join-room-recent__summary { position: absolute; left: 102px; right: 76px; bottom: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 800 10px/1 Arial, sans-serif; color: #6b4315; text-align: left; }

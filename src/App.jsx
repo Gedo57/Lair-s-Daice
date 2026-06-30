@@ -1114,7 +1114,7 @@ function normalizeRoom(room = {}) {
     roomMode: room.roomMode || room.gameMode || room.playMode || (room.botsEnabled || room.playWithBots || room.withBots ? 'bots' : 'normal'),
     isPrivate: Boolean(room.isPrivate),
     visibility: room.isPrivate ? 'private' : (room.visibility || 'public'),
-    turnTimer: Number(room.turnTimer || room.selectedTimer || 15),
+    turnTimer: Number(room.turnTimer || room.selectedTimer || 30),
     isFull: Boolean(room.isFull ?? (playerCount >= maxPlayers)),
     status: room.status || 'waiting',
     matchId: room.matchId || null,

@@ -36,9 +36,13 @@ function clampInt(value, fallback, min, max) {
   return Math.max(min, Math.min(Math.trunc(parsed), max));
 }
 
+const DEFAULT_TURN_TIMER_SECONDS = 30;
+const ALLOWED_TURN_TIMERS_SECONDS = new Set([20, 25, 30]);
+
 function parseTimer(value) {
-  const timer = Number(String(value || '15').replace(/[^0-9]/g, ''));
-  return Number.isFinite(timer) && timer > 0 ? Math.min(Math.trunc(timer), 120) : 15;
+  const timer = Number(String(value || DEFAULT_TURN_TIMER_SECONDS).replace(/[^0-9]/g, ''));
+  const normalized = Number.isFinite(timer) ? Math.trunc(timer) : DEFAULT_TURN_TIMER_SECONDS;
+  return ALLOWED_TURN_TIMERS_SECONDS.has(normalized) ? normalized : DEFAULT_TURN_TIMER_SECONDS;
 }
 
 const OFFICIAL_BID_STYLE = 'Official Rules';
@@ -92,7 +96,7 @@ function normalizeGameRules(existingRules = {}, context = {}) {
 }
 
 function setTurnTimer(match) {
-  const turnTimer = parseTimer(match.turnTimer || match.gameRules?.turnTimer || 15);
+  const turnTimer = parseTimer(match.turnTimer || match.gameRules?.turnTimer || 30);
   const startedAt = nowIso();
   match.turnTimer = turnTimer;
   match.turnStartedAt = startedAt;

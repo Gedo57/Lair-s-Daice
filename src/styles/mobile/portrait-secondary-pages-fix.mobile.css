@@ -539,3 +539,25 @@ html[data-device='mobile'][data-orientation='portrait'] .room-lobby-action--seco
 html[data-device='mobile'][data-orientation='portrait'] .room-lobby-action__text {
   font-size: 19px !important;
 }
+
+/* Pek/Slam room preset betting patch */
+html[data-device='mobile'][data-orientation='portrait'] .create-room-block--perGame { left: 0 !important; top: 288px !important; width: 248px !important; height: 76px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-block--pekToggle { left: 292px !important; top: 288px !important; width: 248px !important; height: 76px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-block--pekPercent { left: 0 !important; top: 392px !important; width: 248px !important; height: 92px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-block--private { left: 292px !important; top: 392px !important; width: 248px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-block--mode { left: 0 !important; top: 496px !important; width: 248px !important; height: 76px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-block--code { left: 292px !important; top: 496px !important; width: 248px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-pekToggle { left: 74px !important; top: 29px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-option--percent { width: 68px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-pekPreview { position: absolute !important; left: 0 !important; top: 69px !important; width: 248px !important; text-align: center !important; font: 900 13px/1 Arial, sans-serif !important; color: #5b3210 !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-invite { top: 590px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .create-room-rules { top: 616px !important; }
+
+/* Pek/Slam available-room summary patch */
+html[data-device='mobile'][data-orientation='portrait'] .join-room-recent { height: 56px !important; flex-basis: 56px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .join-room-recent__summary { position: absolute !important; left: 126px !important; right: 92px !important; bottom: 7px !important; overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important; font: 800 13px/1 Arial, sans-serif !important; color: #6b4315 !important; text-align: left !important; }
+
+/* Pek/Slam lobby betting summary patch */
+html[data-device='mobile'][data-orientation='portrait'] .room-lobby-infoGrid { grid-template-columns: repeat(3, 1fr) !important; }
+html[data-device='mobile'][data-orientation='portrait'] .room-lobby-info strong { font-size: 18px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .room-lobby-playerList { top: 410px !important; height: 128px !important; }
