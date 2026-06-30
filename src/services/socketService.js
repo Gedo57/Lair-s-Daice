@@ -25,8 +25,12 @@ function normalizeSocketError(error) {
   }
 
   const normalizedError = new Error(message);
-  normalizedError.data = error.data || error.payload || null;
-  normalizedError.code = error.code || error.status || null;
+  normalizedError.data = error.data || error.payload || error.details || null;
+  normalizedError.payload = error.payload || error.data || null;
+  normalizedError.details = error.details || error.data?.details || error.payload?.details || null;
+  normalizedError.code = error.code || error.reason || error.details?.code || error.data?.code || error.payload?.code || error.status || null;
+  normalizedError.reason = error.reason || error.details?.reason || error.data?.reason || error.payload?.reason || null;
+  normalizedError.status = error.status || error.data?.status || error.payload?.status || null;
   return normalizedError;
 }
 

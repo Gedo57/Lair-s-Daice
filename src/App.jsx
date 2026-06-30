@@ -379,6 +379,48 @@ function normalizeWallet(wallet = {}) {
 }
 
 
+function numericWalletAmount(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? Math.trunc(value) : 0;
+  const normalized = String(value ?? '0').trim().toLowerCase().replace(/,/g, '');
+  if (!normalized) return 0;
+
+  const multiplier = normalized.endsWith('m') ? 1000000 : normalized.endsWith('k') ? 1000 : 1;
+  const numeric = Number(normalized.replace(/[a-z]+$/i, ''));
+  return Number.isFinite(numeric) ? Math.trunc(numeric * multiplier) : 0;
+}
+
+function resolveEntryFee(selection = {}) {
+  const pricing = selection?.pricing && typeof selection.pricing === 'object' ? selection.pricing : {};
+  const value = getFirstValue(pricing, ['entryFee', 'buyInAmount', 'buyInCoins', 'fee'])
+    ?? getFirstValue(selection, ['entryFee', 'buyInAmount', 'buyInCoins', 'fee', 'minBuyIn']);
+
+  return Math.max(0, numericWalletAmount(value));
+}
+
+function resolveSelectedTableForMatchmaking(payload = {}, state = {}) {
+  if (payload && Object.keys(payload).length) return payload;
+  return state.playNowTable || state.defaultTable || state.selectedTable || {};
+}
+
+function buildInsufficientFundsMessage(requiredCoins = 0, availableCoins = 0) {
+  return `Not enough chips. Required: ${formatCurrency(requiredCoins)}. Available: ${formatCurrency(availableCoins)}.`;
+}
+
+function getBackendErrorCode(error = {}) {
+  return error?.code
+    || error?.reason
+    || error?.details?.code
+    || error?.details?.reason
+    || error?.data?.code
+    || error?.data?.reason
+    || error?.data?.details?.code
+    || error?.payload?.code
+    || error?.payload?.reason
+    || error?.payload?.details?.code
+    || null;
+}
+
+
 function hasValue(value) {
   return value !== null && value !== undefined && value !== '';
 }
@@ -1070,6 +1112,9 @@ function normalizeRoom(room = {}) {
     playerCount,
     maxPlayers: Number.isFinite(maxPlayers) ? maxPlayers : 4,
     roomMode: room.roomMode || room.gameMode || room.playMode || (room.botsEnabled || room.playWithBots || room.withBots ? 'bots' : 'normal'),
+    isPrivate: Boolean(room.isPrivate),
+    visibility: room.isPrivate ? 'private' : (room.visibility || 'public'),
+    turnTimer: Number(room.turnTimer || room.selectedTimer || 15),
     isFull: Boolean(room.isFull ?? (playerCount >= maxPlayers)),
     status: room.status || 'waiting',
     matchId: room.matchId || null,
@@ -1088,9 +1133,14 @@ function extractGameDataPatch(payload = {}) {
     patch.user = normalizeUser({ ...(patch.user || source.user || source.profile || {}), stats: source.stats });
   }
 
-  const walletSource = source.wallet || source.balance || (
-    source.coins !== undefined || source.gems !== undefined || source.diamonds !== undefined ? source : null
-  );
+  const walletSource = source.wallet
+    || source.viewerWallet
+    || source.balance
+    || source.user?.wallet
+    || source.viewerUser?.wallet
+    || source.match?.wallet
+    || source.match?.viewerWallet
+    || (source.coins !== undefined || source.gems !== undefined || source.diamonds !== undefined ? source : null);
   if (walletSource) patch.wallet = normalizeWallet(walletSource);
 
   const selectableRooms = source.tiers || source.roomTiers || source.tables || source.lobbies || source.tableTiers || null;
@@ -1112,7 +1162,18 @@ function extractGameDataPatch(payload = {}) {
       patch.currentRoom = patch.myRoom;
       patch.currentRoomId = patch.myRoom.roomId || patch.myRoom.id;
       patch.currentRoomCode = patch.myRoom.roomCode || patch.myRoom.code;
+    } else {
+      patch.currentRoom = null;
+      patch.currentRoomId = null;
+      patch.currentRoomCode = null;
     }
+  }
+
+  if (source.currentRoom === null || source.room === null) {
+    patch.currentRoom = null;
+    patch.currentRoomId = null;
+    patch.currentRoomCode = null;
+    patch.createRoom = { roomCode: null };
   }
 
   const rewardList = source.rewards || source.dailyRewards || source.daily?.rewards;
@@ -1269,9 +1330,9 @@ function mergeGameData(current, patch) {
   if (Object.prototype.hasOwnProperty.call(patch, 'myRoom')) next.myRoom = patch.myRoom;
   if (Object.prototype.hasOwnProperty.call(patch, 'currentMatchId')) next.currentMatchId = patch.currentMatchId;
   if (Object.prototype.hasOwnProperty.call(patch, 'currentQueueId')) next.currentQueueId = patch.currentQueueId;
-  if (patch.currentRoomId) next.currentRoomId = patch.currentRoomId;
-  if (patch.currentRoomCode) next.currentRoomCode = patch.currentRoomCode;
-  if (patch.currentRoom) next.currentRoom = patch.currentRoom;
+  if (Object.prototype.hasOwnProperty.call(patch, 'currentRoomId')) next.currentRoomId = patch.currentRoomId;
+  if (Object.prototype.hasOwnProperty.call(patch, 'currentRoomCode')) next.currentRoomCode = patch.currentRoomCode;
+  if (Object.prototype.hasOwnProperty.call(patch, 'currentRoom')) next.currentRoom = patch.currentRoom;
   if (patch.createRoom) next.createRoom = { ...current.createRoom, ...patch.createRoom };
 
   if (patch.recentRoom) {
@@ -1723,12 +1784,25 @@ export default function App() {
     }
   };
 
-  const getErrorMessage = (error) => error?.message
-    || error?.reason
-    || error?.description
-    || error?.data?.message
-    || error?.payload?.message
-    || 'Realtime connection failed';
+  const getErrorMessage = (error) => {
+    const code = getBackendErrorCode(error);
+    const details = error?.details || error?.data?.details || error?.payload?.details || null;
+    if (code === 'INSUFFICIENT_FUNDS') {
+      const requiredCoins = details?.requiredCoins ?? error?.requiredCoins;
+      const availableCoins = details?.availableCoins ?? error?.availableCoins;
+      if (requiredCoins !== undefined && availableCoins !== undefined) {
+        return buildInsufficientFundsMessage(requiredCoins, availableCoins);
+      }
+      return 'Not enough chips to enter this table.';
+    }
+
+    return error?.message
+      || error?.reason
+      || error?.description
+      || error?.data?.message
+      || error?.payload?.message
+      || 'Realtime connection failed';
+  };
 
   const setChatStatus = (patch) => {
     setGameData((current) => ({
@@ -1907,29 +1981,36 @@ export default function App() {
       },
     ),
     startMatchmaking: async (payload = {}) => {
-      setGameData((current) => {
-        const selectedTable = payload && Object.keys(payload).length
-          ? payload
-          : current.playNowTable || current.defaultTable || current.selectedTable || {};
+      const selectedTable = resolveSelectedTableForMatchmaking(payload, gameData);
+      const requiredCoins = resolveEntryFee(selectedTable);
+      const availableCoins = numericWalletAmount(gameData.wallet?.coins);
 
-        return {
-          ...current,
-          selectedTable,
-          currentMatchId: null,
-          currentQueueId: null,
-          match: null,
-          matchResult: null,
-          roundResult: null,
-          serverMatchmaking: null,
-          matchmaking: buildMatchmakingUi(selectedTable, {}, null, null),
-        };
-      });
+      if (requiredCoins > 0 && availableCoins < requiredCoins) {
+        clearSocketMatchmakingState();
+        setBackendStatus({
+          loading: false,
+          error: buildInsufficientFundsMessage(requiredCoins, availableCoins),
+          lastAction: 'matchmaking.insufficient_funds',
+        });
+        return null;
+      }
+
+      setGameData((current) => ({
+        ...current,
+        selectedTable,
+        currentMatchId: null,
+        currentQueueId: null,
+        match: null,
+        matchResult: null,
+        roundResult: null,
+        serverMatchmaking: null,
+        matchmaking: buildMatchmakingUi(selectedTable, {}, null, null),
+      }));
 
       setBackendStatus({ loading: true, error: null, lastAction: 'matchmaking.start' });
-      navigation.goMatchmaking();
 
       try {
-        const result = await startSocketMatchmaking(payload, {
+        const result = await startSocketMatchmaking(selectedTable, {
           onQueueUpdate: (socketPayload) => applySocketMatchmakingPayload(socketPayload, 'matchmaking.queue_update'),
           onMatchFound: (socketPayload) => applySocketMatchmakingPayload(socketPayload, 'matchmaking.match_found'),
           onMatchCountdown: (socketPayload) => applySocketMatchmakingPayload(socketPayload, 'matchmaking.countdown'),
@@ -1951,6 +2032,7 @@ export default function App() {
             });
           },
           onError: (error) => {
+            clearSocketMatchmakingState();
             setBackendStatus({ loading: false, error: getErrorMessage(error), lastAction: 'matchmaking.socket_error' });
           },
         });
@@ -1962,10 +2044,14 @@ export default function App() {
             : 'matchmaking.queue_update';
         return applySocketMatchmakingPayload(result, actionName);
       } catch (error) {
+        clearSocketMatchmakingState();
+        const message = getErrorMessage(error);
         setBackendStatus({
           loading: false,
-          error: `Realtime matchmaking is required. ${getErrorMessage(error)}`,
-          lastAction: 'matchmaking.start.socket_required',
+          error: message,
+          lastAction: getBackendErrorCode(error) === 'INSUFFICIENT_FUNDS'
+            ? 'matchmaking.insufficient_funds'
+            : 'matchmaking.start.error',
         });
         return null;
       }

@@ -56,6 +56,9 @@ export class ApiError extends Error {
     this.name = 'ApiError';
     this.status = status;
     this.payload = payload;
+    this.details = payload?.details || null;
+    this.code = payload?.code || payload?.reason || payload?.details?.code || null;
+    this.reason = payload?.reason || payload?.details?.reason || null;
   }
 }
 

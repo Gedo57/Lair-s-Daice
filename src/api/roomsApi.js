@@ -43,7 +43,10 @@ function cleanCoinBetOptions(options = [], min = 0, max = Infinity) {
 
 function normalizeCreateRoomPayload(settings = {}) {
   const name = settings.name || settings.roomName || settings.title || 'Private Room';
-  const tableId = settings.tableId || settings.selectedTableId || settings.tierId || (settings.isPrivate === false ? 'classic' : 'private');
+  const isPrivate = settings.isPrivate !== false && String(settings.isPrivate).toLowerCase() !== 'false';
+  // Create Room is a custom-room flow. The private toggle controls visibility only;
+  // the custom players/timer/buy-in rules should stay custom whether the room is public or private.
+  const tableId = settings.tableId || settings.selectedTableId || settings.tierId || 'private';
   const maxPlayers = Number(settings.maxPlayers || settings.selectedPlayers || settings.playersCount || 4);
   const safeMaxPlayers = Number.isFinite(maxPlayers) ? Math.min(Math.max(maxPlayers, 2), 4) : 4;
   const roomMode = String(
@@ -62,6 +65,8 @@ function normalizeCreateRoomPayload(settings = {}) {
   const payload = {
     name,
     tableId,
+    isPrivate,
+    visibility: isPrivate ? 'private' : 'public',
     maxPlayers: safeMaxPlayers,
     selectedPlayers: safeMaxPlayers,
     requiredPlayers: safeMaxPlayers,
@@ -131,10 +136,11 @@ export const getRoom = (room) => {
 };
 
 export const createRoom = (settings = {}) => {
-  const endpoint = settings.isPrivate === false ? API_ENDPOINTS.rooms.create : API_ENDPOINTS.rooms.createPrivate;
+  const payload = normalizeCreateRoomPayload(settings);
+  const endpoint = payload.isPrivate === false ? API_ENDPOINTS.rooms.create : API_ENDPOINTS.rooms.createPrivate;
   return apiRequest(endpoint, {
     method: 'POST',
-    body: normalizeCreateRoomPayload(settings),
+    body: payload,
   });
 };
 

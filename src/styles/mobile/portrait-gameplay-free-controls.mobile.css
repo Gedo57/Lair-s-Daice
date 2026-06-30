@@ -1,0 +1,357 @@
+/* Patch H: portrait gameplay free-position controls.
+   Edit only the variables in the block below to move/resize portrait gameplay UI.
+   This file is imported last, so it overrides Patch F/G without touching landscape. */
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen {
+  /* Coordinate system: portrait gameplay canvas = 720 x 1280 px. */
+
+  /* Top chrome */
+  --pg-round-x: 18px;
+  --pg-round-y: 18px;
+  --pg-round-w: 102px;
+  --pg-round-h: 56px;
+
+  --pg-chat-x: 152px;
+  --pg-chat-y: 24px;
+  --pg-chat-w: 126px;
+  --pg-chat-h: 48px;
+
+  --pg-voice-x: 292px;
+  --pg-voice-y: 24px;
+  --pg-voice-w: 126px;
+  --pg-voice-h: 48px;
+
+  --pg-leave-x: auto;
+  --pg-leave-right: 18px;
+  --pg-leave-y: 17px;
+  --pg-leave-w: 164px;
+  --pg-leave-h: 58px;
+
+  /* Turn banner + timer */
+  --pg-turn-x: 98px;
+  --pg-turn-y: 92px;
+  --pg-turn-w: 484px;
+  --pg-turn-h: 116px;
+
+  --pg-timer-x: 508px;
+  --pg-timer-y: 124px;
+  --pg-timer-w: 70px;
+  --pg-timer-h: 80px;
+
+  /* Current bid card */
+  --pg-current-bid-x: 250px;
+  --pg-current-bid-y: 222px;
+  --pg-current-bid-w: 220px;
+  --pg-current-bid-h: 132px;
+
+  /* Stack panel: this was hidden by Patch F. It is now visible in portrait. */
+  --pg-stack-x: 24px;
+  --pg-stack-y: 222px;
+  --pg-stack-w: 168px;
+  --pg-stack-h: 110px;
+  --pg-stack-z: 98;
+
+  /* Player panels */
+  --pg-player-w: 226px;
+  --pg-player-h: 104px;
+  --pg-player-z: 86;
+
+  --pg-sophie-x: 16px;
+  --pg-sophie-y: 344px;
+
+  --pg-dragon-right: 16px;
+  --pg-dragon-y: 344px;
+
+  --pg-you-x: 16px;
+  --pg-you-y: 746px;
+
+  --pg-gad-right: 16px;
+  --pg-gad-y: 746px;
+
+  /* Center cups */
+  --pg-cups-x: 142px;
+  --pg-cups-y: 392px;
+  --pg-cups-w: 436px;
+  --pg-cups-h: 316px;
+
+  /* Bid selector */
+  --pg-bid-x: 100px;
+  --pg-bid-y: 870px;
+  --pg-bid-w: 520px;
+  --pg-bid-h: 208px;
+
+  /* Bottom actions */
+  --pg-action-y: 1092px;
+  --pg-action-w: 306px;
+  --pg-action-h: 96px;
+  --pg-confirm-x: 42px;
+  --pg-call-x: 372px;
+
+  /* Internal player tuning */
+  --pg-player-avatar-left: -34px;
+  --pg-player-avatar-top: -44px;
+  --pg-player-avatar-size: 146px;
+  --pg-player-name-left: 112px;
+  --pg-player-name-top: 27px;
+  --pg-player-coin-left: 112px;
+  --pg-player-coin-top: 58px;
+
+  --pg-right-player-avatar-right: -42px;
+  --pg-right-player-text-right: 112px;
+}
+
+/* Top chrome */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-badge {
+  left: var(--pg-round-x) !important;
+  top: var(--pg-round-y) !important;
+  width: var(--pg-round-w) !important;
+  min-width: var(--pg-round-w) !important;
+  height: var(--pg-round-h) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-chat-button {
+  left: var(--pg-chat-x) !important;
+  right: auto !important;
+  top: var(--pg-chat-y) !important;
+  width: var(--pg-chat-w) !important;
+  height: var(--pg-chat-h) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-voice-button {
+  left: var(--pg-voice-x) !important;
+  right: auto !important;
+  top: var(--pg-voice-y) !important;
+  width: var(--pg-voice-w) !important;
+  height: var(--pg-voice-h) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-leave {
+  left: var(--pg-leave-x) !important;
+  right: var(--pg-leave-right) !important;
+  top: var(--pg-leave-y) !important;
+  width: var(--pg-leave-w) !important;
+  height: var(--pg-leave-h) !important;
+}
+
+/* Turn banner + timer */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-turnbar {
+  left: var(--pg-turn-x) !important;
+  top: var(--pg-turn-y) !important;
+  width: var(--pg-turn-w) !important;
+  height: var(--pg-turn-h) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-timer {
+  left: var(--pg-timer-x) !important;
+  right: auto !important;
+  top: var(--pg-timer-y) !important;
+  width: var(--pg-timer-w) !important;
+  height: var(--pg-timer-h) !important;
+}
+
+/* Current bid */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid {
+  left: var(--pg-current-bid-x) !important;
+  right: auto !important;
+  top: var(--pg-current-bid-y) !important;
+  width: var(--pg-current-bid-w) !important;
+  height: var(--pg-current-bid-h) !important;
+}
+
+/* Stack panel: visible again and movable from variables above. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel {
+  display: block !important;
+  position: absolute !important;
+  left: var(--pg-stack-x) !important;
+  right: auto !important;
+  top: var(--pg-stack-y) !important;
+  bottom: auto !important;
+  width: var(--pg-stack-w) !important;
+  height: var(--pg-stack-h) !important;
+  z-index: var(--pg-stack-z) !important;
+  transform: none !important;
+  overflow: visible !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel__skin {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel__label {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 14px !important;
+  text-align: center !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  color: #fff5d8 !important;
+  text-shadow: 0 2px 2px rgba(0,0,0,.65) !important;
+  z-index: 3 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel__label--pot {
+  top: 63px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel__row {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  z-index: 3 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel__row--stack {
+  top: 31px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel__row--pot {
+  top: 79px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel__coinIcon {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel__value {
+  font-size: 20px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  color: #fff4d7 !important;
+  text-shadow: 0 2px 2px rgba(0,0,0,.7) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-stack-panel__divider {
+  position: absolute !important;
+  left: 22px !important;
+  right: 22px !important;
+  top: 55px !important;
+  height: 1px !important;
+  background: rgba(255, 227, 155, .55) !important;
+  z-index: 3 !important;
+}
+
+/* Player panels */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player {
+  width: var(--pg-player-w) !important;
+  height: var(--pg-player-h) !important;
+  z-index: var(--pg-player-z) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__avatar {
+  left: var(--pg-player-avatar-left) !important;
+  top: var(--pg-player-avatar-top) !important;
+  width: var(--pg-player-avatar-size) !important;
+  height: var(--pg-player-avatar-size) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__name {
+  left: var(--pg-player-name-left) !important;
+  top: var(--pg-player-name-top) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player__coinRow {
+  left: var(--pg-player-coin-left) !important;
+  top: var(--pg-player-coin-top) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--sophie {
+  left: var(--pg-sophie-x) !important;
+  right: auto !important;
+  top: var(--pg-sophie-y) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon {
+  left: auto !important;
+  right: var(--pg-dragon-right) !important;
+  top: var(--pg-dragon-y) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--you {
+  left: var(--pg-you-x) !important;
+  right: auto !important;
+  top: var(--pg-you-y) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--fourth {
+  left: auto !important;
+  right: var(--pg-gad-right) !important;
+  top: var(--pg-gad-y) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon .gameplay-player__avatar,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--fourth .gameplay-player__avatar {
+  left: auto !important;
+  right: var(--pg-right-player-avatar-right) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon .gameplay-player__name,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--fourth .gameplay-player__name {
+  left: 12px !important;
+  right: var(--pg-right-player-text-right) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--dragon .gameplay-player__coinRow,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-player--fourth .gameplay-player__coinRow {
+  left: 12px !important;
+  right: var(--pg-right-player-text-right) !important;
+}
+
+/* Keep special 2P / 3P centering overridable too. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--sophie,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--dragon,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--fourth {
+  left: var(--pg-sophie-x) !important;
+  right: auto !important;
+  top: var(--pg-sophie-y) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-2 .gameplay-player--you,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen--players-3 .gameplay-player--you {
+  left: var(--pg-you-x) !important;
+  right: auto !important;
+  top: var(--pg-you-y) !important;
+}
+
+/* Cups */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups {
+  left: var(--pg-cups-x) !important;
+  right: auto !important;
+  top: var(--pg-cups-y) !important;
+  width: var(--pg-cups-w) !important;
+  height: var(--pg-cups-h) !important;
+}
+
+/* Bid selector */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector {
+  left: var(--pg-bid-x) !important;
+  right: auto !important;
+  top: var(--pg-bid-y) !important;
+  width: var(--pg-bid-w) !important;
+  height: var(--pg-bid-h) !important;
+}
+
+/* Bottom actions */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action {
+  top: var(--pg-action-y) !important;
+  width: var(--pg-action-w) !important;
+  height: var(--pg-action-h) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--raise {
+  left: var(--pg-confirm-x) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--call {
+  left: var(--pg-call-x) !important;
+}

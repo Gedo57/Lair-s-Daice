@@ -115,7 +115,9 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
   const metrics = matchmaking.metrics || [];
   const steps = matchmaking.steps || [];
   const isStarting = backendStatus?.loading && backendStatus.lastAction === 'matchmaking.start';
-  const isSearching = Boolean(currentQueueId && !currentMatchId && !['cancelled', 'matched', 'match_found'].includes(rawQueueStatus));
+  const hasMatchmakingError = Boolean(backendStatus?.error && String(backendStatus?.lastAction || '').startsWith('matchmaking.'));
+  const isInsufficientFunds = hasMatchmakingError && String(backendStatus?.lastAction || '').includes('insufficient_funds');
+  const isSearching = Boolean(currentQueueId && !currentMatchId && !['cancelled', 'matched', 'match_found'].includes(rawQueueStatus) && !hasMatchmakingError);
   const queuedPlayerSource = !match && Array.isArray(serverMatchmaking?.players) ? { players: serverMatchmaking.players } : null;
   const { viewer, opponents } = getMatchPlayers(match || queuedPlayerSource, user);
 
@@ -125,20 +127,26 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
     return () => window.clearInterval(interval);
   }, [isCountdown]);
 
-  const centerTitle = currentMatchId
-    ? canEnterGameplay
-      ? 'MATCH STARTED'
-      : isCountdown
-        ? `MATCH STARTS IN ${countdown}`
-        : 'MATCH FOUND'
-    : 'FINDING OPPONENTS';
-  const centerCopy = currentMatchId
-    ? canEnterGameplay
-      ? 'Gameplay is ready. Entering the table.'
-      : isCountdown
-        ? 'Entry fee charged. Waiting for server start.'
-        : 'Table found. Waiting for game start signal.'
-    : 'Looking for players with similar skill';
+  const centerTitle = hasMatchmakingError
+    ? isInsufficientFunds
+      ? 'NOT ENOUGH CHIPS'
+      : 'MATCHMAKING ERROR'
+    : currentMatchId
+      ? canEnterGameplay
+        ? 'MATCH STARTED'
+        : isCountdown
+          ? `MATCH STARTS IN ${countdown}`
+          : 'MATCH FOUND'
+      : 'FINDING OPPONENTS';
+  const centerCopy = hasMatchmakingError
+    ? backendStatus.error
+    : currentMatchId
+      ? canEnterGameplay
+        ? 'Gameplay is ready. Entering the table.'
+        : isCountdown
+          ? 'Entry fee charged. Waiting for server start.'
+          : 'Table found. Waiting for game start signal.'
+      : 'Looking for players with similar skill';
 
   const buildOpponentSlot = (index, className) => {
     const opponent = opponents[index];
@@ -168,6 +176,7 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
   ];
 
   const startOrEnterMatch = () => {
+    if (hasMatchmakingError && isInsufficientFunds) return;
     if (currentMatchId) {
       if (canEnterGameplay) navigation.goGameplay();
       return;
@@ -175,6 +184,36 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
     if (isStarting || isSearching) return;
     backendActions?.startMatchmaking?.({});
   };
+
+  const primaryActionTitle = currentMatchId
+    ? isCountdown
+      ? `STARTING IN ${countdown}`
+      : canEnterGameplay
+        ? 'ENTER MATCH'
+        : 'WAITING FOR START'
+    : hasMatchmakingError
+      ? isInsufficientFunds
+        ? 'NOT ENOUGH CHIPS'
+        : 'RETRY'
+      : isStarting
+        ? 'MATCHING...'
+        : isSearching
+          ? 'KEEP SEARCHING'
+          : 'FIND MATCH';
+
+  const primaryActionSubtitle = currentMatchId
+    ? isCountdown
+      ? 'Starting automatically'
+      : canEnterGameplay
+        ? 'Match is ready'
+        : 'Server is preparing the table'
+    : hasMatchmakingError
+      ? isInsufficientFunds
+        ? 'Go back and choose a cheaper table'
+        : 'Try matchmaking again'
+      : isSearching
+        ? 'Waiting for real players'
+        : "We'll find you the best table";
 
   return (
     <section className="screen matchmaking-screen" aria-label={tx('Matchmaking')}>
@@ -263,13 +302,13 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
         </div>
       </div>
 
-      <button className="matchmaking-action matchmaking-action--keep" type="button" onClick={startOrEnterMatch} disabled={isStarting || isCountdown || Boolean(currentMatchId && !canEnterGameplay)}>
+      <button className="matchmaking-action matchmaking-action--keep" type="button" onClick={startOrEnterMatch} disabled={isStarting || isCountdown || isInsufficientFunds || Boolean(currentMatchId && !canEnterGameplay)}>
         <img className="matchmaking-action__skin" src={'/assets/liars-dice/room-select/bottom-play.png'} alt="" draggable="false" />
-        <span className="matchmaking-action__title">{tx(currentMatchId ? isCountdown ? `STARTING IN ${countdown}` : canEnterGameplay ? 'ENTER MATCH' : 'WAITING FOR START' : isStarting ? 'MATCHING...' : isSearching ? 'KEEP SEARCHING' : 'START MATCH')}</span>
-        <span className="matchmaking-action__subtitle">{tx(currentMatchId ? isCountdown ? 'Starting automatically' : canEnterGameplay ? 'Match is ready' : 'Server is preparing the table' : isSearching ? 'Waiting for real players' : "We'll find you the best table")}</span>
+        <span className="matchmaking-action__title">{tx(primaryActionTitle)}</span>
+        <span className="matchmaking-action__subtitle">{tx(primaryActionSubtitle)}</span>
       </button>
 
-      <button className="matchmaking-action matchmaking-action--cancel" type="button" onClick={() => backendActions?.cancelMatchmaking?.() || navigation.goRoomSelect()} disabled={backendStatus?.loading && backendStatus.lastAction === 'matchmaking.cancel'}>
+      <button className="matchmaking-action matchmaking-action--cancel" type="button" onClick={() => (currentQueueId ? backendActions?.cancelMatchmaking?.() : navigation.goRoomSelect())} disabled={backendStatus?.loading && backendStatus.lastAction === 'matchmaking.cancel'}>
         <img className="matchmaking-action__skin" src={`${asset}b1.png`} alt="" draggable="false" />
         <span className="matchmaking-action__title">{tx('CANCEL')}</span>
       </button>

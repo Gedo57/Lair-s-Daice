@@ -1077,3 +1077,69 @@ html[data-device='mobile'] .gameplay-leave__subtitle {
   text-align: center;
   color: #ffe8a8;
 }
+
+/* Patch D: stable +/- quantity control. Keeps the selected number locked inside the control. */
+html[data-device='mobile'] .gameplay-bid-selector__quantityStepper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 8;
+}
+
+html[data-device='mobile'] .gameplay-bid-selector__quantityStep {
+  position: relative;
+  width: 42px;
+  height: 34px;
+  border: 2px solid rgba(255, 221, 132, .9);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(105, 39, 29, .96), rgba(53, 19, 16, .98));
+  color: #fff4d2;
+  font-size: 26px;
+  line-height: 28px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 2px 3px rgba(255,255,255,.18), 0 2px 4px rgba(0,0,0,.45);
+  cursor: pointer;
+}
+
+html[data-device='mobile'] .gameplay-bid-selector__quantityStep:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+html[data-device='mobile'] .gameplay-bid-selector__quantityStep:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  filter: grayscale(.25);
+}
+
+html[data-device='mobile'] .gameplay-bid-selector__quantityValue {
+  min-width: 72px;
+  height: 36px;
+  border-radius: 14px;
+  background: rgba(26, 10, 8, .62);
+  border: 2px solid rgba(255, 218, 125, .78);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  color: #fff7d9;
+  text-shadow: 0 2px 2px rgba(0,0,0,.7);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.35);
+}
+
+html[data-device='mobile'] .gameplay-bid-selector__quantityValueNumber {
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+html[data-device='mobile'] .gameplay-bid-selector__quantityValueMax {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 900;
+  opacity: .9;
+}

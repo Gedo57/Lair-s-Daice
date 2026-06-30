@@ -174,7 +174,6 @@ export default function RoomSelect({ navigation, data, backendActions, backendSt
 
   const startTableMatchmaking = (room) => {
     const payload = buildMatchmakingPayload(room);
-    navigation.goMatchmaking();
     backendActions?.startMatchmaking?.(payload);
   };
 
@@ -213,7 +212,11 @@ export default function RoomSelect({ navigation, data, backendActions, backendSt
         <div className="room-select-empty">{tx('No backend tables available')}</div>
       ) : null}
 
-      <button className="room-select-bottom room-select-bottom--play" type="button" onClick={() => { navigation.goMatchmaking(); backendActions?.startMatchmaking?.({}); }} disabled={isStarting}>
+      {backendStatus?.error && String(backendStatus?.lastAction || '').startsWith('matchmaking.') ? (
+        <div className="room-select-empty room-select-error">{tx(backendStatus.error)}</div>
+      ) : null}
+
+      <button className="room-select-bottom room-select-bottom--play" type="button" onClick={() => backendActions?.startMatchmaking?.({})} disabled={isStarting}>
         <img className="room-select-bottom__skin" src={`${asset}bottom-play.png`} alt="" draggable="false" />
         <span className="room-select-bottom__title">{tx(isStarting ? 'MATCHING...' : 'PLAY NOW')}</span>
         <span className="room-select-bottom__subtitle">{tx('Jump into a quick game')}</span>

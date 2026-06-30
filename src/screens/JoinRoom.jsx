@@ -50,6 +50,11 @@ function getRoomJoinCode(room = {}) {
 function normalizeAvailableRoom(room = {}) {
   if (!room || typeof room !== 'object') return null;
 
+  const status = String(room.status || 'waiting').toLowerCase();
+  const visibility = String(room.visibility || '').toLowerCase();
+  if (room.isPrivate === true || visibility === 'private') return null;
+  if (!['waiting', 'ready', 'open'].includes(status)) return null;
+
   const code = getRoomJoinCode(room);
   if (!code) return null;
 
@@ -57,6 +62,8 @@ function normalizeAvailableRoom(room = {}) {
   const playerIds = Array.isArray(room.playerIds) ? room.playerIds : [];
   const playerCount = Number(room.playerCount ?? players.length ?? playerIds.length ?? 0);
   const maxPlayers = Number(room.maxPlayers || room.selectedPlayers || 4);
+  if (!Number.isFinite(maxPlayers) || maxPlayers <= 0) return null;
+  if (Number.isFinite(playerCount) && playerCount >= maxPlayers) return null;
 
   return {
     code,
@@ -83,13 +90,10 @@ export default function JoinRoom({ navigation, data, backendActions, backendStat
   const user = data?.user || {};
   const wallet = data?.wallet || {};
   const joinRoomData = data?.joinRoom || {};
-  const recentRooms = joinRoomData.recentRooms || [];
   const availableRooms = useMemo(() => mergeAvailableRooms(
     data?.publicRooms || [],
     data?.activeRooms || [],
-    data?.currentRoom ? [data.currentRoom] : [],
-    recentRooms,
-  ), [data?.publicRooms, data?.activeRooms, data?.currentRoom, recentRooms]);
+  ), [data?.publicRooms, data?.activeRooms]);
   const [roomCode, setRoomCode] = useState(joinRoomData.defaultCode || '');
 
   const cleanCode = useMemo(() => normalizeRoomCode(roomCode), [roomCode]);

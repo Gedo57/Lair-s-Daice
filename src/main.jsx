@@ -60,6 +60,10 @@ import './styles/mobile/portrait-tournament-pass-fix.mobile.css';
 import './styles/mobile/mobile-landscape-browser-fix.css';
 import './styles/base/gameplay-chat.css';
 import './styles/base/bots-mode.css';
+import './styles/mobile/portrait-gameplay-final-fix.mobile.css';
+import './styles/mobile/portrait-gameplay-polish.mobile.css';
+import './styles/mobile/portrait-gameplay-free-controls.mobile.css';
+import './styles/mobile/portrait-gameplay-editor-controls.mobile.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

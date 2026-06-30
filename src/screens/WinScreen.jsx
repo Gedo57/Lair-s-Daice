@@ -99,14 +99,100 @@ function isSameId(left, right) {
   return Boolean(a && b && a === b);
 }
 
+
+function getNestedValue(source = {}, paths = []) {
+  for (const path of paths) {
+    const parts = String(path).split('.').filter(Boolean);
+    let cursor = source;
+    let found = true;
+    for (const part of parts) {
+      if (!cursor || typeof cursor !== 'object' || !(part in cursor)) {
+        found = false;
+        break;
+      }
+      cursor = cursor[part];
+    }
+    if (found && cursor !== null && cursor !== undefined && cursor !== '') return cursor;
+  }
+  return null;
+}
+
+function resolvePlayerResults(rawResult = {}) {
+  const source = rawResult?.playerResults || rawResult?.players || rawResult?.rankings || rawResult?.results || [];
+  if (Array.isArray(source)) return source.filter(Boolean);
+  if (source && typeof source === 'object') {
+    return Object.entries(source).map(([key, value]) => ({ userId: key, ...(value || {}) }));
+  }
+  return [];
+}
+
+function getPlayerResultForId(rawResult = {}, id) {
+  const normalizedId = normalizeId(id);
+  if (!normalizedId) return null;
+  return resolvePlayerResults(rawResult).find((entry) => identityValues(entry).some((entryId) => entryId === normalizedId)) || null;
+}
+
+function resolveViewerPlayerResult(rawResult = {}, user = {}) {
+  const ids = identityValues(user);
+  return resolvePlayerResults(rawResult).find((entry) => identityValues(entry).some((entryId) => ids.includes(entryId))) || null;
+}
+
+function resolvePlayerPlace(player = {}, result = {}, index = 0) {
+  const rawResult = result.raw || {};
+  const directPlace = compactNumber(
+    player.place ?? player.rank ?? player.position ?? player.placement ?? player.finishPosition,
+    Number.NaN,
+  );
+  if (Number.isFinite(directPlace) && directPlace > 0) return directPlace;
+
+  const playerResult = getPlayerResultForId(rawResult, playerId(player));
+  const resultPlace = compactNumber(
+    playerResult?.place ?? playerResult?.rank ?? playerResult?.position ?? playerResult?.placement ?? playerResult?.finishPosition,
+    Number.NaN,
+  );
+  if (Number.isFinite(resultPlace) && resultPlace > 0) return resultPlace;
+
+  if (isSameId(playerId(player), result.winnerId)) return 1;
+  return index + 2;
+}
+
+function ordinalPlace(place) {
+  const safePlace = Math.max(1, Math.trunc(compactNumber(place, 1)));
+  const mod100 = safePlace % 100;
+  const suffix = mod100 >= 11 && mod100 <= 13
+    ? 'TH'
+    : safePlace % 10 === 1
+      ? 'ST'
+      : safePlace % 10 === 2
+        ? 'ND'
+        : safePlace % 10 === 3
+          ? 'RD'
+          : 'TH';
+  return `${safePlace}${suffix} PLACE`;
+}
+
 function getMatchResult(data = {}) {
   const match = data.match || {};
   const stored = data.matchResult || null;
   const viewerMatchResult = data.viewerMatchResult || stored?.viewerMatchResult || null;
   const rawResult = stored?.raw || stored || match.result || match.lastAction?.result || null;
-  const viewerResult = data.result || viewerMatchResult?.outcome || viewerMatchResult?.result || stored?.viewerResult || rawResult?.viewerResult || null;
-  const userId = normalizeId(data.user?.id || data.user?._id || data.user?.userId || data.user?.playerId);
-  const winnerId = rawResult?.winnerId || viewerMatchResult?.winnerId || match.winnerId || (viewerResult === 'win' ? userId : null);
+  const user = data.user || {};
+  const userId = normalizeId(user.id || user._id || user.userId || user.playerId);
+  const viewerPlayerResult = resolveViewerPlayerResult(rawResult || {}, user);
+  const viewerResult = data.result
+    || viewerPlayerResult?.outcome
+    || viewerPlayerResult?.result
+    || viewerMatchResult?.outcome
+    || viewerMatchResult?.result
+    || stored?.viewerResult
+    || rawResult?.viewerResult
+    || null;
+
+  const winnerId = rawResult?.winnerId
+    || viewerMatchResult?.winnerId
+    || match.winnerId
+    || getNestedValue(rawResult || {}, ['winner.id', 'winner.userId', 'winner.playerId'])
+    || (viewerResult === 'win' ? userId : null);
   const loserId = rawResult?.loserId || viewerMatchResult?.loserId || match.loserId || (viewerResult === 'loss' ? userId : null);
   const status = match.status || rawResult?.status || (rawResult || viewerMatchResult ? 'finished' : 'unknown');
   const outcome = String(viewerResult || viewerMatchResult?.outcome || '').toLowerCase();
@@ -116,13 +202,14 @@ function getMatchResult(data = {}) {
   return {
     raw: rawResult,
     viewerMatchResult,
+    viewerPlayerResult,
     viewerResult: userWon ? 'win' : userLost ? 'loss' : viewerResult,
     status,
     winnerId: normalizeId(winnerId),
     loserId: normalizeId(loserId),
-    reward: viewerMatchResult?.reward ?? rawResult?.reward ?? data.matchReward ?? match.winReward ?? 0,
-    xp: viewerMatchResult?.xpEarned ?? rawResult?.xpEarned ?? rawResult?.xp ?? rawResult?.xpGained ?? (userWon ? 120 : userLost ? 40 : 0),
-    rankPoints: viewerMatchResult?.rankPoints ?? rawResult?.rankPoints ?? (userWon ? 15 : userLost ? 5 : 0),
+    reward: viewerPlayerResult?.reward ?? viewerMatchResult?.reward ?? (userWon ? rawResult?.reward ?? data.matchReward ?? match.winReward : 0) ?? 0,
+    xp: viewerPlayerResult?.xpEarned ?? viewerPlayerResult?.xp ?? viewerPlayerResult?.xpGained ?? viewerMatchResult?.xpEarned ?? rawResult?.xpEarned ?? rawResult?.xp ?? rawResult?.xpGained ?? (userWon ? 120 : userLost ? 40 : 0),
+    rankPoints: viewerPlayerResult?.rankPoints ?? viewerMatchResult?.rankPoints ?? rawResult?.rankPoints ?? (userWon ? 15 : userLost ? 5 : 0),
     reason: rawResult?.reason || rawResult?.challenge || match.lastAction?.type || 'match_result',
     actualCount: rawResult?.actualCount,
     bidWasTrue: rawResult?.bidWasTrue,
@@ -135,21 +222,20 @@ function getMatchResult(data = {}) {
 
 function buildWinner(match = {}, result = {}, user = {}) {
   const players = Array.isArray(match.players) ? match.players : [];
-  const viewerPlayer = players.find((player) => hasMatchingIdentity(player, user));
   const winnerPlayer = players.find((player) => isSameId(playerId(player), result.winnerId));
-  const loserPlayer = players.find((player) => isSameId(playerId(player), result.loserId));
-  const fallbackPlayer = result.userWon ? winnerPlayer : result.userLost ? loserPlayer : winnerPlayer;
-  const displayPlayer = viewerPlayer || fallbackPlayer || players[0] || user;
+  const rawWinner = result.raw?.winner && typeof result.raw.winner === 'object' ? result.raw.winner : null;
+  const displayPlayer = winnerPlayer || rawWinner || (result.userWon ? players.find((player) => hasMatchingIdentity(player, user)) || user : null) || players[0] || user;
+  const isViewerWinner = hasMatchingIdentity(displayPlayer, user) || isSameId(playerId(displayPlayer), playerId(user));
 
   const mergedPlayer = {
-    ...user,
+    ...(isViewerWinner ? user : {}),
     ...displayPlayer,
-    displayName: playerName(displayPlayer, user.displayName || user.username || 'Player'),
-    username: displayPlayer.username || user.username,
-    avatarUrl: resolveAvatarValue(displayPlayer.avatarUrl) ? displayPlayer.avatarUrl : user.avatarUrl,
-    avatar: resolveAvatarValue(displayPlayer.avatar) ? displayPlayer.avatar : user.avatar,
-    avatarId: resolveAvatarValue(displayPlayer.avatarId) ? displayPlayer.avatarId : user.avatarId,
-    eventAvatar: resolveAvatarValue(displayPlayer.eventAvatar) ? displayPlayer.eventAvatar : user.eventAvatar,
+    displayName: playerName(displayPlayer, isViewerWinner ? user.displayName || user.username || 'Player' : 'Winner'),
+    username: displayPlayer.username || (isViewerWinner ? user.username : undefined),
+    avatarUrl: resolveAvatarValue(displayPlayer.avatarUrl) ? displayPlayer.avatarUrl : isViewerWinner ? user.avatarUrl : undefined,
+    avatar: resolveAvatarValue(displayPlayer.avatar) ? displayPlayer.avatar : isViewerWinner ? user.avatar : undefined,
+    avatarId: resolveAvatarValue(displayPlayer.avatarId) ? displayPlayer.avatarId : isViewerWinner ? user.avatarId : undefined,
+    eventAvatar: resolveAvatarValue(displayPlayer.eventAvatar) ? displayPlayer.eventAvatar : isViewerWinner ? user.eventAvatar : undefined,
   };
 
   return {
@@ -161,17 +247,23 @@ function buildWinner(match = {}, result = {}, user = {}) {
 function buildPlayerRows(match = {}, result = {}, featuredPlayer = {}) {
   const players = Array.isArray(match.players) ? match.players : [];
   const featuredId = playerId(featuredPlayer);
-  const ordered = players
+  const orderedPlayers = players
     .filter((player) => !isSameId(playerId(player), featuredId))
+    .sort((left, right) => resolvePlayerPlace(left, result, 0) - resolvePlayerPlace(right, result, 0));
+
+  const ordered = orderedPlayers
     .slice(0, 3)
-    .map((player, index) => ({
-      className: ['quetzal', 'ganesha', 'fenrir'][index] || `player-${index}`,
-      avatar: fallbackPlayers[index]?.avatar || 'A3.png',
-      avatarSrc: resolveAvatarSrc(player || fallbackPlayers[index]),
-      name: playerName(player, fallbackPlayers[index]?.name || 'Player'),
-      place: `${index + 2}${index === 0 ? 'ND' : index === 1 ? 'RD' : 'TH'} PLACE`,
-      score: `${compactNumber(player.lives ?? player.diceCount ?? player.dice?.length, 0)} DICE`,
-    }));
+    .map((player, index) => {
+      const place = resolvePlayerPlace(player, result, index);
+      return {
+        className: ['quetzal', 'ganesha', 'fenrir'][index] || `player-${index}`,
+        avatar: fallbackPlayers[index]?.avatar || 'A3.png',
+        avatarSrc: resolveAvatarSrc(player || fallbackPlayers[index]),
+        name: playerName(player, fallbackPlayers[index]?.name || 'Player'),
+        place: ordinalPlace(place),
+        score: `${compactNumber(player.lives ?? player.diceCount ?? player.dice?.length, 0)} DICE`,
+      };
+    });
 
   return ordered.length ? ordered : fallbackPlayers.map((player) => ({
     ...player,

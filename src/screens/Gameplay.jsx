@@ -299,9 +299,6 @@ function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = fal
         <img className="gameplay-player__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
         <span className="gameplay-player__coinValue">{formatAmount(stack)}</span>
       </div>
-      <div className="gameplay-player__diceRow">
-        {renderDice(player, 'gameplay-player__miniDie', 5)}
-      </div>
     </div>
   );
 }
@@ -768,6 +765,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const minRequiredCoinBet = getMinimumCoinBet(match);
   const maxAllowedCoinBet = getMaximumCoinBet(match);
   const coinBetIsValid = selectedCoinBet >= minRequiredCoinBet && selectedCoinBet <= maxAllowedCoinBet;
+  const quantityMin = 1;
+  const quantityMax = quantityValues[quantityValues.length - 1] || Math.max(1, toNumber(totalDice, 1));
+  const decreaseQuantity = () => setSelectedQuantity((value) => Math.max(quantityMin, toNumber(value, quantityMin) - 1));
+  const increaseQuantity = () => setSelectedQuantity((value) => Math.min(quantityMax, toNumber(value, quantityMin) + 1));
   const challengeDisabled = !canCallLiar;
   const bidDisabled = !canSubmitBid || !bidIsValid || !coinBetIsValid;
   const turnName = playerName(activePlayer, myTurn ? 'You' : 'Player');
@@ -919,25 +920,29 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         <div className="gameplay-bid-selector__quantityCaption">{tx('Total dice in play')}: {totalDice || '-'}</div>
         <div className="gameplay-bid-selector__quantityTrack">
           <img className="gameplay-bid-selector__quantityTrackSkin" src={`${asset}p4.png`} alt="" draggable="false" />
-          <div className="gameplay-bid-selector__quantityRow">
-            {quantityValues.map((value, index) => {
-              const left = quantityValues.length <= 1 ? 50 : 8 + ((index / (quantityValues.length - 1)) * 84);
-              return (
-                <button
-                  key={`qty-${value}`}
-                  type="button"
-                  className={`gameplay-bid-selector__quantity ${value === selectedQuantity ? 'is-active' : ''}`}
-                  style={{ left: `${left}%` }}
-                  onClick={() => setSelectedQuantity(value)}
-                  aria-pressed={value === selectedQuantity}
-                >
-                  {value === selectedQuantity ? (
-                    <img className="gameplay-bid-selector__selectedSkin" src={`${asset}p5.png`} alt="" draggable="false" />
-                  ) : null}
-                  <span className="gameplay-bid-selector__quantityText">{value}</span>
-                </button>
-              );
-            })}
+          <div className="gameplay-bid-selector__quantityRow gameplay-bid-selector__quantityStepper" role="group" aria-label={tx('Quantity')}>
+            <button
+              type="button"
+              className="gameplay-bid-selector__quantityStep gameplay-bid-selector__quantityStep--minus"
+              onClick={decreaseQuantity}
+              disabled={selectedQuantity <= quantityMin}
+              aria-label={tx('Decrease quantity')}
+            >
+              −
+            </button>
+            <div className="gameplay-bid-selector__quantityValue" aria-live="polite">
+              <span className="gameplay-bid-selector__quantityValueNumber">{selectedQuantity}</span>
+              <span className="gameplay-bid-selector__quantityValueMax">/ {quantityMax}</span>
+            </div>
+            <button
+              type="button"
+              className="gameplay-bid-selector__quantityStep gameplay-bid-selector__quantityStep--plus"
+              onClick={increaseQuantity}
+              disabled={selectedQuantity >= quantityMax}
+              aria-label={tx('Increase quantity')}
+            >
+              +
+            </button>
           </div>
         </div>
         <div className="gameplay-bid-selector__faceRow">
