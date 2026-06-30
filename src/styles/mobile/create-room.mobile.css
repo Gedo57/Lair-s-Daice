@@ -403,3 +403,136 @@ html[data-device='mobile'] .create-room-option--percent { width: 70px; }
 html[data-device='mobile'] .create-room-option.is-disabled,
 html[data-device='mobile'] .create-room-block--pekPercent.is-disabled { opacity: .55; }
 html[data-device='mobile'] .create-room-pekPreview { position: absolute; left: 0; top: 61px; width: 240px; text-align: center; font: 900 11px/1 Arial, sans-serif; color: #5b3210; }
+
+/* Patch 2: dynamic buy-in / per-game range-static steppers */
+html[data-device='mobile'] .create-room-stepper {
+  position: absolute;
+  left: 0;
+  top: 24px;
+  width: 196px;
+  height: 36px;
+  display: grid;
+  grid-template-columns: 42px 1fr 42px;
+  align-items: center;
+  border-radius: 15px;
+  border: 2px solid #9b5c19;
+  background: linear-gradient(180deg, #fff2cb 0%, #e6bd75 58%, #b66b23 100%);
+  box-shadow: 0 3px 8px rgba(72, 36, 3, .28), inset 0 2px 0 rgba(255,255,255,.4);
+  overflow: hidden;
+}
+
+html[data-device='mobile'] .create-room-stepper__button {
+  width: 42px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: linear-gradient(180deg, #9c3619 0%, #6f1f12 100%);
+  color: #fff4d4;
+  font: 900 24px/1 Arial, sans-serif;
+  text-shadow: 0 2px 3px rgba(0,0,0,.45);
+  cursor: pointer;
+}
+
+html[data-device='mobile'] .create-room-stepper__button--plus {
+  background: linear-gradient(180deg, #2f8a33 0%, #155f1e 100%);
+}
+
+html[data-device='mobile'] .create-room-stepper__button:disabled {
+  cursor: default;
+  filter: grayscale(.75);
+  opacity: .45;
+}
+
+html[data-device='mobile'] .create-room-stepper__value {
+  display: grid;
+  place-items: center;
+  height: 36px;
+  font: 900 17px/1 Arial, sans-serif;
+  color: #3c2105;
+  text-align: center;
+}
+
+html[data-device='mobile'] .create-room-perGameMode {
+  position: absolute;
+  left: 0;
+  top: 23px;
+  display: flex;
+  gap: 6px;
+}
+
+html[data-device='mobile'] .create-room-option--mini {
+  width: 80px;
+  height: 31px;
+}
+
+html[data-device='mobile'] .create-room-option--mini .create-room-option__text {
+  font-size: 11px;
+}
+
+html[data-device='mobile'] .create-room-stepper--perGame {
+  left: 178px;
+  top: 22px;
+  width: 155px;
+  height: 34px;
+  grid-template-columns: 35px 1fr 35px;
+}
+
+html[data-device='mobile'] .create-room-stepper--perGame .create-room-stepper__button,
+html[data-device='mobile'] .create-room-stepper--perGame .create-room-stepper__value {
+  height: 34px;
+}
+
+html[data-device='mobile'] .create-room-stepper--perGame .create-room-stepper__button {
+  width: 35px;
+  font-size: 21px;
+}
+
+html[data-device='mobile'] .create-room-optionRow--perGameChoices {
+  left: 0;
+  top: 63px;
+  gap: 7px;
+}
+
+html[data-device='mobile'] .create-room-stepper--pekPercent {
+  left: 21px;
+  top: 24px;
+  width: 155px;
+  height: 34px;
+  grid-template-columns: 35px 1fr 35px;
+}
+
+html[data-device='mobile'] .create-room-stepper--pekPercent .create-room-stepper__button,
+html[data-device='mobile'] .create-room-stepper--pekPercent .create-room-stepper__value {
+  height: 34px;
+}
+
+html[data-device='mobile'] .create-room-stepper--pekPercent .create-room-stepper__button {
+  width: 35px;
+  font-size: 21px;
+}
+
+html[data-device='mobile'] .create-room-stepper.is-disabled {
+  opacity: .55;
+}
+
+html[data-device='mobile'] .create-room-stepper__button:hover,
+html[data-device='mobile'] .create-room-stepper:hover {
+  filter: brightness(1.04);
+}
+
+html[data-device='mobile'] .create-room-block--bid { left: 0; top: 128px; width: 225px; height: 64px; }
+html[data-device='mobile'] .create-room-block--private { left: 390px; top: 128px; width: 175px; height: 58px; }
+html[data-device='mobile'] .create-room-block--perGame { left: 0; top: 190px; width: 355px; height: 106px; }
+html[data-device='mobile'] .create-room-block--pekToggle { left: 375px; top: 202px; width: 150px; height: 58px; }
+html[data-device='mobile'] .create-room-block--pekPercent { left: 68px; top: 300px; width: 200px; height: 82px; }
+html[data-device='mobile'] .create-room-block--mode { left: 340px; top: 300px; width: 220px; height: 58px; }
+html[data-device='mobile'] .create-room-block--code { left: 0; top: 350px; width: 210px; height: 72px; }
+html[data-device='mobile'] .create-room-invite { left: 276px; top: 370px; }
+html[data-device='mobile'] .create-room-rules { top: 414px; max-width: 520px; font-size: 11px; line-height: 1.15; }
+html[data-device='mobile'] .create-room-rules--error { top: 436px; color: #8a1a11; }
+html[data-device='mobile'] .create-room-pekPreview { top: 63px; width: 200px; }
+html[data-device='mobile'] .create-room-pekPreview--error { top: 77px; color: #8a1a11; }
+html[data-device='mobile'] .create-room-bottom { bottom: -46px; }
+
+/* Patch 3: keep local and backend validation messages separated */
+html[data-device='mobile'] .create-room-rules--backendError { top: 456px; }

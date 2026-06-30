@@ -333,7 +333,7 @@ function getPerGameAmount(match = {}) {
   );
 }
 
-function normalizePekPercentage(value, fallback = 100) {
+function normalizePekPercentage(value, fallback = 25) {
   const number = Math.trunc(Number(value));
   return [25, 50, 100].includes(number) ? number : fallback;
 }
@@ -358,7 +358,7 @@ function getPekSettings(match = {}) {
     pricing.slamPercentage ??
     rules.pekPercentage ??
     rules.slamPercentage,
-    100,
+    25,
   );
   const finalPekAmount = firstPositiveNumber(
     match?.finalPekAmount,

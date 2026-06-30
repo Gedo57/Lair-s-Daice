@@ -1381,3 +1381,162 @@ html[data-device='mobile'] .tournament-pass-tournaments__cards::-webkit-scrollba
   border-radius: 999px;
   background: linear-gradient(#e7b957, #9a5c12);
 }
+
+/* Patch 2 portrait create-room betting controls */
+html[data-device='mobile'] .create-room-block--bid { left: 298px !important; top: 198px !important; width: 250px !important; height: 84px !important; }
+html[data-device='mobile'] .create-room-block--private { left: 0 !important; top: 304px !important; width: 250px !important; height: 88px !important; }
+html[data-device='mobile'] .create-room-block--pekToggle { left: 298px !important; top: 304px !important; width: 250px !important; height: 88px !important; }
+html[data-device='mobile'] .create-room-block--perGame { left: 0 !important; top: 410px !important; width: 548px !important; height: 142px !important; }
+html[data-device='mobile'] .create-room-block--pekPercent { left: 0 !important; top: 574px !important; width: 250px !important; height: 96px !important; }
+html[data-device='mobile'] .create-room-block--mode { left: 298px !important; top: 574px !important; width: 250px !important; height: 88px !important; }
+html[data-device='mobile'] .create-room-block--code { left: 0 !important; top: 676px !important; width: 250px !important; height: 94px !important; }
+
+html[data-device='mobile'] .create-room-stepper {
+  top: 36px !important;
+  left: 17px !important;
+  width: 216px !important;
+  height: 46px !important;
+  grid-template-columns: 50px 1fr 50px !important;
+  border-radius: 17px !important;
+}
+
+html[data-device='mobile'] .create-room-stepper__button {
+  width: 50px !important;
+  height: 46px !important;
+  font-size: 28px !important;
+}
+
+html[data-device='mobile'] .create-room-stepper__value {
+  height: 46px !important;
+  font-size: 22px !important;
+}
+
+html[data-device='mobile'] .create-room-perGameMode {
+  left: 4px !important;
+  top: 38px !important;
+  gap: 10px !important;
+}
+
+html[data-device='mobile'] .create-room-option--mini {
+  width: 104px !important;
+  height: 42px !important;
+}
+
+html[data-device='mobile'] .create-room-option--mini .create-room-option__text {
+  font-size: 14px !important;
+}
+
+html[data-device='mobile'] .create-room-stepper--perGame {
+  left: 250px !important;
+  top: 37px !important;
+  width: 278px !important;
+  height: 44px !important;
+  grid-template-columns: 52px 1fr 52px !important;
+}
+
+html[data-device='mobile'] .create-room-stepper--perGame .create-room-stepper__button {
+  width: 52px !important;
+  height: 44px !important;
+  font-size: 27px !important;
+}
+
+html[data-device='mobile'] .create-room-stepper--perGame .create-room-stepper__value {
+  height: 44px !important;
+  font-size: 22px !important;
+}
+
+html[data-device='mobile'] .create-room-optionRow--perGameChoices {
+  left: 0 !important;
+  right: 0 !important;
+  top: 92px !important;
+  justify-content: center !important;
+  gap: 14px !important;
+  flex-wrap: nowrap !important;
+}
+
+html[data-device='mobile'] .create-room-optionRow--perGameChoices .create-room-option--wide {
+  width: 150px !important;
+  height: 42px !important;
+}
+
+html[data-device='mobile'] .create-room-optionRow--perGameChoices .create-room-option__text {
+  font-size: 18px !important;
+}
+
+html[data-device='mobile'] .create-room-stepper--pekPercent {
+  left: 17px !important;
+  top: 36px !important;
+  width: 216px !important;
+  height: 46px !important;
+  grid-template-columns: 50px 1fr 50px !important;
+}
+
+html[data-device='mobile'] .create-room-stepper--pekPercent .create-room-stepper__button {
+  width: 50px !important;
+  height: 46px !important;
+  font-size: 28px !important;
+}
+
+html[data-device='mobile'] .create-room-stepper--pekPercent .create-room-stepper__value {
+  height: 46px !important;
+  font-size: 22px !important;
+}
+
+html[data-device='mobile'] .create-room-pekToggle {
+  left: 58px !important;
+  top: 36px !important;
+  width: 138px !important;
+  height: 44px !important;
+}
+
+html[data-device='mobile'] .create-room-pekPreview {
+  left: 0 !important;
+  top: 86px !important;
+  width: 250px !important;
+  font-size: 14px !important;
+}
+
+html[data-device='mobile'] .create-room-pekPreview--error {
+  top: 103px !important;
+  font-size: 11px !important;
+}
+
+html[data-device='mobile'] .create-room-invite {
+  left: 312px !important;
+  top: 698px !important;
+  width: 210px !important;
+  height: 52px !important;
+}
+
+html[data-device='mobile'] .create-room-rules {
+  left: 14px !important;
+  top: 762px !important;
+  width: 520px !important;
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+}
+
+html[data-device='mobile'] .create-room-rules--error {
+  top: 812px !important;
+  color: #8a1a11 !important;
+}
+
+/* Patch 3: Create Room / Lobby integration safety tuning */
+html[data-device='mobile'] .create-room-rules--backendError { top: 842px !important; }
+html[data-device='mobile'] .room-lobby-infoGrid {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 8px !important;
+}
+html[data-device='mobile'] .room-lobby-info { height: 54px !important; }
+html[data-device='mobile'] .room-lobby-info strong { font-size: 15px !important; }
+html[data-device='mobile'] .room-lobby-rulesSummary {
+  position: absolute !important;
+  left: 28px !important;
+  top: 414px !important;
+  width: 492px !important;
+  text-align: center !important;
+  font: 900 14px/1.2 Arial, sans-serif !important;
+  color: #5b3210 !important;
+}
+html[data-device='mobile'] .room-lobby-playerList { top: 448px !important; height: 150px !important; }
+html[data-device='mobile'] .room-lobby-error { top: 610px !important; }

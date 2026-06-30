@@ -114,3 +114,16 @@ html[data-device='desktop'] .room-lobby-refresh {
 html[data-device='desktop'] .room-lobby-infoGrid { left: 8px; top: 158px; width: 440px; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 html[data-device='desktop'] .room-lobby-info strong { font-size: 13px; }
 html[data-device='desktop'] .room-lobby-playerList { top: 302px; height: 80px; }
+
+/* Patch 3: full betting contract summary */
+html[data-device='desktop'] .room-lobby-rulesSummary {
+  position: absolute;
+  left: 8px;
+  top: 286px;
+  width: 440px;
+  text-align: center;
+  font: 900 11px/1.15 Arial, sans-serif;
+  color: #5b3210;
+}
+html[data-device='desktop'] .room-lobby-playerList { top: 322px; height: 60px; }
+html[data-device='desktop'] .room-lobby-info strong { font-size: 11px; text-align: center; }

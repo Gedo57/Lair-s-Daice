@@ -250,6 +250,34 @@ function normalizeBackendPricing(room = {}) {
   const coinBetOptions = Array.isArray(pricing.coinBetOptions) && pricing.coinBetOptions.length
     ? pricing.coinBetOptions
     : Array.isArray(room.coinBetOptions) ? room.coinBetOptions : undefined;
+  const perGameMode = getFirstValue(pricing, ['perGameMode', 'coinBetMode'])
+    ?? getFirstValue(room, ['perGameMode', 'coinBetMode'])
+    ?? 'static';
+  const perGameBase = getFirstValue(pricing, ['perGameBase', 'rangeBase'])
+    ?? getFirstValue(room, ['perGameBase', 'rangeBase'])
+    ?? maxCoinBet
+    ?? defaultCoinBet;
+  const perGameOptions = Array.isArray(pricing.perGameOptions) && pricing.perGameOptions.length
+    ? pricing.perGameOptions
+    : (Array.isArray(room.perGameOptions) && room.perGameOptions.length ? room.perGameOptions : coinBetOptions);
+  const selectedPerGame = getFirstValue(pricing, ['selectedPerGame', 'selectedPerGameAmount'])
+    ?? getFirstValue(room, ['selectedPerGame', 'selectedPerGameAmount'])
+    ?? defaultCoinBet;
+  const perGameAmount = getFirstValue(pricing, ['perGameAmount', 'roundStake'])
+    ?? getFirstValue(room, ['perGameAmount', 'roundStake'])
+    ?? selectedPerGame;
+  const pekEnabled = getFirstValue(pricing, ['pekEnabled', 'slamEnabled'])
+    ?? getFirstValue(room, ['pekEnabled', 'slamEnabled'])
+    ?? false;
+  const pekPercentage = getFirstValue(pricing, ['pekPercentage', 'slamPercentage'])
+    ?? getFirstValue(room, ['pekPercentage', 'slamPercentage'])
+    ?? 25;
+  const finalPekAmount = getFirstValue(pricing, ['finalPekAmount', 'finalSlamAmount'])
+    ?? getFirstValue(room, ['finalPekAmount', 'finalSlamAmount']);
+  const requiredPekCoverAmount = getFirstValue(pricing, ['requiredPekCoverAmount', 'maxChallengeAmount'])
+    ?? getFirstValue(room, ['requiredPekCoverAmount', 'maxChallengeAmount'])
+    ?? finalPekAmount
+    ?? perGameAmount;
 
   return {
     pricing: {
@@ -272,6 +300,22 @@ function normalizeBackendPricing(room = {}) {
       defaultCoinBet,
       bidCoinStep,
       coinBetOptions,
+      perGameMode,
+      coinBetMode: perGameMode,
+      perGameBase,
+      perGameOptions,
+      selectedPerGame,
+      selectedPerGameAmount: selectedPerGame,
+      perGameAmount,
+      roundStake: perGameAmount,
+      pekEnabled: Boolean(pekEnabled),
+      slamEnabled: Boolean(pekEnabled),
+      pekPercentage,
+      slamPercentage: pekPercentage,
+      finalPekAmount,
+      finalSlamAmount: finalPekAmount,
+      requiredPekCoverAmount,
+      maxChallengeAmount: requiredPekCoverAmount,
       potMode: getFirstValue(pricing, ['potMode']) ?? getFirstValue(room, ['potMode']),
       payoutMode: getFirstValue(pricing, ['payoutMode']) ?? getFirstValue(room, ['payoutMode']),
       winnerRewardMode: getFirstValue(pricing, ['winnerRewardMode']) ?? getFirstValue(rewards, ['winnerRewardMode']) ?? getFirstValue(room, ['winnerRewardMode']) ?? 'pot',
@@ -1098,6 +1142,7 @@ function normalizeRoom(room = {}) {
   const code = room.code || room.roomCode || room.roomCodeText || null;
   const maxPlayers = Number(room.maxPlayers || room.selectedPlayers || 4);
   const playerCount = Number(room.playerCount || playerIds.length || players.length || 0);
+  const backendPricing = normalizeBackendPricing(room);
 
   return {
     ...room,
@@ -1111,6 +1156,34 @@ function normalizeRoom(room = {}) {
     playerIds,
     playerCount,
     maxPlayers: Number.isFinite(maxPlayers) ? maxPlayers : 4,
+    pricing: backendPricing.pricing,
+    rewards: backendPricing.rewards,
+    buyIn: room.buyIn || backendPricing.buyIn || '',
+    buyInAmount: backendPricing.pricing.buyInAmount,
+    entryFee: backendPricing.pricing.entryFee,
+    perGameMode: backendPricing.pricing.perGameMode,
+    coinBetMode: backendPricing.pricing.coinBetMode,
+    perGameBase: backendPricing.pricing.perGameBase,
+    perGameOptions: backendPricing.pricing.perGameOptions,
+    selectedPerGame: backendPricing.pricing.selectedPerGame,
+    selectedPerGameAmount: backendPricing.pricing.selectedPerGameAmount,
+    perGameAmount: backendPricing.pricing.perGameAmount,
+    roundStake: backendPricing.pricing.roundStake,
+    coinBetOptions: backendPricing.pricing.coinBetOptions,
+    minCoinBet: backendPricing.pricing.minCoinBet,
+    maxCoinBet: backendPricing.pricing.maxCoinBet,
+    defaultCoinBet: backendPricing.pricing.defaultCoinBet,
+    minBidCoins: backendPricing.pricing.minBidCoins,
+    maxBidCoins: backendPricing.pricing.maxBidCoins,
+    defaultBidCoins: backendPricing.pricing.defaultBidCoins,
+    pekEnabled: backendPricing.pricing.pekEnabled,
+    slamEnabled: backendPricing.pricing.slamEnabled,
+    pekPercentage: backendPricing.pricing.pekPercentage,
+    slamPercentage: backendPricing.pricing.slamPercentage,
+    finalPekAmount: backendPricing.pricing.finalPekAmount,
+    finalSlamAmount: backendPricing.pricing.finalSlamAmount,
+    requiredPekCoverAmount: backendPricing.pricing.requiredPekCoverAmount,
+    maxChallengeAmount: backendPricing.pricing.maxChallengeAmount,
     roomMode: room.roomMode || room.gameMode || room.playMode || (room.botsEnabled || room.playWithBots || room.withBots ? 'bots' : 'normal'),
     isPrivate: Boolean(room.isPrivate),
     visibility: room.isPrivate ? 'private' : (room.visibility || 'public'),

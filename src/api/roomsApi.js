@@ -21,6 +21,11 @@ function looksLikeRoomCode(value) {
   return /^LD[-A-Z0-9]*\d/i.test(text) || /^[A-Z0-9]{4,10}$/.test(text);
 }
 
+const MIN_BUY_IN = 500;
+const MIN_RANGE_PER_GAME_BASE = 500;
+const MIN_STATIC_PER_GAME = 100;
+const PEK_PERCENTAGE_OPTIONS = [25, 50, 100];
+
 function numericSetting(settings = {}, keys = [], fallback = undefined) {
   for (const key of keys) {
     const value = settings[key];
@@ -41,10 +46,21 @@ function cleanCoinBetOptions(options = [], min = 0, max = Infinity) {
     .sort((left, right) => left - right);
 }
 
+function normalizePerGameMode(value) {
+  const normalized = String(value || 'range').trim().toLowerCase();
+  return normalized === 'static' ? 'static' : 'range';
+}
 
-function normalizePekPercentage(value, fallback = 100) {
+function buildRangeCoinBetOptions(baseAmount) {
+  const base = Math.max(MIN_RANGE_PER_GAME_BASE, Number(baseAmount) || MIN_RANGE_PER_GAME_BASE);
+  const low = Math.max(MIN_STATIC_PER_GAME, Math.floor(base * 0.2));
+  const mid = Math.max(low, Math.floor(base * 0.4));
+  return Array.from(new Set([low, mid, base])).sort((left, right) => left - right);
+}
+
+function normalizePekPercentage(value, fallback = 25) {
   const number = Number(String(value || '').replace(/[^0-9]/g, '').trim());
-  return [25, 50, 100].includes(number) ? number : fallback;
+  return PEK_PERCENTAGE_OPTIONS.includes(number) ? number : fallback;
 }
 
 function booleanSetting(value, fallback = false) {
@@ -70,17 +86,37 @@ function normalizeCreateRoomPayload(settings = {}) {
     settings.playMode ||
     (settings.botsEnabled || settings.playWithBots || settings.withBots ? 'bots' : 'normal')
   ).toLowerCase() === 'bots' ? 'bots' : 'normal';
-  const buyInAmount = numericSetting(settings, ['buyInAmount', 'buyInCoins', 'customBuyIn', 'customStake', 'stakeAmount', 'stake', 'entryFee']);
-  const perGameAmount = numericSetting(settings, ['perGameAmount', 'perGameCoins', 'roundStake', 'roundStakeAmount', 'baseStake', 'baseBet', 'gameAmount', 'gameStake', 'defaultCoinBet', 'defaultBidCoins']);
-  const fixedPerGameAmount = perGameAmount !== undefined ? perGameAmount : numericSetting(settings, ['minCoinBet', 'minBidCoins', 'minBet', 'minimumBet']);
-  const minCoinBet = fixedPerGameAmount;
-  const maxCoinBet = fixedPerGameAmount;
-  const defaultCoinBet = fixedPerGameAmount;
-  const bidCoinStep = numericSetting(settings, ['bidCoinStep', 'coinBidStep']);
-  const coinBetOptions = fixedPerGameAmount !== undefined ? [fixedPerGameAmount] : cleanCoinBetOptions(settings.coinBetOptions, minCoinBet || 0, maxCoinBet || Infinity);
+
+  const rawBuyInAmount = numericSetting(settings, ['buyInAmount', 'buyInCoins', 'customBuyIn', 'customStake', 'stakeAmount', 'stake', 'entryFee'], MIN_BUY_IN);
+  const buyInAmount = Math.max(MIN_BUY_IN, rawBuyInAmount);
+  const perGameMode = normalizePerGameMode(settings.perGameMode || settings.coinBetMode || settings.betMode);
   const pekEnabled = booleanSetting(settings.pekEnabled ?? settings.slamEnabled ?? settings.pekMode ?? settings.slamMode, false);
-  const pekPercentage = normalizePekPercentage(settings.pekPercentage ?? settings.slamPercentage ?? settings.pekPercent ?? settings.slamPercent, 100);
-  const finalPekAmount = fixedPerGameAmount !== undefined ? fixedPerGameAmount + Math.floor((fixedPerGameAmount * pekPercentage) / 100) : undefined;
+  const pekPercentage = normalizePekPercentage(settings.pekPercentage ?? settings.slamPercentage ?? settings.pekPercent ?? settings.slamPercent, 25);
+  const bidCoinStep = numericSetting(settings, ['bidCoinStep', 'coinBidStep']);
+
+  let perGameBase = numericSetting(settings, ['perGameBase', 'rangeBase', 'maxCoinBet', 'maxBidCoins'], buyInAmount);
+  perGameBase = Math.min(buyInAmount, Math.max(MIN_RANGE_PER_GAME_BASE, perGameBase));
+
+  let coinBetOptions;
+  let selectedPerGame;
+
+  if (perGameMode === 'range') {
+    const providedOptions = cleanCoinBetOptions(settings.coinBetOptions, MIN_STATIC_PER_GAME, buyInAmount);
+    coinBetOptions = providedOptions.length ? providedOptions.slice(0, 3) : buildRangeCoinBetOptions(perGameBase);
+    perGameBase = Math.max(...coinBetOptions);
+    selectedPerGame = numericSetting(settings, ['selectedPerGame', 'perGameAmount', 'perGameCoins', 'roundStake', 'roundStakeAmount', 'defaultCoinBet', 'defaultBidCoins'], coinBetOptions[0]);
+    if (!coinBetOptions.includes(selectedPerGame)) selectedPerGame = coinBetOptions[0];
+  } else {
+    selectedPerGame = numericSetting(settings, ['selectedPerGame', 'perGameAmount', 'perGameCoins', 'roundStake', 'roundStakeAmount', 'baseStake', 'baseBet', 'gameAmount', 'gameStake', 'defaultCoinBet', 'defaultBidCoins', 'minCoinBet', 'minBidCoins', 'minBet', 'minimumBet'], MIN_STATIC_PER_GAME);
+    selectedPerGame = Math.min(buyInAmount, Math.max(MIN_STATIC_PER_GAME, selectedPerGame));
+    perGameBase = selectedPerGame;
+    coinBetOptions = [selectedPerGame];
+  }
+
+  const minCoinBet = coinBetOptions[0];
+  const maxCoinBet = coinBetOptions[coinBetOptions.length - 1];
+  const defaultCoinBet = selectedPerGame;
+  const finalPekAmount = selectedPerGame + Math.floor((selectedPerGame * pekPercentage) / 100);
 
   const payload = {
     name,
@@ -103,49 +139,84 @@ function normalizeCreateRoomPayload(settings = {}) {
     dicePerRound: 5,
     turnTimer: Number(settings.turnTimer || String(settings.selectedTimer || '').replace(/[^0-9]/g, '') || 30) || 30,
     bidStyle: 'Official Rules',
+    buyInAmount,
+    buyInCoins: buyInAmount,
+    customBuyIn: buyInAmount,
+    customStake: buyInAmount,
+    entryFee: buyInAmount,
+    perGameMode,
+    coinBetMode: perGameMode,
+    perGameBase,
+    selectedPerGame,
+    perGameAmount: selectedPerGame,
+    perGameCoins: selectedPerGame,
+    roundStake: selectedPerGame,
+    minCoinBet,
+    minBidCoins: minCoinBet,
+    maxCoinBet,
+    maxBidCoins: maxCoinBet,
+    defaultCoinBet,
+    defaultBidCoins: defaultCoinBet,
+    coinBetOptions,
+    pekEnabled,
+    slamEnabled: pekEnabled,
+    pekPercentage,
+    slamPercentage: pekPercentage,
+    finalPekAmount,
+    finalSlamAmount: finalPekAmount,
+    requiredPekCoverAmount: pekEnabled ? finalPekAmount : selectedPerGame,
+    maxChallengeAmount: pekEnabled ? finalPekAmount : selectedPerGame,
   };
 
-  if (buyInAmount !== undefined) {
-    payload.buyInAmount = buyInAmount;
-    payload.buyInCoins = buyInAmount;
-    payload.customBuyIn = buyInAmount;
-    payload.customStake = buyInAmount;
-    payload.entryFee = buyInAmount;
-  }
-  if (fixedPerGameAmount !== undefined) {
-    payload.perGameAmount = fixedPerGameAmount;
-    payload.perGameCoins = fixedPerGameAmount;
-    payload.roundStake = fixedPerGameAmount;
-    payload.minCoinBet = fixedPerGameAmount;
-    payload.minBidCoins = fixedPerGameAmount;
-    payload.maxCoinBet = fixedPerGameAmount;
-    payload.maxBidCoins = fixedPerGameAmount;
-    payload.defaultCoinBet = fixedPerGameAmount;
-    payload.defaultBidCoins = fixedPerGameAmount;
-    payload.coinBetOptions = [fixedPerGameAmount];
-  } else {
-    if (minCoinBet !== undefined) {
-      payload.minCoinBet = minCoinBet;
-      payload.minBidCoins = minCoinBet;
-    }
-    if (maxCoinBet !== undefined) {
-      payload.maxCoinBet = maxCoinBet;
-      payload.maxBidCoins = maxCoinBet;
-    }
-    if (defaultCoinBet !== undefined) {
-      payload.defaultCoinBet = defaultCoinBet;
-      payload.defaultBidCoins = defaultCoinBet;
-    }
-    if (coinBetOptions.length) payload.coinBetOptions = coinBetOptions;
-  }
-  payload.pekEnabled = pekEnabled;
-  payload.slamEnabled = pekEnabled;
-  payload.pekPercentage = pekPercentage;
-  payload.slamPercentage = pekPercentage;
-  if (finalPekAmount !== undefined) {
-    payload.finalPekAmount = finalPekAmount;
-    payload.finalSlamAmount = finalPekAmount;
-  }
+  payload.pricing = {
+    buyInAmount,
+    buyInCoins: buyInAmount,
+    entryFee: buyInAmount,
+    startingStack: buyInAmount,
+    minBuyIn: MIN_BUY_IN,
+    maxBuyIn: 0,
+    perGameMode,
+    coinBetMode: perGameMode,
+    perGameBase,
+    perGameOptions: coinBetOptions,
+    selectedPerGame,
+    selectedPerGameAmount: selectedPerGame,
+    perGameAmount: selectedPerGame,
+    perGameCoins: selectedPerGame,
+    roundStake: selectedPerGame,
+    minCoinBet,
+    minBidCoins: minCoinBet,
+    maxCoinBet,
+    maxBidCoins: maxCoinBet,
+    defaultCoinBet,
+    defaultBidCoins: defaultCoinBet,
+    bidCoinStep: bidCoinStep ?? payload.bidCoinStep,
+    coinBetOptions,
+    pekEnabled,
+    slamEnabled: pekEnabled,
+    pekPercentage,
+    slamPercentage: pekPercentage,
+    finalPekAmount,
+    finalSlamAmount: finalPekAmount,
+    requiredPekCoverAmount: pekEnabled ? finalPekAmount : selectedPerGame,
+    maxChallengeAmount: pekEnabled ? finalPekAmount : selectedPerGame,
+    pekMultiplier: 1 + (pekPercentage / 100),
+  };
+
+  payload.stakeValidationClient = {
+    validated: true,
+    source: 'frontend_create_room',
+    buyInAmount,
+    perGameMode,
+    perGameBase,
+    coinBetOptions,
+    selectedPerGame,
+    perGameAmount: selectedPerGame,
+    pekEnabled,
+    pekPercentage,
+    finalPekAmount,
+  };
+
   if (bidCoinStep !== undefined) payload.bidCoinStep = bidCoinStep;
 
   return payload;

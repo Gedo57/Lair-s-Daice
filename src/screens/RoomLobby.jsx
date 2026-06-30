@@ -74,20 +74,58 @@ function formatAmount(value, fallback = '—') {
 
 function getRoomPerGameAmount(room = {}) {
   return readNumber(
-    room.perGameAmount ?? room.perGameCoins ?? room.roundStake ?? room.defaultCoinBet ?? room.defaultBidCoins ?? room.pricing?.perGameAmount ?? room.pricing?.roundStake,
+    room.perGameAmount ?? room.perGameCoins ?? room.roundStake ?? room.selectedPerGame ?? room.selectedPerGameAmount ?? room.defaultCoinBet ?? room.defaultBidCoins ?? room.pricing?.perGameAmount ?? room.pricing?.roundStake ?? room.pricing?.selectedPerGame ?? room.pricing?.selectedPerGameAmount,
     undefined,
   );
 }
 
+function getRoomCoinBetOptions(room = {}) {
+  const rawOptions = Array.isArray(room.coinBetOptions) && room.coinBetOptions.length
+    ? room.coinBetOptions
+    : (Array.isArray(room.pricing?.coinBetOptions) && room.pricing.coinBetOptions.length
+      ? room.pricing.coinBetOptions
+      : (Array.isArray(room.perGameOptions) && room.perGameOptions.length ? room.perGameOptions : room.pricing?.perGameOptions));
+
+  if (!Array.isArray(rawOptions)) return [];
+  return Array.from(new Set(rawOptions.map((value) => readNumber(value)).filter((value) => Number.isFinite(value) && value > 0)))
+    .sort((left, right) => left - right)
+    .slice(0, 3);
+}
+
+function getRoomPerGameMode(room = {}) {
+  const mode = String(room.perGameMode || room.coinBetMode || room.pricing?.perGameMode || room.pricing?.coinBetMode || '').toLowerCase();
+  return mode === 'range' ? 'range' : 'static';
+}
+
+function getRoomPerGameSummary(room = {}) {
+  const mode = getRoomPerGameMode(room);
+  const selected = getRoomPerGameAmount(room);
+  if (mode === 'range') {
+    const options = getRoomCoinBetOptions(room);
+    const optionCopy = options.length ? options.map((value) => formatAmount(value)).join(' / ') : formatAmount(selected);
+    return selected ? `Range ${optionCopy} • Pick ${formatAmount(selected)}` : `Range ${optionCopy}`;
+  }
+  return `Static ${formatAmount(selected)}`;
+}
+
+function getRoomBuyInAmount(room = {}) {
+  return readNumber(room.buyInAmount ?? room.entryFee ?? room.buyInCoins ?? room.pricing?.buyInAmount ?? room.pricing?.entryFee, undefined);
+}
+
 function getRoomPek(room = {}) {
   const perGameAmount = getRoomPerGameAmount(room) || 0;
-  const percentage = readNumber(room.pekPercentage ?? room.slamPercentage ?? room.pricing?.pekPercentage ?? room.pricing?.slamPercentage, 100);
-  const safePercentage = [25, 50, 100].includes(percentage) ? percentage : 100;
+  const percentage = readNumber(room.pekPercentage ?? room.slamPercentage ?? room.pricing?.pekPercentage ?? room.pricing?.slamPercentage, 25);
+  const safePercentage = [25, 50, 100].includes(percentage) ? percentage : 25;
   const enabled = Boolean(room.pekEnabled ?? room.slamEnabled ?? room.pricing?.pekEnabled ?? room.pricing?.slamEnabled ?? false);
   const finalAmount = readNumber(room.finalPekAmount ?? room.finalSlamAmount ?? room.pricing?.finalPekAmount ?? room.pricing?.finalSlamAmount, perGameAmount + Math.floor((perGameAmount * safePercentage) / 100));
   return { enabled, percentage: safePercentage, finalAmount };
 }
 
+function getRoomRulesSummary(room = {}) {
+  const buyInAmount = getRoomBuyInAmount(room);
+  const pek = getRoomPek(room);
+  return `Rules: 5 dice each • Buy-in ${formatAmount(buyInAmount)} • ${getRoomPerGameSummary(room)}${pek.enabled ? ` • Pek ${pek.percentage}% = ${formatAmount(pek.finalAmount)}` : ' • Pek OFF'}`;
+}
 
 export default function RoomLobby({ navigation, data, backendActions, backendStatus, i18n }) {
   const tx = i18n?.tx || ((value) => value);
@@ -114,7 +152,8 @@ export default function RoomLobby({ navigation, data, backendActions, backendSta
   const isRefreshing = backendStatus?.loading && ['rooms.get', 'rooms.my', 'rooms.refresh'].includes(backendStatus?.lastAction);
   const canStart = Boolean(room?.roomId || room?.id || roomCode) && isHost && isFull && allReady && !isCountdown;
   const roomId = room?.roomId || room?.id || roomCode || null;
-  const perGameAmount = getRoomPerGameAmount(room || {});
+  const perGameSummary = getRoomPerGameSummary(room || {});
+  const roomRulesSummary = getRoomRulesSummary(room || {});
   const pekInfo = getRoomPek(room || {});
 
   const startButtonText = useMemo(() => {
@@ -210,10 +249,12 @@ export default function RoomLobby({ navigation, data, backendActions, backendSta
             <div className="room-lobby-info"><span>{tx('STATUS')}</span><strong>{tx(isCountdown ? `STARTING ${countdown}` : String(room.status || 'waiting').toUpperCase())}</strong></div>
             <div className="room-lobby-info"><span>{tx('READY')}</span><strong>{(room.readyPlayers || []).length} / {room.maxPlayers || 4}</strong></div>
             <div className="room-lobby-info"><span>{tx('TIMER')}</span><strong>{room.turnTimer || room.selectedTimer || '30s'}</strong></div>
-            <div className="room-lobby-info"><span>{tx('BUY-IN')}</span><strong>{formatAmount(room.buyInAmount || room.entryFee || room.pricing?.buyInAmount)}</strong></div>
-            <div className="room-lobby-info"><span>{tx('PER GAME')}</span><strong>{formatAmount(perGameAmount)}</strong></div>
+            <div className="room-lobby-info"><span>{tx('BUY-IN')}</span><strong>{formatAmount(getRoomBuyInAmount(room || {}))}</strong></div>
+            <div className="room-lobby-info"><span>{tx('PER GAME')}</span><strong>{tx(perGameSummary)}</strong></div>
             <div className="room-lobby-info"><span>{tx('PEK / SLAM')}</span><strong>{pekInfo.enabled ? `${pekInfo.percentage}% / ${formatAmount(pekInfo.finalAmount)}` : tx('OFF')}</strong></div>
           </div>
+
+          <div className="room-lobby-rulesSummary">{tx(roomRulesSummary)}</div>
 
           {isCountdown ? (
             <div className="room-lobby-countdown" aria-live="polite">
