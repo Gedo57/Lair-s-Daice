@@ -240,6 +240,177 @@ function getBidControls(match = {}) {
   return {};
 }
 
+const OPENING_BID_DEFAULTS = Object.freeze({
+  2: { ones: 2, open: 3 },
+  3: { ones: 3, open: 4 },
+  4: { ones: 4, open: 6 },
+});
+
+const CHAI_DEFAULT_STEP = 2;
+
+function truthyFlag(value) {
+  return value === true || value === 1 || value === '1' || String(value || '').toLowerCase() === 'true';
+}
+
+function normalizeJokerMode(source = {}) {
+  const mode = String(
+    source?.jokerMode
+      ?? source?.jokerStatus
+      ?? source?.wildMode
+      ?? source?.onesMode
+      ?? ''
+  ).toLowerCase();
+
+  if (truthyFlag(source?.zai) || truthyFlag(source?.isZai) || mode === 'zai' || mode === 'joker_off') return 'zai';
+  if (truthyFlag(source?.chai) || truthyFlag(source?.isChai) || mode === 'chai' || mode === 'joker_on') return 'chai';
+  if (
+    truthyFlag(source?.jokerLockedThisRound)
+    || truthyFlag(source?.onesWereCalledThisRound)
+    || truthyFlag(source?.onesLocked)
+    || mode === 'ones_locked'
+    || mode === 'locked'
+  ) return 'ones_locked';
+
+  return 'normal';
+}
+
+function isBidZai(bid = {}) {
+  return normalizeJokerMode(bid) === 'zai';
+}
+
+function isBidChai(bid = {}) {
+  return normalizeJokerMode(bid) === 'chai';
+}
+
+function getChaiQuantityStep(match = {}) {
+  const controls = getBidControls(match);
+  return Math.max(1, Math.trunc(readNumber(
+    controls.chaiQuantityStep
+      ?? match?.chaiQuantityStep
+      ?? match?.gameRules?.chaiQuantityStep
+      ?? CHAI_DEFAULT_STEP,
+    CHAI_DEFAULT_STEP,
+  )));
+}
+
+function getOpeningBidRules(match = {}, playerCount = 2) {
+  const controls = getBidControls(match);
+  const rawRules = controls.openingBidRules || match?.openingBidRules || match?.gameRules?.openingBidRules || {};
+  const count = Math.max(2, Math.min(4, Math.trunc(readNumber(
+    rawRules.playerCount
+      ?? controls.playerCount
+      ?? match?.playerCount
+      ?? match?.players?.length
+      ?? playerCount,
+    playerCount,
+  ))));
+  const fallback = OPENING_BID_DEFAULTS[count] || OPENING_BID_DEFAULTS[4];
+
+  return {
+    playerCount: count,
+    minOnesQuantity: Math.max(1, Math.trunc(readNumber(
+      rawRules.minOnesQuantity
+        ?? rawRules.minimumOnesQuantity
+        ?? rawRules.minOnesBid
+        ?? rawRules.ones
+        ?? controls.minOpeningOnesQuantity,
+      fallback.ones,
+    ))),
+    minOpenQuantity: Math.max(1, Math.trunc(readNumber(
+      rawRules.minOpenQuantity
+        ?? rawRules.minimumOpenQuantity
+        ?? rawRules.minOpenBid
+        ?? rawRules.open
+        ?? controls.minOpeningOpenQuantity,
+      fallback.open,
+    ))),
+  };
+}
+
+function getOpeningMinimumQuantity(match = {}, playerCount = 2, face = 1) {
+  const rules = getOpeningBidRules(match, playerCount);
+  return Number(face) === 1 ? rules.minOnesQuantity : rules.minOpenQuantity;
+}
+
+function getOpeningBidError(match = {}, currentBid = null, quantity = 1, face = 1, playerCount = 2, tx = (value) => value) {
+  if (currentBid) return '';
+  const minQuantity = getOpeningMinimumQuantity(match, playerCount, face);
+  if (toNumber(quantity, 0) >= minQuantity) return '';
+
+  const faceText = Number(face) === 1 ? '1' : tx('any face');
+  return `${tx('Opening bid is too low')} (${minQuantity} x ${faceText})`;
+}
+
+function getBidJokerTag(bid = {}) {
+  if (!bid) return '';
+  const mode = normalizeJokerMode(bid);
+  if (mode === 'zai') return 'ZAI';
+  if (mode === 'chai') return 'CHAI';
+  if (mode === 'ones_locked' || Number(bid?.face) === 1) return '1s LOCKED';
+  return '';
+}
+
+function getMatchJokerDisplay(match = {}, bid = null, tx = (value) => value) {
+  const source = {
+    ...(match || {}),
+    ...(bid || {}),
+    jokerMode: bid?.jokerMode ?? match?.jokerMode,
+    zai: bid?.zai ?? bid?.isZai ?? match?.zaiActive,
+    chai: bid?.chai ?? bid?.isChai ?? match?.chaiActive,
+  };
+  const mode = normalizeJokerMode(source);
+  const bidFace = Number(bid?.face);
+  const onesLocked = mode === 'ones_locked' || bidFace === 1 || truthyFlag(match?.jokerLockedThisRound) || truthyFlag(match?.onesWereCalledThisRound);
+
+  if (mode === 'zai') {
+    return { mode: 'zai', label: tx('ZAI'), detail: tx('Joker OFF'), className: 'is-zai', jokerWildActive: false };
+  }
+
+  if (mode === 'chai') {
+    return { mode: 'chai', label: tx('CHAI'), detail: tx('Joker ON'), className: 'is-chai', jokerWildActive: true };
+  }
+
+  if (onesLocked) {
+    return { mode: 'ones_locked', label: tx('1s LOCKED'), detail: tx('Joker OFF'), className: 'is-locked', jokerWildActive: false };
+  }
+
+  return { mode: 'normal', label: tx('Joker ON'), detail: tx('1s are wild'), className: 'is-normal', jokerWildActive: true };
+}
+
+function buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match }) {
+  const currentQuantity = toNumber(currentBid?.quantity, 0);
+  const chaiStep = getChaiQuantityStep(match);
+  const currentJokerInfo = getMatchJokerDisplay(match, currentBid);
+  const face = toNumber(selectedFace, 1);
+  const zai = Boolean(zaiEnabled && face !== 1);
+  const chai = Boolean(
+    !zai
+      && currentBid
+      && currentJokerInfo.mode === 'zai'
+      && face !== 1
+      && toNumber(selectedQuantity, 0) >= currentQuantity + chaiStep
+  );
+  const onesLocked = face === 1;
+  const jokerMode = zai ? 'zai' : chai ? 'chai' : onesLocked ? 'ones_locked' : 'normal';
+
+  return {
+    zai,
+    isZai: zai,
+    chai,
+    isChai: chai,
+    jokerMode,
+    jokerWildActive: jokerMode === 'normal' || jokerMode === 'chai',
+  };
+}
+
+function getSelectedBidJokerInfo({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match, tx = (value) => value }) {
+  const payload = buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match });
+  if (payload.zai) return { ...payload, label: tx('ZAI'), detail: tx('Joker OFF'), className: 'is-zai' };
+  if (payload.chai) return { ...payload, label: tx('CHAI'), detail: tx('Joker ON'), className: 'is-chai' };
+  if (payload.jokerMode === 'ones_locked') return { ...payload, label: tx('1s LOCKED'), detail: tx('Joker OFF'), className: 'is-locked' };
+  return { ...payload, label: tx('Joker ON'), detail: tx('1s are wild'), className: 'is-normal' };
+}
+
 function cleanCoinOptions(options = [], min = 0, max = Infinity) {
   if (!Array.isArray(options)) return [];
   return Array.from(new Set(options
@@ -814,9 +985,11 @@ function normalizedActionList(list) {
   return list.map((item) => String(item || '').toLowerCase()).filter(Boolean);
 }
 
-function bidLabel(bid) {
+function bidLabel(bid, tx = (value) => value) {
   if (!bid) return '-';
-  return `${toNumber(bid.quantity, 0)} x ${toNumber(bid.face, 0)}`;
+  const tag = getBidJokerTag(bid);
+  const base = `${toNumber(bid.quantity, 0)} x ${toNumber(bid.face, 0)}`;
+  return tag ? `${base} ${tx(tag)}` : base;
 }
 
 function describeRoundResult(roundResult, tx) {
@@ -866,11 +1039,17 @@ function nextDefaultBid(currentBid, totalDice) {
   return { quantity: Math.min(toNumber(currentBid.quantity, 1) + 1, totalDice || 7), face: 1 };
 }
 
-function isValidBid(currentBid, quantity, face) {
-  if (!currentBid) return quantity >= 1 && face >= 1 && face <= 6;
+function isValidBid(currentBid, quantity, face, options = {}) {
+  const normalizedQuantity = toNumber(quantity, 0);
+  const normalizedFace = toNumber(face, 0);
+  if (!currentBid) {
+    if (normalizedFace < 1 || normalizedFace > 6) return false;
+    const minOpeningQuantity = getOpeningMinimumQuantity(options.match || {}, options.playerCount || 2, normalizedFace);
+    return normalizedQuantity >= minOpeningQuantity;
+  }
   const currentQuantity = toNumber(currentBid.quantity, 0);
   const currentFace = toNumber(currentBid.face, 0);
-  return quantity > currentQuantity || (quantity === currentQuantity && face > currentFace);
+  return normalizedQuantity > currentQuantity || (normalizedQuantity === currentQuantity && normalizedFace > currentFace);
 }
 
 function TurnIntroOverlay({ player, phase }) {
@@ -1071,6 +1250,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const [selectedQuantity, setSelectedQuantity] = useState(defaultBid.quantity || 1);
   const [selectedFace, setSelectedFace] = useState(defaultBid.face || 1);
   const [selectedCoinBet, setSelectedCoinBet] = useState(getMatchCoinBet(match));
+  const [zaiEnabled, setZaiEnabled] = useState(false);
 
   useEffect(() => {
     if (!currentMatchId && match) return undefined;
@@ -1092,7 +1272,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   useEffect(() => {
     setSelectedQuantity(Math.max(1, Math.min(quantityValues.length, defaultBid.quantity || 1)));
     setSelectedFace(Math.max(1, Math.min(6, defaultBid.face || 1)));
+    setZaiEnabled(false);
   }, [defaultBid.quantity, defaultBid.face, quantityValues.length]);
+
+  useEffect(() => {
+    if (selectedFace === 1 && zaiEnabled) setZaiEnabled(false);
+  }, [selectedFace, zaiEnabled]);
 
   useEffect(() => {
     const min = getMinimumCoinBet(match);
@@ -1153,10 +1338,19 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
   const submitBid = () => {
     if (!canSubmitBid || isTurnIntroPlaying) return;
+    const jokerPayload = buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match });
     backendActions?.submitGameAction?.({
       matchId: currentMatchId,
       type: 'bid',
-      bid: { quantity: selectedQuantity, face: selectedFace, coinBet: selectedCoinBet, coinAmount: selectedCoinBet, betAmount: selectedCoinBet },
+      bid: {
+        quantity: selectedQuantity,
+        face: selectedFace,
+        coinBet: selectedCoinBet,
+        coinAmount: selectedCoinBet,
+        betAmount: selectedCoinBet,
+        ...jokerPayload,
+      },
+      ...jokerPayload,
       coinBet: selectedCoinBet,
       betAmount: selectedCoinBet,
     });
@@ -1203,12 +1397,21 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     voiceSessionRef.current.toggleMute();
   };
 
-  const bidIsValid = isValidBid(currentBid, selectedQuantity, selectedFace);
+  const bidIsValid = isValidBid(currentBid, selectedQuantity, selectedFace, { match, playerCount: tablePlayerCount });
+  const openingBidError = getOpeningBidError(match, currentBid, selectedQuantity, selectedFace, tablePlayerCount, tx);
   const minRequiredCoinBet = getMinimumCoinBet(match);
   const maxAllowedCoinBet = getMaximumCoinBet(match);
   const coinBetIsValid = selectedCoinBet >= minRequiredCoinBet && selectedCoinBet <= maxAllowedCoinBet;
-  const quantityMin = 1;
+  const quantityMin = currentBid ? 1 : getOpeningMinimumQuantity(match, tablePlayerCount, selectedFace);
   const quantityMax = quantityValues[quantityValues.length - 1] || Math.max(1, toNumber(totalDice, 1));
+  const zaiAvailable = selectedFace !== 1;
+  const currentBidJokerInfo = getMatchJokerDisplay(match, currentBid, tx);
+  const selectedBidJokerInfo = getSelectedBidJokerInfo({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match, tx });
+  const chaiStep = getChaiQuantityStep(match);
+  const chaiHint = currentBid && currentBidJokerInfo.mode === 'zai' && !zaiEnabled
+    ? `${tx('Increase by +2 to reopen joker')} (${toNumber(currentBid.quantity, 0) + chaiStep}+)`
+    : '';
+  const bidSubmitSubtitle = openingBidError || (bidIsValid ? (coinBetIsValid ? selectedBidJokerInfo.detail : tx('Coin bet out of range')) : tx('Bid must be higher'));
   const decreaseQuantity = () => setSelectedQuantity((value) => Math.max(quantityMin, toNumber(value, quantityMin) - 1));
   const increaseQuantity = () => setSelectedQuantity((value) => Math.min(quantityMax, toNumber(value, quantityMin) + 1));
   const challengeDisabled = !canCallLiar;
@@ -1318,6 +1521,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           {currentBid ? <span>{toNumber(currentBid.quantity, 0)} x</span> : <span>- x</span>}
           <Die value={currentBid?.face || 1} className="gameplay-current-bid__die" />
         </div>
+        {currentBid ? (
+          <div className={`gameplay-current-bid__jokerBadge ${currentBidJokerInfo.className}`}>
+            <span>{currentBidJokerInfo.label}</span>
+            <small>{currentBidJokerInfo.detail}</small>
+          </div>
+        ) : null}
         <span className="gameplay-current-bid__metaLabel gameplay-current-bid__metaLabel--coin">{tx('COIN BET')}</span>
         <div className="gameplay-current-bid__coinRow">
           <img className="gameplay-current-bid__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
@@ -1340,9 +1549,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           <div className="gameplay-round-result__title">{roundResultTitle(roundResult, tx)}</div>
           <div className="gameplay-round-result__summary">{describeRoundResult(roundResult, tx)}</div>
           <div className="gameplay-round-result__meta">
-            <span>{tx('Bid')}: {bidLabel(roundResult?.bid)}</span>
+            <span>{tx('Bid')}: {bidLabel(roundResult?.bid, tx)}</span>
             <span>{tx('Actual')}: {toNumber(roundResult?.actualCount, 0)}</span>
-            {toNumber(roundResult?.wildOnesCount, 0) > 0 ? <span>{tx('Wild ones counted')}: {toNumber(roundResult?.wildOnesCount, 0)}</span> : null}
+            {roundResult?.wildOnesCount !== undefined || roundResult?.jokerWildActive !== undefined ? <span>{tx('Wild ones counted')}: {toNumber(roundResult?.wildOnesCount, 0)}</span> : null}
+            {roundResult?.jokerMode || roundResult?.bid?.jokerMode ? <span>{tx('Joker')}: {getMatchJokerDisplay(roundResult, roundResult?.bid, tx).detail}</span> : null}
             {roundResult?.onesWereCalledThisRound && toNumber(roundResult?.wildOnesCount, 0) <= 0 ? <span>{tx('Ones stopped being wild')}</span> : null}
           </div>
           {revealedRows.length ? (
@@ -1415,6 +1625,22 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
             );
           })}
         </div>
+        <div className="gameplay-bid-selector__jokerRow">
+          <button
+            type="button"
+            className={`gameplay-bid-selector__zaiBtn ${zaiEnabled ? 'is-active' : ''}`}
+            onClick={() => setZaiEnabled((value) => !value)}
+            aria-pressed={zaiEnabled}
+            disabled={!zaiAvailable}
+          >
+            <strong>{tx('ZAI')}</strong>
+            <span>{tx('Joker OFF')}</span>
+          </button>
+          <div className={`gameplay-bid-selector__jokerHint ${selectedBidJokerInfo.className}`}>
+            <span>{selectedBidJokerInfo.label}</span>
+            <small>{chaiHint || selectedBidJokerInfo.detail}</small>
+          </div>
+        </div>
         <div className="gameplay-bid-selector__coinBetRow">
           {dynamicCoinBetOptions.map((value) => {
             const disabled = value < minRequiredCoinBet || value > maxAllowedCoinBet;
@@ -1439,7 +1665,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         <img className="gameplay-action-tray__skin" src={`${asset}Panal.png`} alt="" draggable="false" />
       </div>
 
-      <ActionButton className="gameplay-action--raise" skin="B!.png" title="CONFIRM BID" subtitle={bidIsValid ? (coinBetIsValid ? 'Submit your bid' : 'Coin bet out of range') : 'Bid must be higher'} onClick={submitBid} disabled={bidDisabled} tx={tx} />
+      <ActionButton className="gameplay-action--raise" skin="B!.png" title="CONFIRM BID" subtitle={bidSubmitSubtitle} onClick={submitBid} disabled={bidDisabled} tx={tx} />
       <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIAR" subtitle={`Risk ${formatAmount(pekSettings.perGameAmount || currentCoinBet)}`} onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
       {pekSettings.pekEnabled ? (
         <ActionButton className="gameplay-action--slam" skin="B3.png" title="PEK / SLAM" subtitle={pekStackBlockReason || `Risk ${formatAmount(pekSettings.finalPekAmount)}`} onClick={() => submitSimpleAction('call_pek')} disabled={pekDisabled} tx={tx} />

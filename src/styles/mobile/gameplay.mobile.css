@@ -1149,3 +1149,81 @@ html[data-device='mobile'] .gameplay-action--raise { left: 345px; }
 html[data-device='mobile'] .gameplay-action--call { left: 528px; }
 html[data-device='mobile'] .gameplay-action--slam { left: 711px; }
 html[data-device='mobile'] .gameplay-action--slam .gameplay-action__title { left: 51px; top: 30px; font-size: 14px; }
+
+/* Patch C: Zai / Chai / Joker status controls for mobile landscape. */
+html[data-device='mobile'] .gameplay-current-bid__jokerBadge {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  top: 108px;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 221, 132, .72);
+  background: rgba(38, 14, 5, .78);
+  color: #fff4d2;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 950;
+  text-shadow: 0 1px 2px rgba(0,0,0,.7);
+  z-index: 5;
+}
+html[data-device='mobile'] .gameplay-current-bid__jokerBadge small { font-size: 9px; font-weight: 900; opacity: .92; }
+html[data-device='mobile'] .gameplay-current-bid__jokerBadge.is-zai,
+html[data-device='mobile'] .gameplay-current-bid__jokerBadge.is-locked { border-color: rgba(255, 146, 105, .86); }
+html[data-device='mobile'] .gameplay-current-bid__jokerBadge.is-chai { border-color: rgba(172, 255, 151, .78); }
+html[data-device='mobile'] .gameplay-current-bid__metaLabel--coin { top: 139px; }
+html[data-device='mobile'] .gameplay-current-bid__coinRow { top: 158px; }
+html[data-device='mobile'] .gameplay-current-bid__metaLabel--pot { top: 187px; }
+html[data-device='mobile'] .gameplay-current-bid__potRow { top: 206px; }
+
+html[data-device='mobile'] .gameplay-bid-selector__jokerRow {
+  position: absolute;
+  left: 54px;
+  right: 54px;
+  top: 150px;
+  height: 42px;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+html[data-device='mobile'] .gameplay-bid-selector__zaiBtn {
+  width: 104px;
+  height: 38px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 221, 132, .78);
+  border-radius: 13px;
+  background: linear-gradient(180deg, rgba(91, 54, 19, .96), rgba(41, 18, 8, .96));
+  box-shadow: inset 0 2px 3px rgba(255,255,255,.14), 0 3px 7px rgba(0,0,0,.35);
+  color: #fff4d2;
+  text-shadow: 0 1px 2px rgba(0,0,0,.65);
+}
+html[data-device='mobile'] .gameplay-bid-selector__zaiBtn strong { font-size: 15px; line-height: 1; font-weight: 950; }
+html[data-device='mobile'] .gameplay-bid-selector__zaiBtn span { margin-top: 2px; font-size: 8px; line-height: 1; font-weight: 900; }
+html[data-device='mobile'] .gameplay-bid-selector__zaiBtn.is-active { filter: brightness(1.18) drop-shadow(0 0 7px rgba(255, 207, 86, .36)); }
+html[data-device='mobile'] .gameplay-bid-selector__zaiBtn:disabled { opacity: .48; filter: grayscale(.35) brightness(.78); cursor: not-allowed; }
+html[data-device='mobile'] .gameplay-bid-selector__jokerHint {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 221, 132, .62);
+  background: rgba(36, 13, 5, .7);
+  color: #fff4d2;
+  text-shadow: 0 1px 2px rgba(0,0,0,.65);
+}
+html[data-device='mobile'] .gameplay-bid-selector__jokerHint span { flex: 0 0 auto; font-size: 12px; line-height: 1; font-weight: 950; }
+html[data-device='mobile'] .gameplay-bid-selector__jokerHint small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; line-height: 1; font-weight: 900; opacity: .92; }

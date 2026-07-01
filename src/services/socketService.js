@@ -37,13 +37,20 @@ function normalizeSocketError(error) {
 function isGameStartedPayload(payload = {}) {
   const status = String(payload.status || payload.matchStatus || payload.match?.status || '').toLowerCase();
   const stage = String(payload.stage || payload.matchmaking?.stage || '').toLowerCase();
+  const nextScreen = String(payload.nextScreen || payload.navigationTarget || payload.nextRoute || '').toLowerCase();
 
   return Boolean(
     payload.shouldEnterGame
+    || payload.directStart
+    || payload.startImmediately
+    || payload.botsMatchStarted
     || stage === 'game_started'
+    || stage === 'bots_match_started'
+    || nextScreen === 'gameplay'
     || status === 'active'
     || status === 'in_progress'
     || status === 'started'
+    || status === 'in_match'
   );
 }
 

@@ -977,7 +977,7 @@ function unwrapBackendPayload(payload = {}) {
 
 function isActiveMatchStatus(value) {
   const normalized = String(value || '').toLowerCase();
-  return ['active', 'in_progress', 'started', 'game_started', 'bots_match_started'].includes(normalized);
+  return ['active', 'in_progress', 'started', 'game_started', 'bots_match_started', 'in_match'].includes(normalized);
 }
 
 function isGameStartedPayload(payload = {}) {
@@ -2098,7 +2098,12 @@ export default function App() {
           navigation.goGameplay();
           return;
         }
-        navigation.goMatchmaking();
+
+        setBackendStatus({
+          loading: false,
+          error: 'Bots mode did not return an active match. Please try again.',
+          lastAction: 'bots.start.error',
+        });
       },
     ),
     getMyRoom: () => runBackendAction('rooms.my', () => backendBridge.getMyRoom(), navigation.goRoomLobby),
@@ -2158,7 +2163,11 @@ export default function App() {
             clearChatForMatch();
             navigation.goGameplay();
           } else {
-            navigation.goMatchmaking();
+            setBackendStatus({
+              loading: false,
+              error: 'Bots mode did not return an active match. Please try again.',
+              lastAction: 'bots.start.error',
+            });
           }
 
           return result;
