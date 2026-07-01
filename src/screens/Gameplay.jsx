@@ -1319,12 +1319,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   useEffect(() => {
     if (!roundResult || isFinished) {
       setRoundResultVisible(false);
-      return undefined;
+      return;
     }
 
     setRoundResultVisible(true);
-    const timeout = window.setTimeout(() => setRoundResultVisible(false), 5000);
-    return () => window.clearTimeout(timeout);
   }, [roundResultKey, Boolean(roundResult), isFinished]);
 
   useEffect(() => {
@@ -1698,6 +1696,13 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
               ))}
             </div>
           ) : null}
+          <button
+            type="button"
+            className="gameplay-round-result__ok"
+            onClick={() => setRoundResultVisible(false)}
+          >
+            {tx('OK')}
+          </button>
         </div>
       ) : null}
 
