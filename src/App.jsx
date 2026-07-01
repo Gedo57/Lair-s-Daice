@@ -977,15 +977,22 @@ function unwrapBackendPayload(payload = {}) {
 
 function isActiveMatchStatus(value) {
   const normalized = String(value || '').toLowerCase();
-  return ['active', 'in_progress', 'started', 'game_started'].includes(normalized);
+  return ['active', 'in_progress', 'started', 'game_started', 'bots_match_started'].includes(normalized);
 }
 
 function isGameStartedPayload(payload = {}) {
   const source = unwrapBackendPayload(payload);
   const match = source.match && typeof source.match === 'object' ? source.match : {};
+  const stage = String(source.stage || '').toLowerCase();
+  const nextScreen = String(source.nextScreen || source.screen || '').toLowerCase();
   return Boolean(
     source.shouldEnterGame
-    || String(source.stage || '').toLowerCase() === 'game_started'
+    || source.directStart
+    || source.startImmediately
+    || source.botsMatchStarted
+    || stage === 'game_started'
+    || stage === 'bots_match_started'
+    || nextScreen === 'gameplay'
     || isActiveMatchStatus(source.status)
     || isActiveMatchStatus(source.matchStatus)
     || isActiveMatchStatus(match.status)
@@ -1085,20 +1092,59 @@ function getBackendPayloadSources(payload = {}) {
   return sources.filter(Boolean);
 }
 
+const BOT_MODE_ALIASES = new Set(['bot', 'bots', 'pve', 'ai', 'cpu', 'computer', 'solo', 'singleplayer', 'single-player', 'vs-bot', 'vs-bots']);
+
+function normalizeModeText(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function isBotsModeValue(value) {
   if (typeof value === 'boolean') return value;
-  return String(value || '').trim().toLowerCase() === 'bots';
+  const normalized = normalizeModeText(value);
+  if (!normalized) return false;
+  if (BOT_MODE_ALIASES.has(normalized)) return true;
+  return normalized.split('-').some((part) => BOT_MODE_ALIASES.has(part));
 }
 
 function isBotsModeSettings(settings = {}) {
-  return Boolean(
-    isBotsModeValue(settings.roomMode) ||
-    isBotsModeValue(settings.gameMode) ||
-    isBotsModeValue(settings.playMode) ||
-    settings.botsEnabled ||
-    settings.playWithBots ||
-    settings.withBots
-  );
+  if (!settings || typeof settings !== 'object') return false;
+
+  const botFlags = [
+    settings.botsEnabled,
+    settings.playWithBots,
+    settings.withBots,
+    settings.hasBots,
+    settings.useBots,
+    settings.isBotMatch,
+    settings.isBotsMatch,
+  ];
+
+  if (botFlags.some((value) => value === true || value === 1 || value === '1' || String(value).trim().toLowerCase() === 'true')) return true;
+
+  return [
+    settings.roomMode,
+    settings.gameMode,
+    settings.playMode,
+    settings.selectedRoomMode,
+    settings.mode,
+    settings.selectedMode,
+    settings.roomType,
+    settings.type,
+    settings.matchType,
+    settings.queueType,
+    settings.tableId,
+    settings.tierId,
+    settings.key,
+    settings.slug,
+    settings.title,
+    settings.name,
+    settings.label,
+  ].some(isBotsModeValue);
 }
 
 function isBotsDirectStartResult(result = {}, patch = {}, settings = {}) {
@@ -1184,7 +1230,7 @@ function normalizeRoom(room = {}) {
     finalSlamAmount: backendPricing.pricing.finalSlamAmount,
     requiredPekCoverAmount: backendPricing.pricing.requiredPekCoverAmount,
     maxChallengeAmount: backendPricing.pricing.maxChallengeAmount,
-    roomMode: room.roomMode || room.gameMode || room.playMode || (room.botsEnabled || room.playWithBots || room.withBots ? 'bots' : 'normal'),
+    roomMode: isBotsModeSettings(room) ? 'bots' : (room.roomMode || room.gameMode || room.playMode || 'normal'),
     isPrivate: Boolean(room.isPrivate),
     visibility: room.isPrivate ? 'private' : (room.visibility || 'public'),
     turnTimer: Number(room.turnTimer || room.selectedTimer || 30),
@@ -1292,13 +1338,14 @@ function extractGameDataPatch(payload = {}) {
   if (Array.isArray(source.transactions)) patch.transactions = source.transactions.map(normalizeTransaction);
   if (Array.isArray(source.transactionLedger)) patch.transactions = source.transactionLedger.map(normalizeTransaction);
 
-  if (source.match) {
-    patch.match = source.match;
-    if (source.match.id || source.match.matchId) patch.currentMatchId = source.match.id || source.match.matchId;
-    if (Object.prototype.hasOwnProperty.call(source.match, 'roundResult')) {
-      patch.roundResult = source.match.roundResult || null;
-    } else if (Object.prototype.hasOwnProperty.call(source.match, 'lastRoundResult')) {
-      patch.roundResult = source.match.lastRoundResult || null;
+  const matchSource = source.match || source.gameState || source.game || source.activeMatch || null;
+  if (matchSource && typeof matchSource === 'object') {
+    patch.match = matchSource;
+    if (matchSource.id || matchSource.matchId) patch.currentMatchId = matchSource.id || matchSource.matchId;
+    if (Object.prototype.hasOwnProperty.call(matchSource, 'roundResult')) {
+      patch.roundResult = matchSource.roundResult || null;
+    } else if (Object.prototype.hasOwnProperty.call(matchSource, 'lastRoundResult')) {
+      patch.roundResult = matchSource.lastRoundResult || null;
     }
   }
 
@@ -2025,16 +2072,33 @@ export default function App() {
       }
     },
     joinRoom: (room) => runBackendAction('rooms.join', () => backendBridge.joinRoom(room), navigation.goRoomLobby),
-    createRoom: (settings) => runBackendAction(
-      'rooms.create',
-      () => backendBridge.createRoom(settings),
+    createRoom: (settings) => {
+      const isBotsMode = isBotsModeSettings(settings);
+      return runBackendAction(
+        isBotsMode ? 'bots.start' : 'rooms.create',
+        () => (isBotsMode ? backendBridge.startBotsMatch(settings) : backendBridge.createRoom(settings)),
+        (result) => {
+          const patch = extractGameDataPatch(result || {});
+          if (isBotsDirectStartResult(result || {}, patch, settings) || (isBotsMode && (patch.match || patch.currentMatchId || isGameStartedPayload(result || {})))) {
+            clearChatForMatch();
+            navigation.goGameplay();
+            return;
+          }
+          navigation.goRoomLobby();
+        },
+      );
+    },
+    startBotsMatch: (settings = {}) => runBackendAction(
+      'bots.start',
+      () => backendBridge.startBotsMatch(settings),
       (result) => {
         const patch = extractGameDataPatch(result || {});
-        if (isBotsDirectStartResult(result || {}, patch, settings)) {
+        if (isBotsDirectStartResult(result || {}, patch, settings) || patch.match || patch.currentMatchId || isGameStartedPayload(result || {})) {
+          clearChatForMatch();
           navigation.goGameplay();
           return;
         }
-        navigation.goRoomLobby();
+        navigation.goMatchmaking();
       },
     ),
     getMyRoom: () => runBackendAction('rooms.my', () => backendBridge.getMyRoom(), navigation.goRoomLobby),
@@ -2080,7 +2144,30 @@ export default function App() {
         matchmaking: buildMatchmakingUi(selectedTable, {}, null, null),
       }));
 
-      setBackendStatus({ loading: true, error: null, lastAction: 'matchmaking.start' });
+      const isBotsMode = isBotsModeSettings(selectedTable);
+      setBackendStatus({ loading: true, error: null, lastAction: isBotsMode ? 'bots.start' : 'matchmaking.start' });
+
+      if (isBotsMode) {
+        try {
+          const result = await backendBridge.startBotsMatch(selectedTable);
+          applyBackendPayloads(result);
+          setBackendStatus({ loading: false, error: null, lastAction: 'bots.start' });
+
+          const patch = extractGameDataPatch(result || {});
+          if (isBotsDirectStartResult(result || {}, patch, selectedTable) || patch.match || patch.currentMatchId || isGameStartedPayload(result || {})) {
+            clearChatForMatch();
+            navigation.goGameplay();
+          } else {
+            navigation.goMatchmaking();
+          }
+
+          return result;
+        } catch (error) {
+          const message = getErrorMessage(error);
+          setBackendStatus({ loading: false, error: message, lastAction: 'bots.start.error' });
+          return null;
+        }
+      }
 
       try {
         const result = await startSocketMatchmaking(selectedTable, {

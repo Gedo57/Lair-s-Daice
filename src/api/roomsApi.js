@@ -72,20 +72,68 @@ function booleanSetting(value, fallback = false) {
   return fallback;
 }
 
+const BOT_MODE_ALIASES = new Set(['bot', 'bots', 'pve', 'ai', 'cpu', 'computer', 'solo', 'singleplayer', 'single-player', 'vs-bot', 'vs-bots']);
+
+function normalizeModeText(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function isBotsModeValue(value) {
+  if (typeof value === 'boolean') return value;
+  const normalized = normalizeModeText(value);
+  if (!normalized) return false;
+  if (BOT_MODE_ALIASES.has(normalized)) return true;
+  return normalized.split('-').some((part) => BOT_MODE_ALIASES.has(part));
+}
+
+function isBotsModeSettings(settings = {}) {
+  if (!settings || typeof settings !== 'object') return false;
+
+  const botFlags = [
+    settings.botsEnabled,
+    settings.playWithBots,
+    settings.withBots,
+    settings.hasBots,
+    settings.useBots,
+    settings.isBotMatch,
+    settings.isBotsMatch,
+  ];
+  if (botFlags.some((value) => value === true || value === 1 || value === '1' || String(value).trim().toLowerCase() === 'true')) return true;
+
+  return [
+    settings.roomMode,
+    settings.gameMode,
+    settings.playMode,
+    settings.selectedRoomMode,
+    settings.mode,
+    settings.selectedMode,
+    settings.roomType,
+    settings.type,
+    settings.matchType,
+    settings.queueType,
+    settings.tableId,
+    settings.tierId,
+    settings.key,
+    settings.slug,
+    settings.title,
+    settings.name,
+    settings.label,
+  ].some(isBotsModeValue);
+}
+
 function normalizeCreateRoomPayload(settings = {}) {
   const name = settings.name || settings.roomName || settings.title || 'Private Room';
   const isPrivate = settings.isPrivate !== false && String(settings.isPrivate).toLowerCase() !== 'false';
   // Create Room is a custom-room flow. The private toggle controls visibility only;
   // the custom players/timer/buy-in rules should stay custom whether the room is public or private.
-  const tableId = settings.tableId || settings.selectedTableId || settings.tierId || 'private';
+  const roomMode = isBotsModeSettings(settings) ? 'bots' : 'normal';
+  const tableId = settings.tableId || settings.selectedTableId || settings.tierId || (roomMode === 'bots' ? 'bots' : 'private');
   const maxPlayers = Number(settings.maxPlayers || settings.selectedPlayers || settings.playersCount || 4);
   const safeMaxPlayers = Number.isFinite(maxPlayers) ? Math.min(Math.max(maxPlayers, 2), 4) : 4;
-  const roomMode = String(
-    settings.roomMode ||
-    settings.gameMode ||
-    settings.playMode ||
-    (settings.botsEnabled || settings.playWithBots || settings.withBots ? 'bots' : 'normal')
-  ).toLowerCase() === 'bots' ? 'bots' : 'normal';
 
   const rawBuyInAmount = numericSetting(settings, ['buyInAmount', 'buyInCoins', 'customBuyIn', 'customStake', 'stakeAmount', 'stake', 'entryFee'], MIN_BUY_IN);
   const buyInAmount = Math.max(MIN_BUY_IN, rawBuyInAmount);
@@ -130,6 +178,13 @@ function normalizeCreateRoomPayload(settings = {}) {
     roomMode,
     gameMode: roomMode,
     playMode: roomMode,
+    selectedRoomMode: roomMode,
+    mode: roomMode === 'bots' ? 'bots' : 'normal',
+    selectedMode: roomMode === 'bots' ? 'bots' : 'normal',
+    roomType: roomMode === 'bots' ? 'pve' : 'normal',
+    directStart: roomMode === 'bots',
+    startImmediately: roomMode === 'bots',
+    shouldEnterGame: roomMode === 'bots',
     botsEnabled: roomMode === 'bots',
     playWithBots: roomMode === 'bots',
     withBots: roomMode === 'bots',
@@ -247,8 +302,52 @@ export const getRoom = (room) => {
   return apiRequest(API_ENDPOINTS.rooms.details(roomId));
 };
 
+async function requestFirstSupportedEndpoint(requests = []) {
+  let lastError = null;
+
+  for (const request of requests) {
+    try {
+      return await request();
+    } catch (error) {
+      lastError = error;
+      if (![404, 405].includes(Number(error?.status))) throw error;
+    }
+  }
+
+  throw lastError || new Error('No supported bots endpoint is available');
+}
+
+export const startBotsMatch = (settings = {}) => {
+  const payload = normalizeCreateRoomPayload({
+    ...settings,
+    roomMode: 'bots',
+    gameMode: 'bots',
+    playMode: 'bots',
+    selectedRoomMode: 'bots',
+    mode: 'bots',
+    selectedMode: 'bots',
+    roomType: 'pve',
+    botsEnabled: true,
+    playWithBots: true,
+    withBots: true,
+    directStart: true,
+    startImmediately: true,
+    shouldEnterGame: true,
+  });
+
+  return requestFirstSupportedEndpoint([
+    () => apiRequest(API_ENDPOINTS.rooms.bots, { method: 'POST', body: payload }),
+    () => apiRequest(API_ENDPOINTS.rooms.bot, { method: 'POST', body: payload }),
+    () => apiRequest(API_ENDPOINTS.matchmaking.startBots, { method: 'POST', body: payload }),
+    () => apiRequest(API_ENDPOINTS.matchmaking.start, { method: 'POST', body: payload }),
+    () => apiRequest(API_ENDPOINTS.rooms.createPrivate, { method: 'POST', body: payload }),
+  ]);
+};
+
 export const createRoom = (settings = {}) => {
   const payload = normalizeCreateRoomPayload(settings);
+  if (payload.roomMode === 'bots') return startBotsMatch(payload);
+
   const endpoint = payload.isPrivate === false ? API_ENDPOINTS.rooms.create : API_ENDPOINTS.rooms.createPrivate;
   return apiRequest(endpoint, {
     method: 'POST',

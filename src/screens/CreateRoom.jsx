@@ -196,7 +196,7 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const players = settings.players?.length ? settings.players : ['2', '3', '4'];
   const cups = settings.cups?.length ? settings.cups : ['5'];
   const timers = settings.timers || [];
-  const isCreating = backendStatus?.loading && backendStatus?.lastAction === 'rooms.create';
+  const isCreating = backendStatus?.loading && ['rooms.create', 'bots.start'].includes(backendStatus?.lastAction);
 
   const initialBuyIn = normalizeStake(settings.buyInAmount || settings.buyInCoins || settings.customBuyIn || settings.customStake || settings.entryFee, MIN_BUY_IN);
   const initialPerGameMode = normalizePerGameMode(settings.perGameMode || settings.betMode || settings.coinBetMode);
@@ -559,13 +559,17 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
 
           {localCreateError ? <span className="create-room-rules create-room-rules--error">{tx(localCreateError)}</span> : null}
 
-          {backendStatus?.error && backendStatus?.lastAction === 'rooms.create' ? <span className="create-room-rules create-room-rules--error create-room-rules--backendError">{backendStatus.error}</span> : null}
+          {backendStatus?.error && ['rooms.create', 'bots.start', 'bots.start.error'].includes(backendStatus?.lastAction) ? <span className="create-room-rules create-room-rules--error create-room-rules--backendError">{backendStatus.error}</span> : null}
 
           <button
             className="create-room-bottom create-room-bottom--create"
             type="button"
             onClick={() => {
               if (createDisabled) return;
+              if (isBotsMode && backendActions?.startBotsMatch) {
+                backendActions.startBotsMatch(currentSettings);
+                return;
+              }
               backendActions?.createRoom?.(currentSettings) || navigation.goRoomLobby();
             }}
             disabled={createDisabled}

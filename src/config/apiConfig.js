@@ -58,6 +58,8 @@ export const API_ENDPOINTS = {
     details: (roomId) => `/api/rooms/${encodePath(roomId)}`,
     create: '/api/rooms',
     createPrivate: '/api/rooms/private',
+    bots: '/api/rooms/bots',
+    bot: '/api/rooms/bot',
     join: '/api/rooms/join',
     joinById: (roomId) => `/api/rooms/${encodePath(roomId)}/join`,
     leave: (roomId) => `/api/rooms/${encodePath(roomId)}/leave`,
@@ -68,6 +70,7 @@ export const API_ENDPOINTS = {
   },
   matchmaking: {
     start: '/api/matchmaking/start',
+    startBots: '/api/matchmaking/bots/start',
     status: '/api/matchmaking/status',
     queueStatus: (queueId) => `/api/matchmaking/${encodePath(queueId)}/status`,
     cancel: '/api/matchmaking/cancel',

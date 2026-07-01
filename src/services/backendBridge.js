@@ -138,6 +138,8 @@ export const backendBridge = {
 
   createRoom: (settings) => withFreshGameData(() => roomsApi.createRoom(settings)),
 
+  startBotsMatch: (settings) => withFreshGameData(() => roomsApi.startBotsMatch(settings)),
+
   getRoom: (room) => withFreshGameData(() => roomsApi.getRoom(room)),
 
   getMyRoom: () => withFreshGameData(() => roomsApi.getMyRoom()),
