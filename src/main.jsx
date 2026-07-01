@@ -63,6 +63,9 @@ import './styles/base/bots-mode.css';
 import './styles/base/create-room-responsive-layout.css';
 import './styles/mobile/portrait-gameplay-final-reference.mobile.css';
 import './styles/base/gameplay-turn-intro.css';
+import './styles/mobile/portrait-gameplay-actions-manual.mobile.css';
+
+import './styles/base/gameplay-chinese-layout-fix.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
