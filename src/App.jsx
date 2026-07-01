@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFixedViewport } from './hooks.js';
 import { useLanguage } from './i18n/useLanguage.js';
 import { initialGameData } from './data/initialGameData.js';
-import { mockBackendActions, mockGameData } from './data/mockGameData.js';
+import { createMockBackendActions, mockGameData } from './data/mockGameData.js';
 import { getAssetsForPhase, getAssetsForScreen } from './config/assetsManifest.js';
 import { preloadAssets, preloadAssetsInBackground } from './services/assetPreloader.js';
 import { backendBridge } from './services/backendBridge.js';
@@ -1505,6 +1505,7 @@ export default function App() {
     return initialScreen;
   });
   const [gameData, setGameData] = useState(initialGameData);
+  const [mockGameplayData, setMockGameplayData] = useState(mockGameData);
   const [backendStatus, setBackendStatus] = useState({ loading: false, error: null, lastAction: null });
   const [starterAssetsReady, setStarterAssetsReady] = useState(false);
   const [bootAssetLoading, setBootAssetLoading] = useState({
@@ -2417,9 +2418,9 @@ export default function App() {
   const activeScreenData = isBootPreloading
     ? { ...gameData, assetLoading: bootAssetLoading }
     : screen === 'mockgame'
-      ? mockGameData
+      ? mockGameplayData
       : gameData;
-  const activeBackendActions = isBootPreloading ? {} : screen === 'mockgame' ? mockBackendActions : backendActions;
+  const activeBackendActions = isBootPreloading ? {} : screen === 'mockgame' ? createMockBackendActions(setMockGameplayData) : backendActions;
   const activeBackendStatus = isBootPreloading
     ? { loading: false, error: null, lastAction: 'asset.boot' }
     : screen === 'mockgame'

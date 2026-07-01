@@ -736,11 +736,17 @@ function PlayerPanel({ className, skin, player, fallbackName, isTurnPlayer = fal
   const isEliminated = isPlayerEliminatedForMatch(match, player);
   const botClass = isBotPlayer(player) ? 'gameplay-player--bot' : '';
 
+  const displayName = playerName(player, fallbackName);
+
   return (
-    <div className={`gameplay-player ${className} ${botClass} ${isTurnPlayer ? 'is-active' : ''} ${isEliminated ? 'is-eliminated' : ''}`}>
+    <div
+      className={`gameplay-player ${className} ${botClass} ${isTurnPlayer ? 'is-active' : 'is-inactive'} ${isEliminated ? 'is-eliminated' : ''}`}
+      data-active-player={isTurnPlayer ? 'true' : 'false'}
+      title={displayName}
+    >
       <img className="gameplay-player__skin" src={`${asset}${skin}`} alt="" draggable="false" />
       <img className="gameplay-player__avatar" src={resolveAvatarSrc(player)} alt="" draggable="false" />
-      <span className="gameplay-player__name">{playerName(player, fallbackName)}</span>
+      <span className="gameplay-player__name" title={displayName}>{displayName}</span>
       <div className="gameplay-player__coinRow">
         <img className="gameplay-player__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
         <span className="gameplay-player__coinValue">{formatAmount(stack)}</span>
@@ -1425,7 +1431,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
   return (
     <section
-      className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''}`}
+      className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${activePlayer ? 'has-active-player' : ''} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''}`}
       data-turn-intro-phase={turnIntroPhase}
       data-turn-intro-player={playerId(turnIntroPlayer) || playerName(turnIntroPlayer, '') || undefined}
       data-turn-intro-count={tablePlayerCount}
@@ -1521,22 +1527,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           {currentBid ? <span>{toNumber(currentBid.quantity, 0)} x</span> : <span>- x</span>}
           <Die value={currentBid?.face || 1} className="gameplay-current-bid__die" />
         </div>
-        {currentBid ? (
-          <div className={`gameplay-current-bid__jokerBadge ${currentBidJokerInfo.className}`}>
-            <span>{currentBidJokerInfo.label}</span>
-            <small>{currentBidJokerInfo.detail}</small>
-          </div>
-        ) : null}
-        <span className="gameplay-current-bid__metaLabel gameplay-current-bid__metaLabel--coin">{tx('COIN BET')}</span>
-        <div className="gameplay-current-bid__coinRow">
-          <img className="gameplay-current-bid__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
-          <span className="gameplay-current-bid__coinValue">{formatAmount(currentCoinBet)}</span>
-        </div>
-        <span className="gameplay-current-bid__metaLabel gameplay-current-bid__metaLabel--pot">{tx('TOTAL POT')}</span>
-        <div className="gameplay-current-bid__potRow">
-          <img className="gameplay-current-bid__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
-          <span className="gameplay-current-bid__coinValue gameplay-current-bid__coinValue--pot">{formatAmount(totalPot)}</span>
-        </div>
+        <div className="gameplay-current-bid__cleanSpacer" aria-hidden="true" />
       </div>
 
       <div className="gameplay-round-badge">
@@ -1625,66 +1616,26 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
             );
           })}
         </div>
-        <div className="gameplay-bid-selector__jokerRow">
+        <div className="gameplay-bid-selector__actionRow" role="group" aria-label={tx('Bid actions')}>
+          <ActionButton className="gameplay-action--raise gameplay-action--compact" skin="B!.png" title="CONFIRM BID" subtitle={bidSubmitSubtitle} onClick={submitBid} disabled={bidDisabled} tx={tx} />
+          <ActionButton className="gameplay-action--call gameplay-action--compact" skin="B2.png" title="CALL LIAR" subtitle={`Risk ${formatAmount(pekSettings.perGameAmount || currentCoinBet)}`} onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
+          {pekSettings.pekEnabled ? (
+            <ActionButton className="gameplay-action--slam gameplay-action--compact" skin="B3.png" title="SLAM" subtitle={pekStackBlockReason || `Risk ${formatAmount(pekSettings.finalPekAmount)}`} onClick={() => submitSimpleAction('call_pek')} disabled={pekDisabled} tx={tx} />
+          ) : null}
           <button
             type="button"
-            className={`gameplay-bid-selector__zaiBtn ${zaiEnabled ? 'is-active' : ''}`}
+            className={`gameplay-action gameplay-action--zai gameplay-action--compact ${zaiEnabled ? 'is-active' : ''}`}
             onClick={() => setZaiEnabled((value) => !value)}
             aria-pressed={zaiEnabled}
             disabled={!zaiAvailable}
           >
-            <strong>{tx('ZAI')}</strong>
-            <span>{tx('Joker OFF')}</span>
+            <img className="gameplay-action__skin" src={`${asset}${zaiEnabled ? 'B3.png' : 'B!.png'}`} alt="" draggable="false" />
+            <span className="gameplay-action__title">{tx('ZAI')}</span>
+            <span className="gameplay-action__subtitle">{tx(zaiEnabled ? 'Joker OFF' : 'Joker ON')}</span>
           </button>
-          <div className={`gameplay-bid-selector__jokerHint ${selectedBidJokerInfo.className}`}>
-            <span>{selectedBidJokerInfo.label}</span>
-            <small>{chaiHint || selectedBidJokerInfo.detail}</small>
-          </div>
-        </div>
-        <div className="gameplay-bid-selector__coinBetRow">
-          {dynamicCoinBetOptions.map((value) => {
-            const disabled = value < minRequiredCoinBet || value > maxAllowedCoinBet;
-            return (
-              <button
-                key={`coin-${value}`}
-                type="button"
-                className={`gameplay-bid-selector__coinBtn ${value === selectedCoinBet ? 'is-active' : ''}`}
-                onClick={() => setSelectedCoinBet(value)}
-                aria-pressed={value === selectedCoinBet}
-                disabled={disabled}
-              >
-                <img className="gameplay-bid-selector__coinBtnSkin" src={`${asset}${value === selectedCoinBet ? 'p1.png' : 'p2.png'}`} alt="" draggable="false" />
-                <span className="gameplay-bid-selector__coinBtnText">{formatAmount(value)}</span>
-              </button>
-            );
-          })}
         </div>
       </div>
 
-      <div className="gameplay-action-tray">
-        <img className="gameplay-action-tray__skin" src={`${asset}Panal.png`} alt="" draggable="false" />
-      </div>
-
-      <ActionButton className="gameplay-action--raise" skin="B!.png" title="CONFIRM BID" subtitle={bidSubmitSubtitle} onClick={submitBid} disabled={bidDisabled} tx={tx} />
-      <ActionButton className="gameplay-action--call" skin="B2.png" title="CALL LIAR" subtitle={`Risk ${formatAmount(pekSettings.perGameAmount || currentCoinBet)}`} onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
-      {pekSettings.pekEnabled ? (
-        <ActionButton className="gameplay-action--slam" skin="B3.png" title="PEK / SLAM" subtitle={pekStackBlockReason || `Risk ${formatAmount(pekSettings.finalPekAmount)}`} onClick={() => submitSimpleAction('call_pek')} disabled={pekDisabled} tx={tx} />
-      ) : null}
-
-      <div className="gameplay-stack-panel">
-        <img className="gameplay-stack-panel__skin" src={`${asset}p3.png`} alt="" draggable="false" />
-        <div className="gameplay-stack-panel__label">{tx('YOUR STACK')}</div>
-        <div className="gameplay-stack-panel__row gameplay-stack-panel__row--stack">
-          <img className="gameplay-stack-panel__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
-          <span className="gameplay-stack-panel__value">{formatAmount(viewerStack)}</span>
-        </div>
-        <div className="gameplay-stack-panel__divider" />
-        <div className="gameplay-stack-panel__label gameplay-stack-panel__label--pot">{tx('TOTAL POT')}</div>
-        <div className="gameplay-stack-panel__row gameplay-stack-panel__row--pot">
-          <img className="gameplay-stack-panel__coinIcon" src={`${asset}coin.png`} alt="" draggable="false" />
-          <span className="gameplay-stack-panel__value">{formatAmount(totalPot)}</span>
-        </div>
-      </div>
 
       {canUseChat && chatOpen ? (
         <aside id="gameplay-chat-drawer" className="gameplay-chat-drawer" aria-label={tx('Match Chat')}>
