@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import ProfileHud from '../components/ProfileHud.jsx';
 import { resolveProfileAvatarSrc as resolveAvatarSrc } from '../utils/profileAvatars.js';
 
 const asset = '/assets/liars-dice/matchmaking/';
 const sparkles = Array.from({ length: 18 }, (_, index) => index + 1);
+const SLOT_CLASSES_BY_PLAYERS = {
+  2: ['matchmaking-slot--left-top', 'matchmaking-slot--right-top'],
+  3: ['matchmaking-slot--left-top', 'matchmaking-slot--left-bottom', 'matchmaking-slot--right-top'],
+  4: ['matchmaking-slot--left-top', 'matchmaking-slot--left-bottom', 'matchmaking-slot--right-top', 'matchmaking-slot--right-bottom'],
+};
 
 function TopHud({ user, wallet }) {
   return (
@@ -31,8 +36,9 @@ function normalizeId(value) {
 }
 
 function PlayerSlot({ className = '', avatar, avatarSrc, title, subtitle, caption, tx }) {
+  const isSearching = !avatar && title === 'Searching...';
   return (
-    <div className={`matchmaking-slot ${className}`}>
+    <div className={`matchmaking-slot ${className}${isSearching ? ' matchmaking-slot--searching' : ''}`}>
       <img className="matchmaking-slot__skin" src={`${asset}panal2.png`} alt="" draggable="false" />
       <div className="matchmaking-slot__inner">
         <img className="matchmaking-slot__avatar" src={avatarSrc || resolveAvatarSrc(avatar)} alt="" draggable="false" />
@@ -53,11 +59,27 @@ function getMatchPlayers(playerSource, user) {
   const userId = normalizeId(user?.id || user?.userId || user?._id || null);
   const viewer = players.find((player) => userId && normalizeId(getPlayerId(player)) === userId) || null;
   const opponents = players.filter((player) => !userId || normalizeId(getPlayerId(player)) !== userId);
-  return { viewer, opponents };
+  return { viewer, opponents, players };
 }
 
 function displayName(player, fallback) {
   return player?.displayName || player?.username || player?.name || fallback;
+}
+
+function hasValue(value) {
+  return value !== null && value !== undefined && value !== '';
+}
+
+function firstValue(...values) {
+  return values.find((value) => hasValue(value));
+}
+
+function clampPlayerCount(value, fallback = 4) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  if (number <= 2) return 2;
+  if (number >= 4) return 4;
+  return 3;
 }
 
 function getCountdownRemainingMs(serverMatchmaking = {}, match = null, tick = Date.now()) {
@@ -92,6 +114,53 @@ function hasGameplayStarted(serverMatchmaking = {}, match = null) {
   );
 }
 
+function getTargetPlayerCount(data = {}, serverMatchmaking = {}, match = null) {
+  const selectedTable = data?.selectedTable || data?.playNowTable || data?.defaultTable || {};
+  const source = firstValue(
+    serverMatchmaking?.requiredPlayers,
+    serverMatchmaking?.targetPlayers,
+    serverMatchmaking?.maxPlayers,
+    serverMatchmaking?.playerLimit,
+    selectedTable?.requiredPlayers,
+    selectedTable?.selectedPlayers,
+    selectedTable?.maxPlayers,
+    selectedTable?.playerCount,
+    match?.requiredPlayers,
+    match?.maxPlayers,
+    match?.playerCount,
+  );
+  return clampPlayerCount(source, 4);
+}
+
+function getFoundPlayerCount(serverMatchmaking = {}, match = null, players = [], targetPlayerCount = 4) {
+  const source = firstValue(
+    serverMatchmaking?.playersFound,
+    serverMatchmaking?.currentPlayers,
+    serverMatchmaking?.playerCount,
+    match?.playerCount,
+    Array.isArray(players) && players.length ? players.length : null,
+  );
+  const number = Number(source);
+  if (Number.isFinite(number)) return Math.min(Math.max(1, Math.trunc(number)), targetPlayerCount);
+  return 1;
+}
+
+function normalizeMetrics(metrics = [], playersLabel) {
+  if (!Array.isArray(metrics) || !metrics.length) {
+    return [{ type: 'players', icon: null, label: 'PLAYERS FOUND', value: playersLabel }];
+  }
+
+  let replaced = false;
+  const next = metrics.map((item) => {
+    const isPlayersMetric = item?.type === 'players' || String(item?.label || '').toUpperCase() === 'PLAYERS FOUND';
+    if (!isPlayersMetric) return item;
+    replaced = true;
+    return { ...item, type: 'players', value: playersLabel };
+  });
+
+  if (!replaced) return [{ type: 'players', icon: null, label: 'PLAYERS FOUND', value: playersLabel }, ...next];
+  return next;
+}
 
 export default function Matchmaking({ navigation, data, backendActions, backendStatus, i18n }) {
   const tx = i18n?.tx || ((value) => value);
@@ -112,14 +181,17 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
   const signalTitle = String(serverMatchmaking?.quality || serverMatchmaking?.matchQuality || 'EXCELLENT').toUpperCase();
   const signalSub = serverMatchmaking?.ping ? `${serverMatchmaking.ping}ms` : '45ms';
   const filters = matchmaking.filters || [];
-  const metrics = matchmaking.metrics || [];
   const steps = matchmaking.steps || [];
   const isStarting = backendStatus?.loading && backendStatus.lastAction === 'matchmaking.start';
   const hasMatchmakingError = Boolean(backendStatus?.error && String(backendStatus?.lastAction || '').startsWith('matchmaking.'));
   const isInsufficientFunds = hasMatchmakingError && String(backendStatus?.lastAction || '').includes('insufficient_funds');
   const isSearching = Boolean(currentQueueId && !currentMatchId && !['cancelled', 'matched', 'match_found'].includes(rawQueueStatus) && !hasMatchmakingError);
   const queuedPlayerSource = !match && Array.isArray(serverMatchmaking?.players) ? { players: serverMatchmaking.players } : null;
-  const { viewer, opponents } = getMatchPlayers(match || queuedPlayerSource, user);
+  const { viewer, opponents, players } = getMatchPlayers(match || queuedPlayerSource, user);
+  const targetPlayerCount = getTargetPlayerCount(data, serverMatchmaking, match);
+  const foundPlayerCount = getFoundPlayerCount(serverMatchmaking, match, players, targetPlayerCount);
+  const metrics = normalizeMetrics(matchmaking.metrics || [], `${foundPlayerCount} / ${targetPlayerCount}`);
+  const slotClasses = SLOT_CLASSES_BY_PLAYERS[targetPlayerCount] || SLOT_CLASSES_BY_PLAYERS[4];
 
   useEffect(() => {
     if (!isCountdown) return undefined;
@@ -164,15 +236,13 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
   const viewerProfile = viewer || user;
   const playerSlots = [
     {
-      className: 'matchmaking-slot--left-top',
-      avatar: null,
+      className: slotClasses[0],
+      avatar: viewerProfile,
       avatarSrc: resolveAvatarSrc(viewerProfile),
       title: displayName(viewerProfile, user.displayName || user.username || 'YOU'),
       subtitle: 'YOU',
     },
-    buildOpponentSlot(0, 'matchmaking-slot--left-bottom'),
-    buildOpponentSlot(1, 'matchmaking-slot--right-top'),
-    buildOpponentSlot(2, 'matchmaking-slot--right-bottom'),
+    ...slotClasses.slice(1).map((className, index) => buildOpponentSlot(index, className)),
   ];
 
   const startOrEnterMatch = () => {
@@ -216,7 +286,7 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
         : "We'll find you the best table";
 
   return (
-    <section className="screen matchmaking-screen" aria-label={tx('Matchmaking')}>
+    <section className={`screen matchmaking-screen matchmaking-screen--players-${targetPlayerCount}`} aria-label={tx('Matchmaking')}>
       <div className="matchmaking-vfx matchmaking-vfx--vignette" aria-hidden="true" />
       <div className="matchmaking-vfx matchmaking-vfx--lightRays" aria-hidden="true" />
       <div className="matchmaking-vfx matchmaking-vfx--panelGlow" aria-hidden="true" />
@@ -262,10 +332,9 @@ export default function Matchmaking({ navigation, data, backendActions, backendS
           </div>
         </div>
 
-        <img className="matchmaking-link matchmaking-link--left-top" src={`${asset}54.png`} alt="" draggable="false" />
-        <img className="matchmaking-link matchmaking-link--left-bottom" src={`${asset}54.png`} alt="" draggable="false" />
-        <img className="matchmaking-link matchmaking-link--right-top" src={`${asset}54.png`} alt="" draggable="false" />
-        <img className="matchmaking-link matchmaking-link--right-bottom" src={`${asset}54.png`} alt="" draggable="false" />
+        {slotClasses.map((className) => (
+          <img key={`link-${className}`} className={`matchmaking-link ${className.replace('matchmaking-slot', 'matchmaking-link')}`} src={`${asset}54.png`} alt="" draggable="false" />
+        ))}
 
         {playerSlots.map((slot) => (
           <PlayerSlot key={slot.className} {...slot} tx={tx} />

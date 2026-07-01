@@ -3,11 +3,11 @@ import ProfileHud from '../components/ProfileHud.jsx';
 const asset = '/assets/liars-dice/create-room/';
 const shared = '/assets/liars-dice/room-select/';
 
-const MIN_BUY_IN = 500;
-const MIN_RANGE_PER_GAME_BASE = 500;
-const MIN_STATIC_PER_GAME = 100;
+const MIN_BUY_IN = 5;
+const MIN_STATIC_PER_GAME = 5;
+const STATIC_PER_GAME_MODE = 'static';
+const DEFAULT_PEK_PERCENTAGE = 25;
 const PEK_PERCENTAGE_OPTIONS = [25, 50, 100];
-const PER_GAME_MODES = ['range', 'static'];
 
 function parseCoinAmount(value, fallback = 0) {
   const number = Number(String(value ?? '').replace(/,/g, '').trim());
@@ -33,88 +33,60 @@ function formatStakeOption(value) {
   return new Intl.NumberFormat('en-US').format(number);
 }
 
-function getBuyInStep(value) {
+function getStakeStep(value) {
   const amount = parseCoinAmount(value, MIN_BUY_IN);
-  if (amount < 5000) return 500;
-  if (amount < 30000) return 5000;
-  if (amount < 100000) return 10000;
-  return 50000;
+  if (amount < 25) return 5;
+  if (amount < 200) return 25;
+  return 50;
 }
 
-function getPreviousBuyInStep(value) {
+function getPreviousStakeStep(value) {
   const amount = parseCoinAmount(value, MIN_BUY_IN);
-  if (amount <= 5000) return 500;
-  if (amount <= 30000) return 5000;
-  if (amount <= 100000) return 10000;
-  return 50000;
+  if (amount <= 25) return 5;
+  if (amount <= 200) return 25;
+  return 50;
 }
 
-function stepBuyIn(value, direction) {
-  const amount = Math.max(MIN_BUY_IN, parseCoinAmount(value, MIN_BUY_IN));
-  if (direction < 0) return Math.max(MIN_BUY_IN, amount - getPreviousBuyInStep(amount));
-  return amount + getBuyInStep(amount);
+function clampStakeValue(value, min = MIN_BUY_IN, max = Number.POSITIVE_INFINITY) {
+  const number = parseCoinAmount(value, min);
+  const safeMax = Number.isFinite(max) ? Math.max(min, max) : Number.POSITIVE_INFINITY;
+  return Math.min(safeMax, Math.max(min, number || min));
 }
 
-function getStaticPerGameStep(value) {
-  const amount = parseCoinAmount(value, MIN_STATIC_PER_GAME);
-  if (amount < 500) return 100;
-  if (amount < 5000) return 500;
-  if (amount < 30000) return 5000;
-  if (amount < 100000) return 10000;
-  return 50000;
+function snapStakeValue(value, min = MIN_BUY_IN, max = Number.POSITIVE_INFINITY) {
+  const amount = clampStakeValue(value, min, max);
+  const snapped = amount <= 25
+    ? Math.round(amount / 5) * 5
+    : amount <= 200
+      ? Math.round(amount / 25) * 25
+      : Math.round(amount / 50) * 50;
+  return clampStakeValue(snapped, min, max);
 }
 
-function getPreviousStaticPerGameStep(value) {
-  const amount = parseCoinAmount(value, MIN_STATIC_PER_GAME);
-  if (amount <= 500) return 100;
-  if (amount <= 5000) return 500;
-  if (amount <= 30000) return 5000;
-  if (amount <= 100000) return 10000;
-  return 50000;
-}
-
-function stepStaticPerGame(value, direction, buyInAmount) {
-  const maxValue = Math.max(MIN_STATIC_PER_GAME, parseCoinAmount(buyInAmount, MIN_BUY_IN));
-  const amount = Math.min(maxValue, Math.max(MIN_STATIC_PER_GAME, parseCoinAmount(value, MIN_STATIC_PER_GAME)));
-  if (direction < 0) return Math.max(MIN_STATIC_PER_GAME, amount - getPreviousStaticPerGameStep(amount));
-  return Math.min(maxValue, amount + getStaticPerGameStep(amount));
-}
-
-function stepRangePerGameBase(value, direction, buyInAmount) {
-  const maxValue = Math.max(MIN_RANGE_PER_GAME_BASE, parseCoinAmount(buyInAmount, MIN_BUY_IN));
-  const amount = Math.min(maxValue, Math.max(MIN_RANGE_PER_GAME_BASE, parseCoinAmount(value, maxValue)));
-  if (direction < 0) return Math.max(MIN_RANGE_PER_GAME_BASE, amount - getPreviousBuyInStep(amount));
-  return Math.min(maxValue, amount + getBuyInStep(amount));
+function stepStakeValue(value, direction, min = MIN_BUY_IN, max = Number.POSITIVE_INFINITY) {
+  const amount = snapStakeValue(value, min, max);
+  const next = direction < 0
+    ? amount - getPreviousStakeStep(amount)
+    : amount + getStakeStep(amount);
+  return snapStakeValue(next, min, max);
 }
 
 function normalizeStake(value, fallback = MIN_BUY_IN) {
-  const number = parseCoinAmount(value, fallback);
-  return Math.max(MIN_BUY_IN, number || fallback);
+  return snapStakeValue(value || fallback, MIN_BUY_IN);
 }
 
-function normalizePerGameMode(value) {
-  const normalized = String(value || 'range').trim().toLowerCase();
-  return PER_GAME_MODES.includes(normalized) ? normalized : 'range';
+function normalizePerGameMode() {
+  return STATIC_PER_GAME_MODE;
 }
 
-function buildRangeCoinBetOptions(baseAmount) {
-  const base = Math.max(MIN_RANGE_PER_GAME_BASE, parseCoinAmount(baseAmount, MIN_RANGE_PER_GAME_BASE));
-  const low = Math.max(MIN_STATIC_PER_GAME, Math.floor(base * 0.2));
-  const mid = Math.max(low, Math.floor(base * 0.4));
-  return Array.from(new Set([low, mid, base])).sort((left, right) => left - right);
+function buildStaticCoinBetOptions(amount) {
+  return [snapStakeValue(amount, MIN_STATIC_PER_GAME)];
 }
 
-function normalizePerGameAmount(value, mode, baseAmount, buyInAmount) {
+function normalizePerGameAmount(value, _mode, _baseAmount, buyInAmount) {
   const buyIn = normalizeStake(buyInAmount, MIN_BUY_IN);
-  const raw = parseCoinAmount(value, 0);
-
-  if (mode === 'static') {
-    if (!raw) return Math.min(buyIn, MIN_STATIC_PER_GAME);
-    return Math.min(buyIn, Math.max(MIN_STATIC_PER_GAME, raw));
-  }
-
-  const options = buildRangeCoinBetOptions(Math.min(buyIn, Math.max(MIN_RANGE_PER_GAME_BASE, parseCoinAmount(baseAmount, buyIn))));
-  return options.includes(raw) ? raw : options[0];
+  const fallback = Math.min(buyIn, MIN_STATIC_PER_GAME);
+  return snapStakeValue(value || fallback, MIN_STATIC_PER_GAME, buyIn);
 }
 
 function normalizePekPercentage(value, fallback = 25) {
@@ -158,24 +130,82 @@ function OptionButton({ value, active = false, disabled = false, className = '',
   );
 }
 
-function StepperControl({ value, displayValue, disabled = false, className = '', onDecrease, onIncrease, decreaseDisabled = false, increaseDisabled = false, tx }) {
+function StepperControl({
+  value,
+  displayValue,
+  disabled = false,
+  className = '',
+  onDecrease,
+  onIncrease,
+  onValueSubmit,
+  decreaseDisabled = false,
+  increaseDisabled = false,
+  tx,
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftValue, setDraftValue] = useState(String(value ?? ''));
+
+  const startEditing = () => {
+    if (disabled || !onValueSubmit) return;
+    setDraftValue(String(value ?? ''));
+    setIsEditing(true);
+  };
+
+  const commitEditing = () => {
+    if (!isEditing) return;
+    setIsEditing(false);
+    const trimmed = String(draftValue || '').trim();
+    if (trimmed) onValueSubmit(trimmed);
+  };
+
+  const cancelEditing = () => {
+    setDraftValue(String(value ?? ''));
+    setIsEditing(false);
+  };
+
   return (
     <div className={`create-room-stepper ${className} ${disabled ? 'is-disabled' : ''}`}>
       <button
         className="create-room-stepper__button create-room-stepper__button--minus"
         type="button"
         onClick={onDecrease}
-        disabled={disabled || decreaseDisabled}
+        disabled={disabled || decreaseDisabled || isEditing}
         aria-label={tx('Decrease')}
       >
         −
       </button>
-      <span className="create-room-stepper__value">{displayValue ?? value}</span>
+      {isEditing ? (
+        <input
+          className="create-room-stepper__value create-room-stepper__input"
+          type="number"
+          inputMode="numeric"
+          min={MIN_BUY_IN}
+          value={draftValue}
+          onChange={(event) => setDraftValue(event.target.value)}
+          onBlur={commitEditing}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') commitEditing();
+            if (event.key === 'Escape') cancelEditing();
+          }}
+          aria-label={tx('Enter value')}
+          autoFocus
+        />
+      ) : (
+        <button
+          className="create-room-stepper__value create-room-stepper__valueButton"
+          type="button"
+          onClick={startEditing}
+          disabled={disabled || !onValueSubmit}
+          aria-label={tx('Edit value')}
+        >
+          {displayValue ?? value}
+        </button>
+      )}
       <button
         className="create-room-stepper__button create-room-stepper__button--plus"
         type="button"
         onClick={onIncrease}
-        disabled={disabled || increaseDisabled}
+        disabled={disabled || increaseDisabled || isEditing}
         aria-label={tx('Increase')}
       >
         +
@@ -194,24 +224,19 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const wallet = data?.wallet || {};
   const settings = data?.createRoom || {};
   const players = settings.players?.length ? settings.players : ['2', '3', '4'];
-  const cups = settings.cups?.length ? settings.cups : ['5'];
   const timers = settings.timers || [];
   const isCreating = backendStatus?.loading && ['rooms.create', 'bots.start'].includes(backendStatus?.lastAction);
 
   const initialBuyIn = normalizeStake(settings.buyInAmount || settings.buyInCoins || settings.customBuyIn || settings.customStake || settings.entryFee, MIN_BUY_IN);
-  const initialPerGameMode = normalizePerGameMode(settings.perGameMode || settings.betMode || settings.coinBetMode);
-  const initialPerGameBase = Math.min(
-    initialBuyIn,
-    Math.max(MIN_RANGE_PER_GAME_BASE, parseCoinAmount(settings.perGameBase || settings.maxCoinBet || settings.maxBidCoins || settings.rangeBase || initialBuyIn, initialBuyIn)),
-  );
+  const initialPerGameMode = normalizePerGameMode();
+  const initialPerGameBase = initialBuyIn;
 
   const [roomName, setRoomName] = useState(settings.roomName || `${user?.displayName || user?.username || 'Player'}’s Room`);
   const [selectedPlayers, setSelectedPlayers] = useState(settings.selectedPlayers || '2');
-  const [selectedCups, setSelectedCups] = useState('5');
   const [selectedTimer, setSelectedTimer] = useState(settings.selectedTimer || '30s');
   const [selectedRoomMode, setSelectedRoomMode] = useState(String(settings.selectedRoomMode || settings.roomMode || 'normal').toLowerCase() === 'bots' ? 'bots' : 'normal');
   const [selectedBuyIn, setSelectedBuyIn] = useState(initialBuyIn);
-  const [perGameMode, setPerGameMode] = useState(initialPerGameMode);
+  const [perGameMode] = useState(initialPerGameMode);
   const [perGameBase, setPerGameBase] = useState(initialPerGameBase);
   const [selectedPerGame, setSelectedPerGame] = useState(() => normalizePerGameAmount(
     settings.selectedPerGame || settings.perGameAmount || settings.roundStake || settings.perGameCoins || settings.defaultCoinBet || settings.defaultBidCoins,
@@ -219,31 +244,26 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
     initialPerGameBase,
     initialBuyIn,
   ));
-  const [pekEnabled, setPekEnabled] = useState(Boolean(settings.pekEnabled ?? settings.slamEnabled ?? false));
-  const [selectedPekPercentage, setSelectedPekPercentage] = useState(normalizePekPercentage(settings.pekPercentage || settings.slamPercentage || settings.pekPercent || settings.slamPercent, 25));
+  const pekEnabled = true;
+  const selectedPekPercentage = normalizePekPercentage(settings.pekPercentage || settings.slamPercentage || settings.pekPercent || settings.slamPercent, DEFAULT_PEK_PERCENTAGE);
   const [isPrivate, setIsPrivate] = useState(settings.isPrivate ?? true);
 
   const isBotsMode = selectedRoomMode === 'bots';
-  const rangeCoinBetOptions = buildRangeCoinBetOptions(perGameBase);
-  const coinBetOptionsForStake = perGameMode === 'range' ? rangeCoinBetOptions : [selectedPerGame];
   const safeSelectedPerGame = normalizePerGameAmount(selectedPerGame, perGameMode, perGameBase, selectedBuyIn);
+  const coinBetOptionsForStake = buildStaticCoinBetOptions(safeSelectedPerGame);
   const finalPekAmount = calculateFinalPekAmount(safeSelectedPerGame, selectedPekPercentage);
   const perGameInvalid = safeSelectedPerGame > selectedBuyIn;
-  const pekRiskInvalid = pekEnabled && finalPekAmount > selectedBuyIn;
+  const pekRiskInvalid = false;
   const walletCoins = walletCoinAmount(wallet);
   const insufficientFunds = walletCoins > 0 && selectedBuyIn > walletCoins;
-  const pekRiskError = pekRiskInvalid
-    ? `Pek/Slam risk ${formatStakeOption(finalPekAmount)} must not be greater than buy-in ${formatStakeOption(selectedBuyIn)}`
-    : '';
+  const pekRiskError = '';
   const insufficientFundsError = insufficientFunds
     ? `Buy-in ${formatStakeOption(selectedBuyIn)} is higher than wallet ${formatStakeOption(walletCoins)}`
     : '';
   const localCreateError = pekRiskError || insufficientFundsError;
   const createDisabled = isCreating || perGameInvalid || pekRiskInvalid || insufficientFunds;
-  const perGameCopy = perGameMode === 'range'
-    ? `Range ${formatStakeOption(perGameBase)}`
-    : `Static ${formatStakeOption(safeSelectedPerGame)}`;
-  const selectedRulesCopy = `Rules: 5 dice each • Buy-in ${formatStakeOption(selectedBuyIn)} • ${perGameCopy}${pekEnabled ? ` • Pek ${selectedPekPercentage}% = ${formatStakeOption(finalPekAmount)}` : ' • Pek OFF'}`;
+  const perGameCopy = `Bet ${formatStakeOption(safeSelectedPerGame)}`;
+  const selectedRulesCopy = `Rules: 5 dice each • Buy-in ${formatStakeOption(selectedBuyIn)} • ${perGameCopy} • Pek/Slam ON`;
 
   const currentSettings = {
     ...settings,
@@ -264,18 +284,18 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
     entryFee: selectedBuyIn,
     perGameMode,
     coinBetMode: perGameMode,
-    perGameBase: perGameMode === 'range' ? perGameBase : safeSelectedPerGame,
+    perGameBase: safeSelectedPerGame,
     selectedPerGame: safeSelectedPerGame,
     perGameAmount: safeSelectedPerGame,
     perGameCoins: safeSelectedPerGame,
     roundStake: safeSelectedPerGame,
-    minCoinBet: perGameMode === 'range' ? coinBetOptionsForStake[0] : safeSelectedPerGame,
-    minBidCoins: perGameMode === 'range' ? coinBetOptionsForStake[0] : safeSelectedPerGame,
-    maxCoinBet: perGameMode === 'range' ? coinBetOptionsForStake[coinBetOptionsForStake.length - 1] : safeSelectedPerGame,
-    maxBidCoins: perGameMode === 'range' ? coinBetOptionsForStake[coinBetOptionsForStake.length - 1] : safeSelectedPerGame,
+    minCoinBet: safeSelectedPerGame,
+    minBidCoins: safeSelectedPerGame,
+    maxCoinBet: safeSelectedPerGame,
+    maxBidCoins: safeSelectedPerGame,
     defaultCoinBet: safeSelectedPerGame,
     defaultBidCoins: safeSelectedPerGame,
-    bidCoinStep: perGameMode === 'static' ? getStaticPerGameStep(safeSelectedPerGame) : getBuyInStep(perGameBase),
+    bidCoinStep: getStakeStep(safeSelectedPerGame),
     coinBetOptions: coinBetOptionsForStake,
     pekEnabled,
     slamEnabled: pekEnabled,
@@ -283,8 +303,8 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
     slamPercentage: selectedPekPercentage,
     finalPekAmount,
     finalSlamAmount: finalPekAmount,
-    requiredPekCoverAmount: pekEnabled ? finalPekAmount : safeSelectedPerGame,
-    maxChallengeAmount: pekEnabled ? finalPekAmount : safeSelectedPerGame,
+    requiredPekCoverAmount: finalPekAmount,
+    maxChallengeAmount: finalPekAmount,
     pricing: {
       buyInAmount: selectedBuyIn,
       buyInCoins: selectedBuyIn,
@@ -294,17 +314,17 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
       maxBuyIn: 0,
       perGameMode,
       coinBetMode: perGameMode,
-      perGameBase: perGameMode === 'range' ? perGameBase : safeSelectedPerGame,
+      perGameBase: safeSelectedPerGame,
       perGameOptions: coinBetOptionsForStake,
       selectedPerGame: safeSelectedPerGame,
       selectedPerGameAmount: safeSelectedPerGame,
       perGameAmount: safeSelectedPerGame,
       perGameCoins: safeSelectedPerGame,
       roundStake: safeSelectedPerGame,
-      minCoinBet: perGameMode === 'range' ? coinBetOptionsForStake[0] : safeSelectedPerGame,
-      minBidCoins: perGameMode === 'range' ? coinBetOptionsForStake[0] : safeSelectedPerGame,
-      maxCoinBet: perGameMode === 'range' ? coinBetOptionsForStake[coinBetOptionsForStake.length - 1] : safeSelectedPerGame,
-      maxBidCoins: perGameMode === 'range' ? coinBetOptionsForStake[coinBetOptionsForStake.length - 1] : safeSelectedPerGame,
+      minCoinBet: safeSelectedPerGame,
+      minBidCoins: safeSelectedPerGame,
+      maxCoinBet: safeSelectedPerGame,
+      maxBidCoins: safeSelectedPerGame,
       defaultCoinBet: safeSelectedPerGame,
       defaultBidCoins: safeSelectedPerGame,
       coinBetOptions: coinBetOptionsForStake,
@@ -314,8 +334,8 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
       slamPercentage: selectedPekPercentage,
       finalPekAmount,
       finalSlamAmount: finalPekAmount,
-      requiredPekCoverAmount: pekEnabled ? finalPekAmount : safeSelectedPerGame,
-      maxChallengeAmount: pekEnabled ? finalPekAmount : safeSelectedPerGame,
+      requiredPekCoverAmount: finalPekAmount,
+      maxChallengeAmount: finalPekAmount,
       pekMultiplier: 1 + (selectedPekPercentage / 100),
     },
     stakeValidationClient: {
@@ -323,7 +343,7 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
       source: 'frontend_create_room',
       buyInAmount: selectedBuyIn,
       perGameMode,
-      perGameBase: perGameMode === 'range' ? perGameBase : safeSelectedPerGame,
+      perGameBase: safeSelectedPerGame,
       coinBetOptions: coinBetOptionsForStake,
       selectedPerGame: safeSelectedPerGame,
       perGameAmount: safeSelectedPerGame,
@@ -345,41 +365,27 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const roomCode = getVisibleRoomCode(data, settings);
   const createSelectedHandler = (setter, value) => () => setter(value);
   const handleBuyInStep = (direction) => () => {
-    const nextBuyIn = stepBuyIn(selectedBuyIn, direction);
+    const nextBuyIn = stepStakeValue(selectedBuyIn, direction, MIN_BUY_IN);
     setSelectedBuyIn(nextBuyIn);
     setPerGameBase(nextBuyIn);
-    if (perGameMode === 'range') {
-      setSelectedPerGame(buildRangeCoinBetOptions(nextBuyIn)[0]);
-    } else {
-      setSelectedPerGame((current) => Math.min(nextBuyIn, Math.max(MIN_STATIC_PER_GAME, parseCoinAmount(current, MIN_STATIC_PER_GAME))));
-    }
+    setSelectedPerGame((current) => normalizePerGameAmount(current, STATIC_PER_GAME_MODE, nextBuyIn, nextBuyIn));
   };
-  const handlePerGameModeSelect = (mode) => () => {
-    const nextMode = normalizePerGameMode(mode);
-    setPerGameMode(nextMode);
-    if (nextMode === 'range') {
-      setPerGameBase(selectedBuyIn);
-      setSelectedPerGame(buildRangeCoinBetOptions(selectedBuyIn)[0]);
-    } else {
-      setSelectedPerGame((current) => Math.min(selectedBuyIn, Math.max(MIN_STATIC_PER_GAME, parseCoinAmount(current, MIN_STATIC_PER_GAME))));
-    }
+
+  const handleBuyInValueSubmit = (value) => {
+    const nextBuyIn = snapStakeValue(value, MIN_BUY_IN);
+    setSelectedBuyIn(nextBuyIn);
+    setPerGameBase(nextBuyIn);
+    setSelectedPerGame((current) => normalizePerGameAmount(current, STATIC_PER_GAME_MODE, nextBuyIn, nextBuyIn));
   };
-  const handlePerGameBaseStep = (direction) => () => {
-    const nextBase = stepRangePerGameBase(perGameBase, direction, selectedBuyIn);
-    const nextOptions = buildRangeCoinBetOptions(nextBase);
-    setPerGameBase(nextBase);
-    setSelectedPerGame((current) => (nextOptions.includes(current) ? current : nextOptions[0]));
-  };
+
   const handleStaticPerGameStep = (direction) => () => {
-    setSelectedPerGame((current) => stepStaticPerGame(current, direction, selectedBuyIn));
+    setSelectedPerGame((current) => stepStakeValue(current, direction, MIN_STATIC_PER_GAME, selectedBuyIn));
   };
-  const handlePekPercentageStep = (direction) => () => {
-    setSelectedPekPercentage((current) => {
-      const index = PEK_PERCENTAGE_OPTIONS.indexOf(normalizePekPercentage(current, 25));
-      const nextIndex = Math.min(PEK_PERCENTAGE_OPTIONS.length - 1, Math.max(0, index + direction));
-      return PEK_PERCENTAGE_OPTIONS[nextIndex];
-    });
+
+  const handleStaticPerGameValueSubmit = (value) => {
+    setSelectedPerGame(snapStakeValue(value, MIN_STATIC_PER_GAME, selectedBuyIn));
   };
+
 
   const copyCode = async () => {
     if (!roomCode || roomCode === 'CREATE FIRST') return;
@@ -427,12 +433,7 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
             </div>
           </div>
 
-          <div className="create-room-block create-room-block--cups">
-            <span className="create-room-label">{tx('DICE PER PLAYER')}</span>
-            <div className="create-room-optionRow create-room-optionRow--cups">
-              {cups.map((value) => <OptionButton key={value} value={value} active={value === selectedCups} tx={tx} onClick={createSelectedHandler(setSelectedCups, '5')} />)}
-            </div>
-          </div>
+
 
           <div className="create-room-block create-room-block--timer">
             <span className="create-room-label">{tx('TURN TIMER')}</span>
@@ -450,72 +451,24 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
               tx={tx}
               onDecrease={handleBuyInStep(-1)}
               onIncrease={handleBuyInStep(1)}
+              onValueSubmit={handleBuyInValueSubmit}
               decreaseDisabled={selectedBuyIn <= MIN_BUY_IN}
             />
           </div>
 
           <div className="create-room-block create-room-block--perGame">
-            <span className="create-room-label">{tx('PER GAME')}</span>
-            <div className="create-room-perGameMode">
-              <OptionButton value="RANGE" active={perGameMode === 'range'} className="create-room-option--mode create-room-option--mini" tx={tx} onClick={handlePerGameModeSelect('range')} />
-              <OptionButton value="STATIC" active={perGameMode === 'static'} className="create-room-option--mode create-room-option--mini" tx={tx} onClick={handlePerGameModeSelect('static')} />
-            </div>
-
-            {perGameMode === 'range' ? (
-              <>
-                <StepperControl
-                  className="create-room-stepper--perGame"
-                  value={perGameBase}
-                  displayValue={formatStakeOption(perGameBase)}
-                  tx={tx}
-                  onDecrease={handlePerGameBaseStep(-1)}
-                  onIncrease={handlePerGameBaseStep(1)}
-                  decreaseDisabled={perGameBase <= MIN_RANGE_PER_GAME_BASE}
-                  increaseDisabled={perGameBase >= selectedBuyIn}
-                />
-              </>
-            ) : (
-              <StepperControl
-                className="create-room-stepper--perGame create-room-stepper--staticPerGame"
-                value={safeSelectedPerGame}
-                displayValue={formatStakeOption(safeSelectedPerGame)}
-                tx={tx}
-                onDecrease={handleStaticPerGameStep(-1)}
-                onIncrease={handleStaticPerGameStep(1)}
-                decreaseDisabled={safeSelectedPerGame <= MIN_STATIC_PER_GAME}
-                increaseDisabled={safeSelectedPerGame >= selectedBuyIn}
-              />
-            )}
-          </div>
-
-          <div className="create-room-block create-room-block--pekToggle">
-            <span className="create-room-label">{tx('PEK / SLAM')}</span>
-            <button
-              className={`create-room-privateToggle create-room-pekToggle ${pekEnabled ? 'is-on' : 'is-off'}`}
-              type="button"
-              onClick={() => setPekEnabled((value) => !value)}
-              aria-pressed={pekEnabled}
-              aria-label={pekEnabled ? tx('Pek on') : tx('Pek off')}
-            >
-              <img src={`${asset}${pekEnabled ? 'on.png' : 'off.png'}`} alt="" draggable="false" />
-            </button>
-          </div>
-
-          <div className={`create-room-block create-room-block--pekPercent ${pekEnabled ? '' : 'is-disabled'}`}>
-            <span className="create-room-label">{tx('PEK AMOUNT')}</span>
+            <span className="create-room-label">{tx('BET')}</span>
             <StepperControl
-              className="create-room-stepper--pekPercent"
-              value={selectedPekPercentage}
-              displayValue={`${selectedPekPercentage}%`}
+              className="create-room-stepper--perGame create-room-stepper--staticPerGame"
+              value={safeSelectedPerGame}
+              displayValue={formatStakeOption(safeSelectedPerGame)}
               tx={tx}
-              disabled={!pekEnabled}
-              onDecrease={handlePekPercentageStep(-1)}
-              onIncrease={handlePekPercentageStep(1)}
-              decreaseDisabled={selectedPekPercentage <= PEK_PERCENTAGE_OPTIONS[0]}
-              increaseDisabled={selectedPekPercentage >= PEK_PERCENTAGE_OPTIONS[PEK_PERCENTAGE_OPTIONS.length - 1]}
+              onDecrease={handleStaticPerGameStep(-1)}
+              onIncrease={handleStaticPerGameStep(1)}
+              onValueSubmit={handleStaticPerGameValueSubmit}
+              decreaseDisabled={safeSelectedPerGame <= MIN_STATIC_PER_GAME}
+              increaseDisabled={safeSelectedPerGame >= selectedBuyIn}
             />
-            <span className="create-room-pekPreview">{tx('Risk')}: {formatStakeOption(finalPekAmount)}</span>
-            {pekRiskInvalid ? <span className="create-room-pekPreview create-room-pekPreview--error">{tx(pekRiskError)}</span> : null}
           </div>
 
           <div className="create-room-block create-room-block--mode">

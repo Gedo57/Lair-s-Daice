@@ -1,14 +1,17 @@
+import { useMemo, useState } from 'react';
 import ProfileHud from '../components/ProfileHud.jsx';
+
 const asset = '/assets/liars-dice/room-select/';
 const sparkles = Array.from({ length: 20 }, (_, index) => index + 1);
-
+const ROOM_ORDER = ['beginner', 'high-roller', 'private'];
+const PLAYER_COUNT_SEQUENCE = [2, 3, 4];
 const TIER_PEK_PERCENTAGES = {
-  beginner: 0,
-  classic: 25,
+  beginner: 25,
   'high-roller': 50,
   highroller: 50,
   high_roller: 50,
-  vip: 100,
+  private: 25,
+  'private-room': 25,
 };
 
 function hasCardValue(value) {
@@ -25,15 +28,16 @@ function formatCardAmount(value) {
   return new Intl.NumberFormat('en-US').format(number);
 }
 
-function formatCardMultiplier(value) {
-  if (!hasCardValue(value)) return '—';
-  const number = Number(value);
-  if (!Number.isFinite(number)) return String(value);
-  return `${Number(number.toFixed(2))}x`;
+function normalizeRoomKey(value) {
+  const normalized = String(value || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+  if (normalized === 'highroller' || normalized === 'high-rollers') return 'high-roller';
+  if (normalized === 'private-room' || normalized === 'privet-room' || normalized === 'privet') return 'private';
+  return normalized;
 }
 
-function normalizeRoomKey(value) {
-  return String(value || '').trim().toLowerCase().replace(/\s+/g, '-');
+function isVisibleRoom(room = {}) {
+  const key = normalizeRoomKey(room.key || room.id || room.tableId || room.tierId || room.title);
+  return ROOM_ORDER.includes(key);
 }
 
 function formatCardPercent(value) {
@@ -43,7 +47,16 @@ function formatCardPercent(value) {
   return `${Math.max(0, Math.trunc(number))}%`;
 }
 
+function firstCardValue(...values) {
+  return values.find((value) => hasCardValue(value));
+}
+
 function resolveTierPekPercentage(room = {}, pricing = {}) {
+  const key = normalizeRoomKey(room.key || room.id || room.tableId || room.tier || room.tableTier || room.title);
+  if (key === 'private') return '25-100%';
+  if (key === 'beginner') return 25;
+  if (key === 'high-roller') return 50;
+
   const direct = firstCardValue(
     pricing.pekPercentage,
     pricing.slamPercentage,
@@ -55,24 +68,31 @@ function resolveTierPekPercentage(room = {}, pricing = {}) {
   if (hasCardValue(direct)) return direct;
 
   const keys = [room.key, room.id, room.tableId, room.tier, room.tableTier, room.title].map(normalizeRoomKey);
-  for (const key of keys) {
-    if (Object.prototype.hasOwnProperty.call(TIER_PEK_PERCENTAGES, key)) return TIER_PEK_PERCENTAGES[key];
+  for (const item of keys) {
+    if (Object.prototype.hasOwnProperty.call(TIER_PEK_PERCENTAGES, item)) return TIER_PEK_PERCENTAGES[item];
   }
 
-  return room.key === 'private' ? 25 : 0;
+  return 25;
 }
 
-function firstCardValue(...values) {
-  return values.find((value) => hasCardValue(value));
-}
-
-function formatCardRange(min, max) {
-  const minText = formatCardAmount(min);
-  const maxText = formatCardAmount(max);
-  if (minText === '—' && maxText === '—') return '—';
-  if (minText === maxText || maxText === '—') return minText;
-  if (minText === '—') return maxText;
-  return `${minText}-${maxText}`;
+function resolveCardBet(room = {}, pricing = {}) {
+  return firstCardValue(
+    pricing.perGameAmount,
+    pricing.roundStake,
+    pricing.selectedPerGame,
+    pricing.selectedPerGameAmount,
+    pricing.defaultCoinBet,
+    pricing.defaultBidCoins,
+    pricing.minCoinBet,
+    pricing.minBidCoins,
+    room.perGameAmount,
+    room.roundStake,
+    room.selectedPerGame,
+    room.defaultCoinBet,
+    room.defaultBidCoins,
+    room.minCoinBet,
+    room.minBidCoins,
+  );
 }
 
 function buildCardInfo(room = {}) {
@@ -80,73 +100,112 @@ function buildCardInfo(room = {}) {
   const rewards = room.rewards && typeof room.rewards === 'object' ? room.rewards : {};
 
   const buyInAmount = firstCardValue(pricing.buyInAmount, pricing.entryFee, room.buyInAmount, room.entryFee, room.fee, pricing.buyIn, room.buyIn);
-  const winnerPayout = firstCardValue(
-    rewards.winnerPayoutPreview,
-    rewards.winnerPayout,
-    rewards.winnerReward,
-    pricing.winnerPayoutPreview,
-    pricing.winnerPayout,
-    pricing.winnerReward,
-    room.winnerPayoutPreview,
-    room.winnerPayout,
-    room.winnerReward,
-    room.winReward,
-  );
-  const totalPot = firstCardValue(
-    pricing.grossPotPreview,
-    pricing.grossPot,
-    rewards.grossPotPreview,
-    rewards.grossPot,
-    room.grossPotPreview,
-    room.grossPot,
-    room.totalPotPreview,
-    room.totalPot,
-  );
-  const minCoinBet = firstCardValue(pricing.minCoinBet, pricing.minBidCoins, pricing.stakeMin, room.minCoinBet, room.minBidCoins, room.stakeMin);
-  const maxCoinBet = firstCardValue(pricing.maxCoinBet, pricing.maxBidCoins, pricing.stakeMax, room.maxCoinBet, room.maxBidCoins, room.stakeMax);
+  const betAmount = resolveCardBet(room, pricing);
   const pekPercentage = resolveTierPekPercentage(room, pricing);
 
   return [
     { label: 'Buy-in', value: formatCardAmount(buyInAmount) },
-    { label: 'Winner Payout', value: formatCardAmount(winnerPayout) },
-    { label: 'Total Pot', value: formatCardAmount(totalPot) },
-    { label: 'Bet Range', value: formatCardRange(minCoinBet, maxCoinBet) },
-    { label: 'Pek', value: formatCardPercent(pekPercentage) },
+    { label: 'Bet', value: formatCardAmount(betAmount) },
+    { label: 'Pek', value: typeof pekPercentage === 'string' && pekPercentage.includes('%') ? pekPercentage : formatCardPercent(pekPercentage) },
     { label: 'XP Win', value: formatCardAmount(rewards.xpWin ?? room.xpWin) },
   ];
+}
+
+function isCycleableRoom(room = {}) {
+  const key = normalizeRoomKey(room.key || room.id || room.title);
+  return key === 'beginner' || key === 'high-roller';
+}
+
+function clampPlayerCount(value, fallback = 2) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  if (number <= 2) return 2;
+  if (number >= 4) return 4;
+  return 3;
+}
+
+function getInitialPlayerCount(room = {}) {
+  const key = normalizeRoomKey(room.key || room.id || room.title);
+  if (key === 'beginner' || key === 'high-roller') return 2;
+  return clampPlayerCount(room.selectedPlayers || room.defaultPlayers || room.defaultPlayerCount || room.maxPlayers || 2);
+}
+
+function getSelectedPlayerCount(room = {}, selectedPlayerCounts = {}) {
+  const key = normalizeRoomKey(room.key || room.id || room.title);
+  return clampPlayerCount(selectedPlayerCounts[key] ?? getInitialPlayerCount(room));
+}
+
+function getNextPlayerCount(currentCount) {
+  const currentIndex = PLAYER_COUNT_SEQUENCE.indexOf(clampPlayerCount(currentCount));
+  return PLAYER_COUNT_SEQUENCE[(currentIndex + 1) % PLAYER_COUNT_SEQUENCE.length];
+}
+
+function buildRoomRows(room = {}, selectedPlayers = 2) {
+  const key = normalizeRoomKey(room.key || room.id || room.title);
+  const rows = Array.isArray(room.rows) ? room.rows : [];
+  const filteredRows = rows.filter((row) => {
+    const text = String(row?.text || row?.label || row || '').trim().toLowerCase();
+    return text && text !== 'official rules';
+  });
+
+  const playerRow = key === 'private'
+    ? { icon: 'IC1.png', text: '2 - 4 Players' }
+    : { icon: 'IC1.png', text: `${selectedPlayers} Players` };
+
+  const featureRows = filteredRows
+    .filter((row) => !/players/i.test(String(row?.text || row?.label || row || '')))
+    .slice(0, 2);
+
+  return [playerRow, ...featureRows].slice(0, 3);
+}
+
+function normalizeDisplayRoom(room = {}, selectedPlayerCounts = {}) {
+  const key = normalizeRoomKey(room.key || room.id || room.tableId || room.tierId || room.title);
+  const selectedPlayers = getSelectedPlayerCount({ ...room, key }, selectedPlayerCounts);
+  const pricing = room.pricing && typeof room.pricing === 'object' ? room.pricing : {};
+  const pekPercentage = resolveTierPekPercentage({ ...room, key }, pricing);
+  const pekNumber = Number(String(pekPercentage).replace(/[^0-9.-]/g, '')) || (key === 'high-roller' ? 50 : 25);
+
+  return {
+    ...room,
+    key,
+    selectedPlayers,
+    minPlayers: key === 'private' ? 2 : selectedPlayers,
+    maxPlayers: key === 'private' ? clampPlayerCount(room.maxPlayers || 4, 4) : selectedPlayers,
+    requiredPlayers: key === 'private' ? undefined : selectedPlayers,
+    pricing: {
+      ...pricing,
+      pekEnabled: true,
+      slamEnabled: true,
+      pekPercentage: key === 'private' ? pricing.pekPercentage ?? 25 : pekNumber,
+      slamPercentage: key === 'private' ? pricing.slamPercentage ?? 25 : pekNumber,
+    },
+    rows: buildRoomRows({ ...room, key }, selectedPlayers),
+  };
 }
 
 function buildMatchmakingPayload(room = {}) {
   const pricing = room.pricing && typeof room.pricing === 'object' ? room.pricing : {};
   const rewards = room.rewards && typeof room.rewards === 'object' ? room.rewards : {};
+  const key = normalizeRoomKey(room.key || room.id || room.tableId || room.tierId || room.title);
+  const selectedPlayers = key === 'private' ? clampPlayerCount(room.maxPlayers || room.selectedPlayers || 2) : getSelectedPlayerCount(room);
   const buyInAmount = pricing.buyInAmount ?? pricing.entryFee ?? room.buyInAmount ?? room.entryFee ?? room.fee ?? undefined;
-  const pekPercentage = Number(resolveTierPekPercentage(room, pricing));
-  const pekEnabled = Boolean(pricing.pekEnabled ?? pricing.slamEnabled ?? room.pekEnabled ?? room.slamEnabled ?? pekPercentage > 0);
+  const pekPercentage = Number(String(resolveTierPekPercentage(room, pricing)).replace(/[^0-9.-]/g, '')) || (key === 'high-roller' ? 50 : 25);
+  const pekEnabled = true;
   const normalizedPricing = {
     ...pricing,
+    paidPlayerCountPreview: selectedPlayers,
     pekEnabled,
     slamEnabled: pekEnabled,
     pekPercentage,
     slamPercentage: pekPercentage,
   };
 
-  const winnerPayout = rewards.winnerPayoutPreview
-    ?? rewards.winnerPayout
-    ?? rewards.winnerReward
-    ?? pricing.winnerPayoutPreview
-    ?? pricing.winnerPayout
-    ?? pricing.winnerReward
-    ?? room.winnerPayoutPreview
-    ?? room.winnerPayout
-    ?? room.winnerReward
-    ?? room.winReward
-    ?? undefined;
-
   return {
     tierId: room.tierId || room.id || room.key,
     tableId: room.tableId || room.id || room.key,
-    key: room.key,
-    mode: room.mode || room.key || room.title,
+    key,
+    mode: room.mode || key || room.title,
     title: room.title || room.name || room.label,
     pricing: normalizedPricing,
     rewards,
@@ -155,16 +214,12 @@ function buildMatchmakingPayload(room = {}) {
     buyInCoins: buyInAmount,
     minBuyIn: pricing.minBuyIn ?? room.minBuyIn,
     maxBuyIn: pricing.maxBuyIn ?? room.maxBuyIn,
-    maxPlayers: room.maxPlayers,
-    minPlayers: room.minPlayers,
+    maxPlayers: selectedPlayers,
+    minPlayers: selectedPlayers,
+    selectedPlayers,
+    requiredPlayers: selectedPlayers,
+    playerCount: selectedPlayers,
     entryFee: buyInAmount,
-    grossPotPreview: pricing.grossPotPreview ?? rewards.grossPotPreview ?? room.grossPotPreview ?? undefined,
-    platformFeePreview: pricing.platformFeePreview ?? rewards.platformFeePreview ?? room.platformFeePreview ?? undefined,
-    netPotPreview: pricing.netPotPreview ?? rewards.netPotPreview ?? room.netPotPreview ?? undefined,
-    winnerPayoutPreview: rewards.winnerPayoutPreview ?? pricing.winnerPayoutPreview ?? room.winnerPayoutPreview ?? winnerPayout,
-    winnerPayout,
-    winnerReward: winnerPayout,
-    winnerRewardMode: rewards.winnerRewardMode ?? pricing.winnerRewardMode ?? room.winnerRewardMode ?? 'pot',
     minCoinBet: pricing.minCoinBet ?? pricing.minBidCoins ?? room.minCoinBet ?? room.minBidCoins ?? undefined,
     minBidCoins: pricing.minCoinBet ?? pricing.minBidCoins ?? room.minCoinBet ?? room.minBidCoins ?? undefined,
     maxCoinBet: pricing.maxCoinBet ?? pricing.maxBidCoins ?? room.maxCoinBet ?? room.maxBidCoins ?? undefined,
@@ -187,12 +242,35 @@ function buildMatchmakingPayload(room = {}) {
   };
 }
 
-function RoomCard({ room, onPlay, onCreatePrivate, tx }) {
-  const rows = Array.isArray(room.rows) ? room.rows : [];
+function RoomCard({ room, onPlay, onCreatePrivate, onCyclePlayers, tx }) {
   const cardInfo = buildCardInfo(room);
+  const rows = Array.isArray(room.rows) ? room.rows : [];
+  const isPrivate = room.key === 'private';
+  const cycleable = isCycleableRoom(room);
+  const handleCardClick = () => {
+    if (isPrivate) onCreatePrivate?.();
+    else if (cycleable) onCyclePlayers?.(room);
+  };
+  const handleCardKeyDown = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    handleCardClick();
+  };
+  const handlePlayClick = (event) => {
+    event.stopPropagation();
+    if (isPrivate) onCreatePrivate?.();
+    else onPlay?.(room);
+  };
 
   return (
-    <button className={`room-select-card room-select-card--${room.key}`} type="button" onClick={() => (room.key === 'private' ? onCreatePrivate?.() : onPlay?.(room))}>
+    <article
+      className={`room-select-card room-select-card--${room.key} room-select-card--players-${room.selectedPlayers || room.maxPlayers || 2}${cycleable ? ' room-select-card--cycleable' : ''}`}
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      aria-label={cycleable ? `${tx(room.title)} ${room.selectedPlayers} ${tx('Players')}` : tx(room.title)}
+    >
       <img className="room-select-card__skin" src={`${asset}${room.card}`} alt="" draggable="false" />
       <span className="room-select-card__title">{tx(room.title)}</span>
       <img className={`room-select-card__art room-select-card__art--${room.key}`} src={`${asset}${room.tableArt}`} alt="" draggable="false" />
@@ -212,11 +290,11 @@ function RoomCard({ room, onPlay, onCreatePrivate, tx }) {
           </span>
         ))}
       </span>
-      <span className="room-select-card__playSkinWrap">
+      <button className="room-select-card__playSkinWrap" type="button" onClick={handlePlayClick} disabled={room.disabled}>
         <img className="room-select-card__playSkin" src={`${asset}${room.button}`} alt="" draggable="false" />
         <span className="room-select-card__playText">{tx('PLAY')}</span>
-      </span>
-    </button>
+      </button>
+    </article>
   );
 }
 
@@ -225,11 +303,26 @@ export default function RoomSelect({ navigation, data, backendActions, backendSt
   const user = data?.user || {};
   const wallet = data?.wallet || {};
   const rooms = data?.rooms || [];
+  const [selectedPlayerCounts, setSelectedPlayerCounts] = useState({});
   const isStarting = backendStatus?.loading && backendStatus?.lastAction === 'matchmaking.start';
+
+  const displayRooms = useMemo(() => rooms
+    .filter(isVisibleRoom)
+    .map((room) => normalizeDisplayRoom(room, selectedPlayerCounts))
+    .sort((a, b) => ROOM_ORDER.indexOf(a.key) - ROOM_ORDER.indexOf(b.key)), [rooms, selectedPlayerCounts]);
 
   const startTableMatchmaking = (room) => {
     const payload = buildMatchmakingPayload(room);
     backendActions?.startMatchmaking?.(payload);
+  };
+
+  const cyclePlayerCount = (room) => {
+    const key = normalizeRoomKey(room.key || room.id || room.title);
+    if (!isCycleableRoom({ ...room, key })) return;
+    setSelectedPlayerCounts((current) => ({
+      ...current,
+      [key]: getNextPlayerCount(current[key] ?? getSelectedPlayerCount(room, current)),
+    }));
   };
 
   return (
@@ -259,11 +352,20 @@ export default function RoomSelect({ navigation, data, backendActions, backendSt
 
       <img className="room-select-titleArt" src={`${asset}select-title.png`} alt={tx('Select Table')} draggable="false" />
 
-      <div className="room-select-cards" aria-label={tx('Available tables')} aria-busy={isStarting}>
-        {rooms.map((room) => <RoomCard key={room.key || room.id} room={room} onPlay={startTableMatchmaking} onCreatePrivate={navigation.goCreateRoom} tx={tx} />)}
+      <div className="room-select-cards room-select-cards--three" aria-label={tx('Available tables')} aria-busy={isStarting}>
+        {displayRooms.map((room) => (
+          <RoomCard
+            key={room.key || room.id}
+            room={room}
+            onPlay={startTableMatchmaking}
+            onCreatePrivate={navigation.goCreateRoom}
+            onCyclePlayers={cyclePlayerCount}
+            tx={tx}
+          />
+        ))}
       </div>
 
-      {!rooms.length ? (
+      {!displayRooms.length ? (
         <div className="room-select-empty">{tx('No backend tables available')}</div>
       ) : null}
 

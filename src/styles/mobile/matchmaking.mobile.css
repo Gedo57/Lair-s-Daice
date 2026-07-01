@@ -1171,3 +1171,12 @@ html[data-device='mobile'] .matchmaking-center__countdown {
   box-shadow: 0 5px 14px rgba(79,43,5,.24), inset 0 1px 0 rgba(255,255,255,.85);
   z-index: 4;
 }
+
+/* Patch 4: player slots are rendered dynamically from selected maxPlayers. */
+html[data-device='mobile'] .matchmaking-screen--players-2 .matchmaking-slot--right-top .matchmaking-slot__avatar,
+html[data-device='mobile'] .matchmaking-screen--players-3 .matchmaking-slot--right-top .matchmaking-slot__avatar {
+  left: 25.14px;
+  top: 8.42px;
+  width: 90.68px;
+  height: 80.92px;
+}

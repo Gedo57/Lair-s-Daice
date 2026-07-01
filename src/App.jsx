@@ -148,11 +148,19 @@ const preloadedPhases = new Set();
 
 
 
+const ROOM_SELECT_ALLOWED_KEYS = ['beginner', 'high-roller', 'private'];
+const ROOM_SELECT_KEY_ALIASES = {
+  highroller: 'high-roller',
+  high_roller: 'high-roller',
+  'high-rollers': 'high-roller',
+  'private-room': 'private',
+  privet: 'private',
+  'privet-room': 'private',
+};
+
 const ROOM_SELECT_DECOR = [
   { key: 'beginner', card: 'card-1.png', tableArt: '213.png', button: '15.png' },
-  { key: 'classic', card: 'card-2.png', tableArt: '213124.png', button: '14.png' },
   { key: 'high-roller', card: 'card-3.png', tableArt: '3323423.png', button: '12.png' },
-  { key: 'vip', card: 'card-4.png', tableArt: '3123213.png', button: '13.png' },
   { key: 'private', card: 'card-5.png', tableArt: '1232131.png', button: 'back-button.png' },
 ];
 
@@ -170,6 +178,11 @@ function slugifyRoomKey(value, fallback = 'table') {
     .replace(/^-+|-+$/g, '') || fallback;
 }
 
+function normalizeSelectableRoomKey(value, fallback = 'table') {
+  const slug = slugifyRoomKey(value, fallback);
+  return ROOM_SELECT_KEY_ALIASES[slug] || slug;
+}
+
 function normalizeRoomSelectRow(row = {}, index = 0) {
   if (typeof row === 'string') return { icon: `IC${Math.min(index + 1, 7)}.png`, text: row };
   const text = row.text || row.label || row.name || row.title || row.value;
@@ -182,13 +195,17 @@ function normalizeRoomSelectRow(row = {}, index = 0) {
 
 function normalizeRoomSelectRows(room = {}) {
   const rawRows = room.rows || room.rules || room.features || room.tags || [];
-  if (Array.isArray(rawRows) && rawRows.length) return rawRows.map(normalizeRoomSelectRow).filter(Boolean).slice(0, 3);
+  if (Array.isArray(rawRows) && rawRows.length) {
+    return rawRows
+      .map(normalizeRoomSelectRow)
+      .filter((row) => row && String(row.text || '').trim().toLowerCase() !== 'official rules')
+      .slice(0, 3);
+  }
 
   const derivedRows = [];
   const minPlayers = room.minPlayers || room.minimumPlayers;
   const maxPlayers = room.maxPlayers || room.playerLimit;
   if (minPlayers || maxPlayers) derivedRows.push({ icon: 'IC1.png', text: `${minPlayers || 2} - ${maxPlayers || 4} Players` });
-  if (room.ruleLabel || room.bidStyle || room.modeName) derivedRows.push({ icon: 'IC2.png', text: room.ruleLabel || room.bidStyle || room.modeName });
   if (room.rewardLabel || room.rewardType) derivedRows.push({ icon: 'IC5.png', text: room.rewardLabel || room.rewardType });
   return derivedRows.slice(0, 3);
 }
@@ -343,7 +360,8 @@ function normalizeSelectableRoom(room = {}, index = 0) {
   if (!id) return null;
 
   const rawKey = room.key || room.slug || room.tierKey || room.tierId || room.tableId || room.name || room.title || id;
-  const key = slugifyRoomKey(rawKey, `table-${index + 1}`);
+  const key = normalizeSelectableRoomKey(rawKey, `table-${index + 1}`);
+  if (!ROOM_SELECT_ALLOWED_KEYS.includes(key)) return null;
   const decor = ROOM_SELECT_DECOR_BY_KEY[key] || ROOM_SELECT_DECOR[index] || ROOM_SELECT_DECOR[0];
   const title = room.title || room.name || room.label || String(id).replace(/[-_]+/g, ' ').toUpperCase();
   const backendPricing = normalizeBackendPricing(room);
@@ -390,8 +408,8 @@ function looksLikeSelectableRooms(rooms = []) {
     if (!room || typeof room !== 'object') return false;
     if (looksLikeActiveBackendRooms([room])) return false;
 
-    const key = slugifyRoomKey(room.key || room.slug || room.tierKey || room.tierId || room.tableId || room.name || room.title || '');
-    return Boolean(
+    const key = normalizeSelectableRoomKey(room.key || room.slug || room.tierKey || room.tierId || room.tableId || room.name || room.title || '');
+    return ROOM_SELECT_ALLOWED_KEYS.includes(key) && Boolean(
       room.tierId ||
       room.tableId ||
       room.buyIn ||

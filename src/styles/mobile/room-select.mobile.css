@@ -872,3 +872,34 @@ html[data-device='mobile'] .room-select-card__statValue {
   text-shadow: 0 .77px 0 rgba(255,255,255,.45);
   white-space: nowrap;
 }
+
+/* Patch 4: three-table select layout and interactive player-count cards. */
+html[data-device='mobile'] .room-select-card {
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  text-align: initial;
+}
+
+html[data-device='mobile'] .room-select-card__playSkinWrap {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+}
+
+html[data-device='mobile'] .room-select-card__playSkinWrap:disabled {
+  cursor: not-allowed;
+  filter: grayscale(.45) brightness(.78);
+}
+
+html[data-device='mobile'] .room-select-card--cycleable:focus-visible,
+html[data-device='mobile'] .room-select-card__playSkinWrap:focus-visible {
+  outline: 3px solid rgba(255, 229, 133, .95);
+  outline-offset: 4px;
+  border-radius: 18px;
+}

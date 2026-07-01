@@ -505,3 +505,90 @@ html.keyboard-open[data-device='mobile'][data-orientation='portrait'] .app-shell
   transform: scale(.9) !important;
   transform-origin: center top !important;
 }
+
+/* Patch 3: Create Room static betting cleanup. */
+html[data-device='desktop'] .app-shell--createroom .create-room-block--cups,
+html[data-device='desktop'] .app-shell--createroom .create-room-block--pekToggle,
+html[data-device='desktop'] .app-shell--createroom .create-room-block--pekPercent,
+html[data-device='desktop'] .app-shell--createroom .create-room-perGameMode,
+html[data-device='mobile'] .app-shell--createroom .create-room-block--cups,
+html[data-device='mobile'] .app-shell--createroom .create-room-block--pekToggle,
+html[data-device='mobile'] .app-shell--createroom .create-room-block--pekPercent,
+html[data-device='mobile'] .app-shell--createroom .create-room-perGameMode {
+  display: none !important;
+}
+
+html[data-device='desktop'] .app-shell--createroom .create-room-stepper__valueButton,
+html[data-device='mobile'] .app-shell--createroom .create-room-stepper__valueButton {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: text;
+}
+
+html[data-device='desktop'] .app-shell--createroom .create-room-stepper__input,
+html[data-device='mobile'] .app-shell--createroom .create-room-stepper__input {
+  width: 100%;
+  padding: 0 4px;
+  border: 0;
+  outline: 0;
+  background: rgba(255, 249, 220, .58);
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+html[data-device='desktop'] .app-shell--createroom .create-room-stepper__input::-webkit-outer-spin-button,
+html[data-device='desktop'] .app-shell--createroom .create-room-stepper__input::-webkit-inner-spin-button,
+html[data-device='mobile'] .app-shell--createroom .create-room-stepper__input::-webkit-outer-spin-button,
+html[data-device='mobile'] .app-shell--createroom .create-room-stepper__input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+html[data-device='desktop'] .app-shell--createroom .create-room-stepper--perGame,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-stepper--perGame,
+html[data-device='desktop'] .app-shell--createroom .create-room-stepper--staticPerGame,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-stepper--staticPerGame {
+  left: 22px !important;
+  top: 24px !important;
+  width: 220px !important;
+  height: 38px !important;
+  grid-template-columns: 48px 1fr 48px !important;
+}
+
+html[data-device='desktop'] .app-shell--createroom .create-room-block--timer,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--timer { left: 42px !important; top: 72px !important; width: 265px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-block--private,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--private { left: 390px !important; top: 72px !important; width: 250px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-block--bid,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--bid { left: 42px !important; top: 150px !important; width: 265px !important; height: 64px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-block--perGame,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--perGame { left: 390px !important; top: 150px !important; width: 250px !important; height: 64px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-block--mode,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--mode { left: 42px !important; top: 235px !important; width: 250px !important; height: 64px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-block--code,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--code { left: 390px !important; top: 235px !important; width: 265px !important; height: 72px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-invite,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-invite { left: 235px !important; top: 330px !important; width: 220px !important; height: 48px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-rules,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-rules { top: 392px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-rules--error,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-rules--error { top: 416px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-rules--backendError,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-rules--backendError { top: 438px !important; }
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--players { left: 0 !important; top: 84px !important; width: 250px !important; height: 72px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--timer { left: 298px !important; top: 84px !important; width: 250px !important; height: 72px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--bid { left: 0 !important; top: 174px !important; width: 250px !important; height: 72px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--perGame { left: 298px !important; top: 174px !important; width: 250px !important; height: 72px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--private { left: 0 !important; top: 264px !important; width: 250px !important; height: 72px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--mode { left: 298px !important; top: 264px !important; width: 250px !important; height: 72px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--code { left: 149px !important; top: 360px !important; width: 250px !important; height: 82px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-stepper--perGame,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-stepper--staticPerGame { left: 17px !important; top: 36px !important; width: 216px !important; height: 46px !important; grid-template-columns: 50px 1fr 50px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-invite { left: 164px !important; top: 458px !important; width: 220px !important; height: 50px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-rules { top: 526px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-rules--error { top: 556px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-rules--backendError { top: 580px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-bottom { top: 628px !important; }
