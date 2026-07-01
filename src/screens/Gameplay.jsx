@@ -261,8 +261,8 @@ function normalizeJokerMode(source = {}) {
       ?? ''
   ).toLowerCase();
 
-  if (truthyFlag(source?.zai) || truthyFlag(source?.isZai) || mode === 'zai' || mode === 'joker_off') return 'zai';
-  if (truthyFlag(source?.chai) || truthyFlag(source?.isChai) || mode === 'chai' || mode === 'joker_on') return 'chai';
+  if (truthyFlag(source?.zai) || truthyFlag(source?.isZai) || ['zai', 'zai_locked', 'joker_off', 'joker_still_off', 'wild_off'].includes(mode)) return 'zai';
+  if (truthyFlag(source?.chai) || truthyFlag(source?.isChai) || ['chai', 'joker_on', 'open_joker', 'reopen_joker', 'wild_on'].includes(mode)) return 'chai';
   if (
     truthyFlag(source?.jokerLockedThisRound)
     || truthyFlag(source?.onesWereCalledThisRound)
@@ -991,6 +991,67 @@ function normalizedActionList(list) {
   return list.map((item) => String(item || '').toLowerCase()).filter(Boolean);
 }
 
+function readRerollState(match = {}, activePlayer = null) {
+  const state = [
+    match?.activeRerollState,
+    match?.rerollState,
+    match?.bidControls?.rerollState,
+    match?.bidRules?.rerollState,
+    match?.bidControls?.reroll,
+    match?.bidRules?.reroll,
+    match?.turnPlayer?.rerollState,
+    activePlayer?.rerollState,
+  ].find((candidate) => candidate && typeof candidate === 'object') || {};
+
+  const limit = Math.max(1, Math.trunc(toNumber(
+    state.limit
+      ?? state.rerollLimitPerRound
+      ?? match?.gameRules?.rerollLimitPerRound
+      ?? match?.bidControls?.rerollLimitPerRound
+      ?? 3,
+    3,
+  )));
+  const used = Math.max(0, Math.trunc(toNumber(
+    state.used
+      ?? state.rerollsUsedThisRound
+      ?? activePlayer?.rerollsUsedThisRound
+      ?? match?.turnPlayer?.rerollsUsedThisRound
+      ?? 0,
+    0,
+  )));
+  const remaining = Math.max(0, Math.trunc(toNumber(state.remaining ?? (limit - used), limit - used)));
+  const required = truthyFlag(state.required)
+    || truthyFlag(state.mustReroll)
+    || truthyFlag(match?.rerollRequired)
+    || truthyFlag(match?.forcedReroll);
+
+  return {
+    ...state,
+    enabled: state.enabled !== false,
+    required,
+    mustReroll: required,
+    canReroll: truthyFlag(state.canReroll) || required,
+    hasNoPair: truthyFlag(state.hasNoPair) || truthyFlag(state.noPair),
+    limit,
+    used,
+    remaining,
+    penalty: Math.max(0, Math.trunc(toNumber(
+      state.penalty
+        ?? state.rerollNoPairPenalty
+        ?? match?.gameRules?.rerollNoPairPenalty
+        ?? match?.bidControls?.rerollNoPairPenalty
+        ?? 25,
+      25,
+    ))),
+  };
+}
+
+function rerollSubtitle(state, tx = (value) => value) {
+  if (state?.required) return tx('No pair - reroll required');
+  if (state?.used || state?.limit) return `${tx('Rerolls')}: ${toNumber(state.used, 0)}/${toNumber(state.limit, 3)}`;
+  return tx('Max 3 rerolls');
+}
+
 function bidLabel(bid, tx = (value) => value) {
   if (!bid) return '-';
   const tag = getBidJokerTag(bid);
@@ -1058,6 +1119,36 @@ function isValidBid(currentBid, quantity, face, options = {}) {
   return normalizedQuantity > currentQuantity || (normalizedQuantity === currentQuantity && normalizedFace > currentFace);
 }
 
+function getDirectZaiBid({ currentBid, selectedQuantity, selectedFace }) {
+  const currentQuantity = toNumber(currentBid?.quantity, 0);
+  const currentFace = toNumber(currentBid?.face, 0);
+
+  if (currentBid && currentQuantity > 0 && currentFace >= 2 && currentFace <= 6 && !isBidZai(currentBid)) {
+    return { quantity: currentQuantity, face: currentFace, source: 'current_bid' };
+  }
+
+  return {
+    quantity: toNumber(selectedQuantity, 0),
+    face: toNumber(selectedFace, 0),
+    source: 'selected_bid',
+  };
+}
+
+function isValidZaiBid(currentBid, quantity, face, options = {}) {
+  const normalizedQuantity = toNumber(quantity, 0);
+  const normalizedFace = toNumber(face, 0);
+  if (normalizedFace === 1) return false;
+
+  if (currentBid) {
+    const currentQuantity = toNumber(currentBid.quantity, 0);
+    const currentFace = toNumber(currentBid.face, 0);
+    const sameDiceClaim = normalizedQuantity === currentQuantity && normalizedFace === currentFace;
+    if (sameDiceClaim) return !isBidZai(currentBid);
+  }
+
+  return isValidBid(currentBid, normalizedQuantity, normalizedFace, options);
+}
+
 function TurnIntroOverlay({ player, phase }) {
   if (!player || phase === TURN_INTRO_PHASE.IDLE) return null;
 
@@ -1115,6 +1206,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const serverAllowsPek = !hasServerActionRules || pekActionAliases.some((action) => availableActions.includes(action));
   const serverDisablesPek = pekActionAliases.some((action) => disabledActions.includes(action));
   const canCallPek = canAct && Boolean(currentBid) && pekSettings.pekEnabled && serverAllowsPek && !serverDisablesPek && !pekStackBlockReason;
+  const rerollState = readRerollState(match, activePlayer);
+  const serverAllowsReroll = availableActions.includes('reroll') || (!hasServerActionRules && rerollState.canReroll);
+  const serverDisablesReroll = disabledActions.includes('reroll');
+  const canReroll = canAct && serverAllowsReroll && !serverDisablesReroll;
   const roundResult = getMatchRoundResult(match, data);
   const roundResultKey = getRoundResultKey(roundResult);
   const revealedRows = revealedDiceRows(roundResult);
@@ -1362,10 +1457,46 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     });
   };
 
+  const submitZaiBid = () => {
+    if (!canSubmitBid || isTurnIntroPlaying) return;
+    const directZaiBid = getDirectZaiBid({ currentBid, selectedQuantity, selectedFace });
+    if (!isValidZaiBid(currentBid, directZaiBid.quantity, directZaiBid.face, { match, playerCount: tablePlayerCount })) return;
+
+    const jokerPayload = buildBidJokerPayload({
+      currentBid,
+      selectedQuantity: directZaiBid.quantity,
+      selectedFace: directZaiBid.face,
+      zaiEnabled: true,
+      match,
+    });
+
+    backendActions?.submitGameAction?.({
+      matchId: currentMatchId,
+      type: 'bid',
+      bid: {
+        quantity: directZaiBid.quantity,
+        face: directZaiBid.face,
+        coinBet: selectedCoinBet,
+        coinAmount: selectedCoinBet,
+        betAmount: selectedCoinBet,
+        ...jokerPayload,
+      },
+      ...jokerPayload,
+      coinBet: selectedCoinBet,
+      betAmount: selectedCoinBet,
+    });
+  };
+
   const submitSimpleAction = (type) => {
     if (!canAct || isTurnIntroPlaying) return;
     backendActions?.submitGameAction?.({ matchId: currentMatchId, type });
   };
+
+  const submitReroll = () => {
+    if (!canReroll || isTurnIntroPlaying) return;
+    backendActions?.submitGameAction?.({ matchId: currentMatchId, type: 'reroll' });
+  };
+
   const submitLeaveMatch = () => {
     if (!currentMatchId || isBusy) return;
     const confirmed = typeof window === 'undefined'
@@ -1410,9 +1541,13 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const coinBetIsValid = selectedCoinBet >= minRequiredCoinBet && selectedCoinBet <= maxAllowedCoinBet;
   const quantityMin = currentBid ? 1 : getOpeningMinimumQuantity(match, tablePlayerCount, selectedFace);
   const quantityMax = quantityValues[quantityValues.length - 1] || Math.max(1, toNumber(totalDice, 1));
-  const zaiAvailable = selectedFace !== 1;
+  const directZaiBid = getDirectZaiBid({ currentBid, selectedQuantity, selectedFace });
+  const zaiAvailable = isValidZaiBid(currentBid, directZaiBid.quantity, directZaiBid.face, { match, playerCount: tablePlayerCount });
   const currentBidJokerInfo = getMatchJokerDisplay(match, currentBid, tx);
   const selectedBidJokerInfo = getSelectedBidJokerInfo({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match, tx });
+  const directZaiSubtitle = zaiAvailable
+    ? `${directZaiBid.quantity} x ${directZaiBid.face} · ${tx('Joker OFF')}`
+    : tx('Joker OFF');
   const chaiStep = getChaiQuantityStep(match);
   const chaiHint = currentBid && currentBidJokerInfo.mode === 'zai' && !zaiEnabled
     ? `${tx('Increase by +2 to reopen joker')} (${toNumber(currentBid.quantity, 0) + chaiStep}+)`
@@ -1422,7 +1557,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const increaseQuantity = () => setSelectedQuantity((value) => Math.min(quantityMax, toNumber(value, quantityMin) + 1));
   const challengeDisabled = !canCallLiar;
   const pekDisabled = !canCallPek;
+  const rerollDisabled = !canReroll;
   const bidDisabled = !canSubmitBid || !bidIsValid || !coinBetIsValid;
+  const zaiDisabled = !canSubmitBid || !zaiAvailable || !coinBetIsValid;
+  const rerollButtonSubtitle = rerollSubtitle(rerollState, tx);
   const turnName = playerName(activePlayer, myTurn ? 'You' : 'Player');
   const currentCoinBet = getMatchCoinBet(match);
   const totalPot = getTotalPot(match);
@@ -1617,6 +1755,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           })}
         </div>
         <div className="gameplay-bid-selector__actionRow" role="group" aria-label={tx('Bid actions')}>
+          <ActionButton className="gameplay-action--reroll gameplay-action--compact" skin="B!.png" title="REROLL" subtitle={rerollButtonSubtitle} onClick={submitReroll} disabled={rerollDisabled} tx={tx} />
           <ActionButton className="gameplay-action--raise gameplay-action--compact" skin="B!.png" title="CONFIRM BID" subtitle={bidSubmitSubtitle} onClick={submitBid} disabled={bidDisabled} tx={tx} />
           <ActionButton className="gameplay-action--call gameplay-action--compact" skin="B2.png" title="CALL LIAR" subtitle={`Risk ${formatAmount(pekSettings.perGameAmount || currentCoinBet)}`} onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
           {pekSettings.pekEnabled ? (
@@ -1624,14 +1763,14 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           ) : null}
           <button
             type="button"
-            className={`gameplay-action gameplay-action--zai gameplay-action--compact ${zaiEnabled ? 'is-active' : ''}`}
-            onClick={() => setZaiEnabled((value) => !value)}
-            aria-pressed={zaiEnabled}
-            disabled={!zaiAvailable}
+            className="gameplay-action gameplay-action--zai gameplay-action--compact"
+            onClick={submitZaiBid}
+            aria-pressed={false}
+            disabled={zaiDisabled}
           >
-            <img className="gameplay-action__skin" src={`${asset}${zaiEnabled ? 'B3.png' : 'B!.png'}`} alt="" draggable="false" />
+            <img className="gameplay-action__skin" src={`${asset}B3.png`} alt="" draggable="false" />
             <span className="gameplay-action__title">{tx('ZAI')}</span>
-            <span className="gameplay-action__subtitle">{tx(zaiEnabled ? 'Joker OFF' : 'Joker ON')}</span>
+            <span className="gameplay-action__subtitle">{directZaiSubtitle}</span>
           </button>
         </div>
       </div>
