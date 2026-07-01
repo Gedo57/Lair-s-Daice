@@ -1059,41 +1059,101 @@ function bidLabel(bid, tx = (value) => value) {
   return tag ? `${base} ${tx(tag)}` : base;
 }
 
-function describeRoundResult(roundResult, tx) {
-  if (!roundResult) return '';
+function roundResultAmount(roundResult) {
+  if (!roundResult) return 0;
 
-  if (roundResult.challengeType === 'forfeit') {
-    return `${roundResult.loserName || tx('Player')} ${tx('forfeited the match')}`;
-  }
+  const playerDeltas = Array.isArray(roundResult.playerDeltas) ? roundResult.playerDeltas : [];
+  const largestDelta = playerDeltas.reduce((max, row) => Math.max(max, Math.abs(toNumber(row?.amount ?? row?.delta ?? row?.coins, 0))), 0);
 
-  const loserName = roundResult.loserName || tx('Player');
-  const bidTruth = roundResult.bidWasTrue ? tx('Bid was true') : tx('Bid was false');
-  const challengeType = String(roundResult.challengeType || roundResult.actionType || '').toLowerCase();
-  const isPekChallenge = ['pek', 'call_pek', 'slam', 'call_slam'].includes(challengeType) || roundResult.isPek || roundResult.isSlam;
-  const lostCoins = firstPositiveNumber(
+  return firstPositiveNumber(
+    roundResult.viewerAmount,
+    roundResult.winnerAmount,
+    roundResult.winAmount,
+    roundResult.rewardAmount,
     roundResult.challengeAmount,
     roundResult.riskAmount,
     roundResult.stackLost,
     roundResult.lossAmount,
     roundResult.finalPekAmount,
     roundResult.finalSlamAmount,
-  );
-
-  if (Number.isFinite(lostCoins) && lostCoins > 0) {
-    const label = isPekChallenge ? tx('Pek/Slam') : tx('Call Liar');
-    const bustSuffix = roundResult.bustedBelowMinimumBid
-      ? ` ${tx('Eliminated because stack is below minimum bid')}.`
-      : '';
-    return `${bidTruth}. ${label}: ${loserName} ${tx('lost')} ${formatAmount(lostCoins)} ${tx('coins')}.${bustSuffix}`;
-  }
-
-  return `${bidTruth}.`;
+    largestDelta,
+  ) || 0;
 }
 
-function roundResultTitle(roundResult, tx) {
+function roundResultPlayerRef(roundResult, role) {
+  if (!roundResult) return null;
+
+  const prefix = role === 'winner' ? 'winner' : 'loser';
+  const userId = roundResult[`${prefix}UserId`] || roundResult[`${prefix}Id`] || roundResult[`${prefix}PlayerId`] || null;
+  const username = roundResult[`${prefix}Name`] || roundResult[`${prefix}Username`] || null;
+
+  return {
+    id: userId,
+    userId,
+    playerId: userId,
+    username,
+    displayName: username,
+    name: username,
+  };
+}
+
+function roundResultViewerOutcome(roundResult, viewerPlayer, user) {
+  const winnerRef = roundResultPlayerRef(roundResult, 'winner');
+  const loserRef = roundResultPlayerRef(roundResult, 'loser');
+  const viewerRefs = [viewerPlayer, user].filter(Boolean);
+
+  const viewerWon = winnerRef && viewerRefs.some((ref) => samePlayer(winnerRef, ref));
+  const viewerLost = loserRef && viewerRefs.some((ref) => samePlayer(loserRef, ref));
+
+  if (viewerWon) return 'won';
+  if (viewerLost) return 'lost';
+  return '';
+}
+
+function describeRoundResult(roundResult, tx, viewerPlayer = null, user = null) {
+  if (!roundResult) return '';
+
+  if (roundResult.challengeType === 'forfeit') {
+    return `${roundResult.loserName || tx('Player')} ${tx('forfeited the match')}`;
+  }
+
+  const amount = roundResultAmount(roundResult);
+  const outcome = roundResultViewerOutcome(roundResult, viewerPlayer, user);
+  const winnerName = roundResult.winnerName || tx('Player');
+  const loserName = roundResult.loserName || tx('Player');
+  const bustSuffix = roundResult.bustedBelowMinimumBid
+    ? ` ${tx('Eliminated because stack is below minimum bid')}.`
+    : '';
+
+  if (outcome === 'won') {
+    return amount > 0
+      ? `${tx('You won')} ${formatAmount(amount)} ${tx('coins')}.${bustSuffix}`
+      : `${tx('You won this bid')}.${bustSuffix}`;
+  }
+
+  if (outcome === 'lost') {
+    return amount > 0
+      ? `${tx('You lost')} ${formatAmount(amount)} ${tx('coins')}.${bustSuffix}`
+      : `${tx('You lost this bid')}.${bustSuffix}`;
+  }
+
+  if (amount > 0) {
+    return `${winnerName} ${tx('won')} ${formatAmount(amount)} ${tx('coins')}. ${loserName} ${tx('lost')} ${formatAmount(amount)} ${tx('coins')}.${bustSuffix}`;
+  }
+
+  return `${winnerName} ${tx('won the bid')}.`;
+}
+
+function roundResultTitle(roundResult, tx, viewerPlayer = null, user = null) {
   if (!roundResult) return tx('Round Result');
   if (roundResult.challengeType === 'forfeit') return tx('Forfeit');
-  return roundResult.bidWasTrue ? tx('Bid Confirmed') : tx('Liar Caught');
+
+  const outcome = roundResultViewerOutcome(roundResult, viewerPlayer, user);
+  if (outcome === 'won') return tx('You won the bid');
+  if (outcome === 'lost') return tx('You lost the bid');
+
+  const winnerName = roundResult.winnerName || tx('Player');
+  return `${winnerName} ${tx('won the bid')}`;
 }
 
 function revealedDiceRows(roundResult) {
@@ -1673,8 +1733,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
       {showRoundResult ? (
         <div className="gameplay-round-result">
-          <div className="gameplay-round-result__title">{roundResultTitle(roundResult, tx)}</div>
-          <div className="gameplay-round-result__summary">{describeRoundResult(roundResult, tx)}</div>
+          <div className="gameplay-round-result__title">{roundResultTitle(roundResult, tx, viewerPlayer, user)}</div>
+          <div className="gameplay-round-result__summary">{describeRoundResult(roundResult, tx, viewerPlayer, user)}</div>
           <div className="gameplay-round-result__meta">
             <span>{tx('Bid')}: {bidLabel(roundResult?.bid, tx)}</span>
             <span>{tx('Actual')}: {toNumber(roundResult?.actualCount, 0)}</span>

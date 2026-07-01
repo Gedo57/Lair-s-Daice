@@ -66,6 +66,7 @@ import './styles/base/gameplay-turn-intro.css';
 import './styles/mobile/portrait-gameplay-actions-manual.mobile.css';
 
 import './styles/base/gameplay-chinese-layout-fix.css';
+import './styles/mobile/gameplay-round-result-manual.mobile.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

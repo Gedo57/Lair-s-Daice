@@ -543,11 +543,11 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 /* Result overlay: compact, readable and no longer colliding with controls. */
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result {
   left: 54px !important;
-  top: 244px !important;
+  top: 232px !important;
   width: 612px !important;
-  max-height: 198px !important;
+  max-height: 250px !important;
   min-height: 0 !important;
-  padding: 12px 16px 10px !important;
+  padding: 12px 16px 48px !important;
   z-index: 125 !important;
   overflow: hidden !important;
   pointer-events: auto;
@@ -576,9 +576,10 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   display: grid !important;
   grid-template-columns: 1fr !important;
   gap: 3px !important;
-  max-height: 52px !important;
+  max-height: 78px !important;
   margin-top: 4px !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__player {
@@ -598,13 +599,18 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__ok {
-  margin-top: 20px !important;
-  min-width: 86px !important;
-  height: 30px !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 10px !important;
+  transform: translateX(-50%) !important;
+  margin-top: 0 !important;
+  min-width: 94px !important;
+  height: 32px !important;
   border-radius: 999px !important;
   font-size: 12px !important;
   font-weight: 900 !important;
   letter-spacing: .08em !important;
+  z-index: 40 !important;
   pointer-events: auto !important;
 }
 
