@@ -188,7 +188,7 @@ function buildMatchmakingPayload(room = {}) {
   const pricing = room.pricing && typeof room.pricing === 'object' ? room.pricing : {};
   const rewards = room.rewards && typeof room.rewards === 'object' ? room.rewards : {};
   const key = normalizeRoomKey(room.key || room.id || room.tableId || room.tierId || room.title);
-  const selectedPlayers = key === 'private' ? clampPlayerCount(room.maxPlayers || room.selectedPlayers || 2) : getSelectedPlayerCount(room);
+  const selectedPlayers = clampPlayerCount(room.selectedPlayers || room.requiredPlayers || room.maxPlayers || room.playersCount || (key === 'private' ? 2 : getSelectedPlayerCount(room)));
   const buyInAmount = pricing.buyInAmount ?? pricing.entryFee ?? room.buyInAmount ?? room.entryFee ?? room.fee ?? undefined;
   const pekPercentage = Number(String(resolveTierPekPercentage(room, pricing)).replace(/[^0-9.-]/g, '')) || (key === 'high-roller' ? 50 : 25);
   const pekEnabled = true;

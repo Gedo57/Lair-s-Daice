@@ -245,7 +245,10 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
     initialBuyIn,
   ));
   const pekEnabled = true;
-  const selectedPekPercentage = normalizePekPercentage(settings.pekPercentage || settings.slamPercentage || settings.pekPercent || settings.slamPercent, DEFAULT_PEK_PERCENTAGE);
+  const [selectedPekPercentage, setSelectedPekPercentage] = useState(() => normalizePekPercentage(
+    settings.pekPercentage || settings.slamPercentage || settings.pekPercent || settings.slamPercent,
+    DEFAULT_PEK_PERCENTAGE,
+  ));
   const [isPrivate, setIsPrivate] = useState(settings.isPrivate ?? true);
 
   const isBotsMode = selectedRoomMode === 'bots';
@@ -263,7 +266,7 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const localCreateError = pekRiskError || insufficientFundsError;
   const createDisabled = isCreating || perGameInvalid || pekRiskInvalid || insufficientFunds;
   const perGameCopy = `Bet ${formatStakeOption(safeSelectedPerGame)}`;
-  const selectedRulesCopy = `Rules: 5 dice each • Buy-in ${formatStakeOption(selectedBuyIn)} • ${perGameCopy} • Pek/Slam ON`;
+  const selectedRulesCopy = `Rules: 5 dice each • Buy-in ${formatStakeOption(selectedBuyIn)} • ${perGameCopy} • Pek/Slam ${selectedPekPercentage}%`;
 
   const currentSettings = {
     ...settings,
@@ -471,6 +474,23 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
             />
           </div>
 
+          <div className="create-room-block create-room-block--pekPercent">
+            <span className="create-room-label">{tx('PEK / SLAM')}</span>
+            <div className="create-room-optionRow create-room-optionRow--pekPercent">
+              {PEK_PERCENTAGE_OPTIONS.map((value) => (
+                <OptionButton
+                  key={value}
+                  value={`${value}%`}
+                  active={value === selectedPekPercentage}
+                  className="create-room-option--pekPercent"
+                  tx={tx}
+                  onClick={() => setSelectedPekPercentage(value)}
+                />
+              ))}
+            </div>
+            <span className="create-room-pekPreview">{tx('PEK amount')} {formatStakeOption(finalPekAmount)}</span>
+          </div>
+
           <div className="create-room-block create-room-block--mode">
             <span className="create-room-label">{tx('ROOM MODE')}</span>
             <div className="create-room-optionRow create-room-optionRow--mode">
@@ -502,11 +522,6 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
               </button>
             </div>
           </div>
-
-          <button className="create-room-invite" type="button" onClick={() => navigation.goRoomLobby()}>
-            <img className="create-room-invite__skin" src={`${asset}b4.png`} alt="" draggable="false" />
-            <span className="create-room-invite__text">{tx(data?.currentRoom ? 'OPEN LOBBY' : 'INVITE FRIENDS')}</span>
-          </button>
 
           <span className="create-room-rules">{tx(isBotsMode ? 'Bots mode starts immediately with Bots.' : selectedRulesCopy)}</span>
 

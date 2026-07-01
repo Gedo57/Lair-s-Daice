@@ -21,9 +21,9 @@ function looksLikeRoomCode(value) {
   return /^LD[-A-Z0-9]*\d/i.test(text) || /^[A-Z0-9]{4,10}$/.test(text);
 }
 
-const MIN_BUY_IN = 500;
-const MIN_RANGE_PER_GAME_BASE = 500;
-const MIN_STATIC_PER_GAME = 100;
+const MIN_BUY_IN = 5;
+const MIN_RANGE_PER_GAME_BASE = 5;
+const MIN_STATIC_PER_GAME = 5;
 const PEK_PERCENTAGE_OPTIONS = [0, 25, 50, 100];
 
 function numericSetting(settings = {}, keys = [], fallback = undefined) {
@@ -47,8 +47,8 @@ function cleanCoinBetOptions(options = [], min = 0, max = Infinity) {
 }
 
 function normalizePerGameMode(value) {
-  const normalized = String(value || 'range').trim().toLowerCase();
-  return normalized === 'static' ? 'static' : 'range';
+  const normalized = String(value || 'static').trim().toLowerCase();
+  return normalized === 'range' ? 'range' : 'static';
 }
 
 function buildRangeCoinBetOptions(baseAmount) {
@@ -138,7 +138,7 @@ function normalizeCreateRoomPayload(settings = {}) {
   const rawBuyInAmount = numericSetting(settings, ['buyInAmount', 'buyInCoins', 'customBuyIn', 'customStake', 'stakeAmount', 'stake', 'entryFee'], MIN_BUY_IN);
   const buyInAmount = Math.max(MIN_BUY_IN, rawBuyInAmount);
   const perGameMode = normalizePerGameMode(settings.perGameMode || settings.coinBetMode || settings.betMode);
-  const pekEnabled = booleanSetting(settings.pekEnabled ?? settings.slamEnabled ?? settings.pekMode ?? settings.slamMode, false);
+  const pekEnabled = true;
   const pekPercentage = normalizePekPercentage(settings.pekPercentage ?? settings.slamPercentage ?? settings.pekPercent ?? settings.slamPercent, 25);
   const bidCoinStep = numericSetting(settings, ['bidCoinStep', 'coinBidStep']);
 

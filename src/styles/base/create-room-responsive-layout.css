@@ -509,11 +509,9 @@ html.keyboard-open[data-device='mobile'][data-orientation='portrait'] .app-shell
 /* Patch 3: Create Room static betting cleanup. */
 html[data-device='desktop'] .app-shell--createroom .create-room-block--cups,
 html[data-device='desktop'] .app-shell--createroom .create-room-block--pekToggle,
-html[data-device='desktop'] .app-shell--createroom .create-room-block--pekPercent,
 html[data-device='desktop'] .app-shell--createroom .create-room-perGameMode,
 html[data-device='mobile'] .app-shell--createroom .create-room-block--cups,
 html[data-device='mobile'] .app-shell--createroom .create-room-block--pekToggle,
-html[data-device='mobile'] .app-shell--createroom .create-room-block--pekPercent,
 html[data-device='mobile'] .app-shell--createroom .create-room-perGameMode {
   display: none !important;
 }
@@ -565,18 +563,20 @@ html[data-device='desktop'] .app-shell--createroom .create-room-block--bid,
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--bid { left: 42px !important; top: 150px !important; width: 265px !important; height: 64px !important; }
 html[data-device='desktop'] .app-shell--createroom .create-room-block--perGame,
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--perGame { left: 390px !important; top: 150px !important; width: 250px !important; height: 64px !important; }
+html[data-device='desktop'] .app-shell--createroom .create-room-block--pekPercent,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--pekPercent { left: 42px !important; top: 235px !important; width: 265px !important; height: 76px !important; }
 html[data-device='desktop'] .app-shell--createroom .create-room-block--mode,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--mode { left: 42px !important; top: 235px !important; width: 250px !important; height: 64px !important; }
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--mode { left: 390px !important; top: 235px !important; width: 250px !important; height: 64px !important; }
 html[data-device='desktop'] .app-shell--createroom .create-room-block--code,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--code { left: 390px !important; top: 235px !important; width: 265px !important; height: 72px !important; }
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-block--code { left: 210px !important; top: 326px !important; width: 265px !important; height: 72px !important; }
 html[data-device='desktop'] .app-shell--createroom .create-room-invite,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-invite { left: 235px !important; top: 330px !important; width: 220px !important; height: 48px !important; }
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-invite { display: none !important; }
 html[data-device='desktop'] .app-shell--createroom .create-room-rules,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-rules { top: 392px !important; }
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-rules { top: 410px !important; }
 html[data-device='desktop'] .app-shell--createroom .create-room-rules--error,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-rules--error { top: 416px !important; }
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-rules--error { top: 434px !important; }
 html[data-device='desktop'] .app-shell--createroom .create-room-rules--backendError,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-rules--backendError { top: 438px !important; }
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-rules--backendError { top: 456px !important; }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--players { left: 0 !important; top: 84px !important; width: 250px !important; height: 72px !important; }
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--timer { left: 298px !important; top: 84px !important; width: 250px !important; height: 72px !important; }
@@ -584,11 +584,53 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--perGame { left: 298px !important; top: 174px !important; width: 250px !important; height: 72px !important; }
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--private { left: 0 !important; top: 264px !important; width: 250px !important; height: 72px !important; }
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--mode { left: 298px !important; top: 264px !important; width: 250px !important; height: 72px !important; }
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--code { left: 149px !important; top: 360px !important; width: 250px !important; height: 82px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--pekPercent { left: 0 !important; top: 354px !important; width: 250px !important; height: 82px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-block--code { left: 298px !important; top: 354px !important; width: 250px !important; height: 82px !important; }
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-stepper--perGame,
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-stepper--staticPerGame { left: 17px !important; top: 36px !important; width: 216px !important; height: 46px !important; grid-template-columns: 50px 1fr 50px !important; }
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-invite { left: 164px !important; top: 458px !important; width: 220px !important; height: 50px !important; }
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-rules { top: 526px !important; }
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-rules--error { top: 556px !important; }
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-rules--backendError { top: 580px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-invite { display: none !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-rules { top: 464px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-rules--error { top: 494px !important; }
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-rules--backendError { top: 518px !important; }
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-bottom { top: 628px !important; }
+
+
+/* Patch 5: restored PEK/Slam percentage selector while keeping Pek always enabled. */
+html[data-device='desktop'] .app-shell--createroom .create-room-optionRow--pekPercent,
+html[data-device='mobile'] .app-shell--createroom .create-room-optionRow--pekPercent {
+  position: absolute;
+  left: 0;
+  top: 22px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+html[data-device='desktop'] .app-shell--createroom .create-room-option--pekPercent,
+html[data-device='mobile'] .app-shell--createroom .create-room-option--pekPercent {
+  width: 72px;
+  height: 32px;
+}
+
+html[data-device='desktop'] .app-shell--createroom .create-room-option--pekPercent .create-room-option__text,
+html[data-device='mobile'] .app-shell--createroom .create-room-option--pekPercent .create-room-option__text {
+  font-size: 14px;
+  letter-spacing: .02em;
+}
+
+html[data-device='desktop'] .app-shell--createroom .create-room-pekPreview,
+html[data-device='mobile'] .app-shell--createroom .create-room-pekPreview {
+  top: 59px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-optionRow--pekPercent {
+  top: 32px;
+  gap: 6px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--createroom .create-room-option--pekPercent {
+  width: 66px;
+  height: 32px;
+}
