@@ -4,6 +4,13 @@ import { useLanguage } from './i18n/useLanguage.js';
 import { initialGameData } from './data/initialGameData.js';
 import { createMockBackendActions, mockGameData } from './data/mockGameData.js';
 import { getAssetsForPhase, getAssetsForScreen } from './config/assetsManifest.js';
+import {
+  resolveCreateRoomBackgroundContract,
+  resolveGameDataBackground,
+  resolveGameplayBackgroundContract,
+  resolveRoomLobbyBackgroundContract,
+  toCssBackgroundImageValue,
+} from './utils/gameplayBackgrounds.js';
 import { preloadAssets, preloadAssetsInBackground } from './services/assetPreloader.js';
 import { backendBridge } from './services/backendBridge.js';
 import {
@@ -365,9 +372,13 @@ function normalizeSelectableRoom(room = {}, index = 0) {
   const decor = ROOM_SELECT_DECOR_BY_KEY[key] || ROOM_SELECT_DECOR[index] || ROOM_SELECT_DECOR[0];
   const title = room.title || room.name || room.label || String(id).replace(/[-_]+/g, ' ').toUpperCase();
   const backendPricing = normalizeBackendPricing(room);
+  const backgroundContract = resolveGameplayBackgroundContract([room], {
+    fallbackKey: key === 'private' ? 'private_room' : key === 'high-roller' ? 'table_buyin_5000' : 'table_buyin_500',
+  });
 
   return {
     ...room,
+    ...backgroundContract,
     id,
     tierId: room.tierId || room.id || id,
     tableId: room.tableId || room.id || id,
@@ -1021,7 +1032,29 @@ function isGameStartedPayload(payload = {}) {
 function mergeSocketMatchmakingState(source = {}, matchmakingSource = null) {
   const merged = { ...(matchmakingSource || {}) };
 
-  ['queueId', 'matchId', 'roomId', 'playersFound', 'requiredPlayers', 'startsAt', 'countdownStartedAt', 'entryFeeCharged'].forEach((key) => {
+  [
+    'queueId',
+    'matchId',
+    'roomId',
+    'playersFound',
+    'requiredPlayers',
+    'startsAt',
+    'countdownStartedAt',
+    'entryFeeCharged',
+    'backgroundKey',
+    'gameplayBackgroundKey',
+    'backgroundAsset',
+    'gameplayBackgroundAsset',
+    'backgroundUrl',
+    'gameplayBackgroundUrl',
+    'backgroundImage',
+    'tableBackgroundUrl',
+    'backgroundSource',
+    'backgroundScope',
+    'backgroundVariant',
+    'backgroundContractVersion',
+    'background',
+  ].forEach((key) => {
     if (source[key] !== undefined && merged[key] === undefined) merged[key] = source[key];
   });
 
@@ -1207,9 +1240,13 @@ function normalizeRoom(room = {}) {
   const maxPlayers = Number(room.maxPlayers || room.selectedPlayers || 4);
   const playerCount = Number(room.playerCount || playerIds.length || players.length || 0);
   const backendPricing = normalizeBackendPricing(room);
+  const backgroundContract = resolveGameplayBackgroundContract([room], {
+    fallbackKey: room.isPrivate ? 'private_room' : undefined,
+  });
 
   return {
     ...room,
+    ...backgroundContract,
     id,
     roomId: room.roomId || id,
     key: room.key || id,
@@ -1358,7 +1395,17 @@ function extractGameDataPatch(payload = {}) {
 
   const matchSource = source.match || source.gameState || source.game || source.activeMatch || null;
   if (matchSource && typeof matchSource === 'object') {
-    patch.match = matchSource;
+    const matchBackgroundContract = resolveGameplayBackgroundContract([
+      matchSource,
+      matchSource.table,
+      matchSource.selectedTable,
+      matchSource.room,
+      source,
+      source.table,
+      source.selectedTable,
+      source.room,
+    ]);
+    patch.match = { ...matchSource, ...matchBackgroundContract };
     if (matchSource.id || matchSource.matchId) patch.currentMatchId = matchSource.id || matchSource.matchId;
     if (Object.prototype.hasOwnProperty.call(matchSource, 'roundResult')) {
       patch.roundResult = matchSource.roundResult || null;
@@ -1390,7 +1437,15 @@ function extractGameDataPatch(payload = {}) {
   const matchmakingSource = source.matchmaking || source.queue || source.queueStatus || (hasTopLevelMatchmaking ? source : null);
   if (matchmakingSource) {
     const mergedMatchmakingSource = mergeSocketMatchmakingState(source, matchmakingSource);
-    patch.serverMatchmaking = mergedMatchmakingSource;
+    const matchmakingBackgroundContract = resolveGameplayBackgroundContract([
+      mergedMatchmakingSource,
+      mergedMatchmakingSource.selectedTable,
+      mergedMatchmakingSource.table,
+      source,
+      source.selectedTable,
+      source.table,
+    ]);
+    patch.serverMatchmaking = { ...mergedMatchmakingSource, ...matchmakingBackgroundContract };
     const serverMatchmakingUi = normalizeMatchmakingUi(mergedMatchmakingSource);
     if (serverMatchmakingUi) patch.matchmaking = serverMatchmakingUi;
     if (mergedMatchmakingSource.selectedTable || mergedMatchmakingSource.table || mergedMatchmakingSource.tier) {
@@ -1751,11 +1806,26 @@ export default function App() {
     };
   }, []);
 
-  const appStyle = useMemo(() => ({
-    '--design-width': `${layout.resolution.width}px`,
-    '--design-height': `${layout.resolution.height}px`,
-    '--ui-scale': layout.scale,
-  }), [layout]);
+  const activeBackgroundData = screen === 'mockgame' ? mockGameplayData : gameData;
+  const gameplayBackground = useMemo(() => resolveGameDataBackground(activeBackgroundData), [activeBackgroundData]);
+  const createRoomBackground = useMemo(() => resolveCreateRoomBackgroundContract(), []);
+  const roomLobbyBackground = useMemo(() => resolveRoomLobbyBackgroundContract(activeBackgroundData), [activeBackgroundData]);
+
+  const appStyle = useMemo(() => {
+    const nextStyle = {
+      '--design-width': `${layout.resolution.width}px`,
+      '--design-height': `${layout.resolution.height}px`,
+      '--ui-scale': layout.scale,
+      '--gameplay-background-image': toCssBackgroundImageValue(gameplayBackground.backgroundUrl),
+      '--create-room-background-image': toCssBackgroundImageValue(createRoomBackground.backgroundUrl),
+    };
+
+    if (roomLobbyBackground?.backgroundUrl) {
+      nextStyle['--room-lobby-background-image'] = toCssBackgroundImageValue(roomLobbyBackground.backgroundUrl);
+    }
+
+    return nextStyle;
+  }, [layout, gameplayBackground, createRoomBackground, roomLobbyBackground]);
 
   const navigateToScreen = (nextScreen) => {
     const safeScreen = SCREENS[nextScreen] ? nextScreen : 'starter';
@@ -2432,6 +2502,8 @@ export default function App() {
       className={`app-shell app-shell--${layout.mode} app-shell--${activeScreenClass}`}
       style={appStyle}
       data-backend-action={activeBackendStatus.lastAction || undefined}
+      data-gameplay-background-key={gameplayBackground.backgroundKey || undefined}
+      data-gameplay-background-url={gameplayBackground.backgroundUrl || undefined}
     >
       <div className="orientation-guard" aria-hidden="true">
         <div className="orientation-guard__card">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveProfileAvatarSrc as resolveAvatarSrc } from '../utils/profileAvatars.js';
 import { startVoiceChatSession } from '../services/voiceChatService.js';
+import { resolveGameDataBackground, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
 
 const asset = '/assets/liars-dice/gameplay/';
 
@@ -1624,10 +1625,14 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const totalPot = getTotalPot(match);
   const viewerStack = getPlayerStack(viewerPlayer || user, 0);
   const turnIntroDisplayPlayer = turnIntroPlayer || turnDicePlayer || activePlayer || viewerPlayer;
+  const backgroundContract = resolveGameDataBackground(data);
 
   return (
     <section
       className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${activePlayer ? 'has-active-player' : ''} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''}`}
+      style={{ '--gameplay-background-image': toCssBackgroundImageValue(backgroundContract.backgroundUrl) }}
+      data-background-key={backgroundContract.backgroundKey}
+      data-background-url={backgroundContract.backgroundUrl}
       data-turn-intro-phase={turnIntroPhase}
       data-turn-intro-player={playerId(turnIntroPlayer) || playerName(turnIntroPlayer, '') || undefined}
       data-turn-intro-count={tablePlayerCount}

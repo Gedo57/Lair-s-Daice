@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import ProfileHud from '../components/ProfileHud.jsx';
+import { resolveGameplayBackgroundContract } from '../utils/gameplayBackgrounds.js';
 
 const asset = '/assets/liars-dice/room-select/';
 const sparkles = Array.from({ length: 20 }, (_, index) => index + 1);
@@ -163,11 +164,15 @@ function normalizeDisplayRoom(room = {}, selectedPlayerCounts = {}) {
   const key = normalizeRoomKey(room.key || room.id || room.tableId || room.tierId || room.title);
   const selectedPlayers = getSelectedPlayerCount({ ...room, key }, selectedPlayerCounts);
   const pricing = room.pricing && typeof room.pricing === 'object' ? room.pricing : {};
+  const backgroundContract = resolveGameplayBackgroundContract([{ ...room, key }], {
+    fallbackKey: key === 'private' ? 'private_room' : key === 'high-roller' ? 'table_buyin_5000' : 'table_buyin_500',
+  });
   const pekPercentage = resolveTierPekPercentage({ ...room, key }, pricing);
   const pekNumber = Number(String(pekPercentage).replace(/[^0-9.-]/g, '')) || (key === 'high-roller' ? 50 : 25);
 
   return {
     ...room,
+    ...backgroundContract,
     key,
     selectedPlayers,
     minPlayers: key === 'private' ? 2 : selectedPlayers,
@@ -190,6 +195,9 @@ function buildMatchmakingPayload(room = {}) {
   const key = normalizeRoomKey(room.key || room.id || room.tableId || room.tierId || room.title);
   const selectedPlayers = clampPlayerCount(room.selectedPlayers || room.requiredPlayers || room.maxPlayers || room.playersCount || (key === 'private' ? 2 : getSelectedPlayerCount(room)));
   const buyInAmount = pricing.buyInAmount ?? pricing.entryFee ?? room.buyInAmount ?? room.entryFee ?? room.fee ?? undefined;
+  const backgroundContract = resolveGameplayBackgroundContract([{ ...room, key, buyInAmount }], {
+    fallbackKey: key === 'private' ? 'private_room' : key === 'high-roller' ? 'table_buyin_5000' : 'table_buyin_500',
+  });
   const pekPercentage = Number(String(resolveTierPekPercentage(room, pricing)).replace(/[^0-9.-]/g, '')) || (key === 'high-roller' ? 50 : 25);
   const pekEnabled = true;
   const normalizedPricing = {
@@ -202,6 +210,7 @@ function buildMatchmakingPayload(room = {}) {
   };
 
   return {
+    ...backgroundContract,
     tierId: room.tierId || room.id || room.key,
     tableId: room.tableId || room.id || room.key,
     key,
@@ -265,6 +274,8 @@ function RoomCard({ room, onPlay, onCreatePrivate, onCyclePlayers, tx }) {
   return (
     <article
       className={`room-select-card room-select-card--${room.key} room-select-card--players-${room.selectedPlayers || room.maxPlayers || 2}${cycleable ? ' room-select-card--cycleable' : ''}`}
+      data-background-key={room.backgroundKey || undefined}
+      data-background-url={room.backgroundUrl || undefined}
       role="button"
       tabIndex={0}
       onClick={handleCardClick}

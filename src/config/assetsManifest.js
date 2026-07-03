@@ -72,7 +72,9 @@ const roomSelectTableAssets = files(ASSET_FOLDERS.roomSelect, [
   'IC7.png',
 ]);
 
-const createRoomSharedAssets = files(ASSET_FOLDERS.createRoom, [
+const createRoomSharedAssets = [
+  file(ASSET_FOLDERS.gameplay, 'BG-3.png'),
+  ...files(ASSET_FOLDERS.createRoom, [
   'bg.png',
   'p1.png',
   'Pannal.png',
@@ -82,8 +84,10 @@ const createRoomSharedAssets = files(ASSET_FOLDERS.createRoom, [
   'b3.png',
   'b4.png',
   'b5.png',
-]);
+  ]),
+];
 
+const gameplayBackgroundAssets = files(ASSET_FOLDERS.gameplay, ['BG.png', 'BG-2.png', 'BG-3.png']);
 const gameplayDiceAssets = files(ASSET_FOLDERS.gameplay, Array.from({ length: 6 }, (_, index) => `n${index + 1}.png`));
 const gameplayRedDiceAssets = files(ASSET_FOLDERS.gameplay, ['n11.png', 'n22.png', 'n33.png', 'n44.png', 'n55.png', 'n66.png']);
 
@@ -178,7 +182,7 @@ export const ASSET_GROUPS = {
   ],
 
   gameplay: [
-    file(ASSET_FOLDERS.gameplay, 'BG.png'),
+    ...gameplayBackgroundAssets,
     file(ASSET_FOLDERS.gameplay, 'chat-button-red.png'),
     file(ASSET_FOLDERS.gameplay, 'leave-button-red.png'),
     file(ASSET_FOLDERS.gameplay, 'cup.png'),

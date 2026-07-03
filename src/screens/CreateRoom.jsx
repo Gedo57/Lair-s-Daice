@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ProfileHud from '../components/ProfileHud.jsx';
+import { resolveCreateRoomBackgroundContract, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
 const asset = '/assets/liars-dice/create-room/';
 const shared = '/assets/liars-dice/room-select/';
 
@@ -267,9 +268,11 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const createDisabled = isCreating || perGameInvalid || pekRiskInvalid || insufficientFunds;
   const perGameCopy = `Bet ${formatStakeOption(safeSelectedPerGame)}`;
   const selectedRulesCopy = `Rules: 5 dice each • Buy-in ${formatStakeOption(selectedBuyIn)} • ${perGameCopy} • Pek/Slam ${selectedPekPercentage}%`;
+  const backgroundContract = resolveCreateRoomBackgroundContract();
 
   const currentSettings = {
     ...settings,
+    ...backgroundContract,
     roomName,
     selectedPlayers,
     maxPlayers: Number(selectedPlayers),
@@ -400,7 +403,13 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   };
 
   return (
-    <section className="screen create-room-screen" aria-label={tx('Create Room')}>
+    <section
+      className="screen create-room-screen"
+      style={{ '--create-room-background-image': toCssBackgroundImageValue(backgroundContract.backgroundUrl) }}
+      data-background-key={backgroundContract.backgroundKey}
+      data-background-url={backgroundContract.backgroundUrl}
+      aria-label={tx('Create Room')}
+    >
       <TopHud user={user} wallet={wallet} />
 
       <div className="create-room-board">

@@ -77,16 +77,19 @@ html[data-language='zh'] .app-shell--help {
 }
 
 .app-shell--gameplay {
-  background-image: url('/assets/liars-dice/gameplay/BG.png');
+  background-image: var(--gameplay-background-image, url('/assets/liars-dice/gameplay/BG.png'));
 }
 
 .app-shell--createroom {
+  background-image: var(--create-room-background-image, url('/assets/liars-dice/gameplay/BG-3.png'));
+}
+
+.app-shell--joinroom {
   background-image: url('/assets/liars-dice/room-select/BG.png');
 }
 
-.app-shell--joinroom,
 .app-shell--roomlobby {
-  background-image: url('/assets/liars-dice/room-select/BG.png');
+  background-image: var(--room-lobby-background-image, url('/assets/liars-dice/room-select/BG.png'));
 }
 
 .app-shell--starter .game-frame,
