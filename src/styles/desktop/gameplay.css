@@ -1327,10 +1327,10 @@ html[data-device='desktop'] .gameplay-current-bid__coinValue {
 html[data-device='desktop'] .gameplay-current-bid__coinValue--pot { font-size: 23px; }
 
 html[data-device='desktop'] .gameplay-cups {
-  left: 532px;
-  top: 355px;
-  width: 220px;
-  height: 150px;
+  left: 552px;
+  top: 375px;
+  width: 165px;
+  height: 112.5px;
 }
 
 html[data-device='desktop'] .gameplay-bid-selector {
