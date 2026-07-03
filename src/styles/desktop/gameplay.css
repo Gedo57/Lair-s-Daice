@@ -899,7 +899,7 @@ html[data-device='desktop'] .gameplay-round-badge__value {
 html[data-device='desktop'] .gameplay-round-result {
   position: absolute;
   left: 380px;
-  top: 185px;
+  top: 85px;
   width: 490px;
   min-height: 142px;
   z-index: 25;
