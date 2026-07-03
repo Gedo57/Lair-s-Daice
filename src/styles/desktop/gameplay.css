@@ -1969,7 +1969,7 @@ html[data-device='desktop'] .gameplay-bid-selector__jokerHint small {
 /* Patch: keep cups seated on the table after the gameplay UI polish overrides. */
 html[data-device='desktop'] .gameplay-cups {
   left: 505px !important;
-  top: 245px !important;
+  top: 195px !important;
   width: 245px !important;
   height: 190px !important;
   z-index: 21 !important;
