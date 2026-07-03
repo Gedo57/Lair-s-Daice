@@ -1411,6 +1411,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const [selectedFace, setSelectedFace] = useState(defaultBid.face || 1);
   const [selectedCoinBet, setSelectedCoinBet] = useState(getMatchCoinBet(match));
   const [zaiEnabled, setZaiEnabled] = useState(false);
+  const [isDiceFacePickerOpen, setDiceFacePickerOpen] = useState(false);
+  const faceDialRef = useRef(null);
+  const quantitySliderRef = useRef(null);
+  const quantitySliderDraggingRef = useRef(false);
 
   useEffect(() => {
     if (!currentMatchId && match) return undefined;
@@ -1433,11 +1437,24 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     setSelectedQuantity(Math.max(1, Math.min(quantityValues.length, defaultBid.quantity || 1)));
     setSelectedFace(Math.max(1, Math.min(6, defaultBid.face || 1)));
     setZaiEnabled(false);
+    setDiceFacePickerOpen(false);
   }, [defaultBid.quantity, defaultBid.face, quantityValues.length]);
 
   useEffect(() => {
     if (selectedFace === 1 && zaiEnabled) setZaiEnabled(false);
   }, [selectedFace, zaiEnabled]);
+
+  useEffect(() => {
+    if (!isDiceFacePickerOpen) return undefined;
+
+    const handleOutsideDiceFacePickerPointerDown = (event) => {
+      if (!faceDialRef.current || faceDialRef.current.contains(event.target)) return;
+      setDiceFacePickerOpen(false);
+    };
+
+    window.addEventListener('pointerdown', handleOutsideDiceFacePickerPointerDown);
+    return () => window.removeEventListener('pointerdown', handleOutsideDiceFacePickerPointerDown);
+  }, [isDiceFacePickerOpen]);
 
   useEffect(() => {
     const min = getMinimumCoinBet(match);
@@ -1612,8 +1629,74 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     ? `${tx('Increase by +2 to reopen joker')} (${toNumber(currentBid.quantity, 0) + chaiStep}+)`
     : '';
   const bidSubmitSubtitle = openingBidError || (bidIsValid ? (coinBetIsValid ? selectedBidJokerInfo.detail : tx('Coin bet out of range')) : tx('Bid must be higher'));
-  const decreaseQuantity = () => setSelectedQuantity((value) => Math.max(quantityMin, toNumber(value, quantityMin) - 1));
-  const increaseQuantity = () => setSelectedQuantity((value) => Math.min(quantityMax, toNumber(value, quantityMin) + 1));
+  useEffect(() => {
+    setSelectedQuantity((value) => Math.min(quantityMax, Math.max(quantityMin, toNumber(value, quantityMin))));
+  }, [quantityMin, quantityMax]);
+
+  const clampQuantityValue = (value) => Math.min(quantityMax, Math.max(quantityMin, toNumber(value, quantityMin)));
+  const sliderPercent = quantityMax > quantityMin ? ((clampQuantityValue(selectedQuantity) - quantityMin) / (quantityMax - quantityMin)) * 100 : 0;
+  const diceFacePickerOptions = faceOptions.filter((value) => value !== selectedFace);
+
+  const setQuantityFromSliderPointer = (event) => {
+    const slider = quantitySliderRef.current;
+    if (!slider) return;
+
+    const rect = slider.getBoundingClientRect();
+    if (!rect.width || quantityMax <= quantityMin) {
+      setSelectedQuantity(quantityMin);
+      return;
+    }
+
+    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    const nextQuantity = Math.round(quantityMin + ratio * (quantityMax - quantityMin));
+    setSelectedQuantity(clampQuantityValue(nextQuantity));
+  };
+
+  const handleQuantitySliderPointerDown = (event) => {
+    event.preventDefault();
+    quantitySliderDraggingRef.current = true;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setQuantityFromSliderPointer(event);
+  };
+
+  const handleQuantitySliderPointerMove = (event) => {
+    if (!quantitySliderDraggingRef.current) return;
+    event.preventDefault();
+    setQuantityFromSliderPointer(event);
+  };
+
+  const stopQuantitySliderDrag = (event) => {
+    quantitySliderDraggingRef.current = false;
+    event?.currentTarget?.releasePointerCapture?.(event.pointerId);
+  };
+
+  const handleQuantitySliderKeyDown = (event) => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      setSelectedQuantity((value) => clampQuantityValue(toNumber(value, quantityMin) - 1));
+      return;
+    }
+
+    if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      setSelectedQuantity((value) => clampQuantityValue(toNumber(value, quantityMin) + 1));
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      setSelectedQuantity(quantityMin);
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      setSelectedQuantity(quantityMax);
+    }
+  };
+
+  const decreaseQuantity = () => setSelectedQuantity((value) => clampQuantityValue(toNumber(value, quantityMin) - 1));
+  const increaseQuantity = () => setSelectedQuantity((value) => clampQuantityValue(toNumber(value, quantityMin) + 1));
   const challengeDisabled = !canCallLiar;
   const pekDisabled = !canCallPek;
   const rerollDisabled = !canReroll;
@@ -1625,6 +1708,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const totalPot = getTotalPot(match);
   const viewerStack = getPlayerStack(viewerPlayer || user, 0);
   const turnIntroDisplayPlayer = turnIntroPlayer || turnDicePlayer || activePlayer || viewerPlayer;
+  const viewerDiceValues = getPlayerDiceValues(viewerPlayer);
+  const matchViewerDiceValues = getMatchViewerDiceValues(match);
+  const ownDiceValues = viewerDiceValues.length ? viewerDiceValues : matchViewerDiceValues;
+  const ownDiceCount = Math.max(getPlayerDiceCount(viewerPlayer, 0), ownDiceValues.length, 5);
   const backgroundContract = resolveGameDataBackground(data);
 
   return (
@@ -1650,25 +1737,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         />
       ))}
 
-      <div className="gameplay-turnbar">
-        <img className="gameplay-turnbar__skin" src={`${asset}11.png`} alt="" draggable="false" />
-        <img className="gameplay-turnbar__avatarBg" src={`${asset}BGBB.png`} alt="" draggable="false" />
-        <img className="gameplay-turnbar__avatar" src={resolveAvatarSrc(activePlayer || viewerPlayer || user)} alt="" draggable="false" />
-        <span className="gameplay-turnbar__title">{tx(myTurn ? 'YOUR TURN' : `${turnName}’S TURN`)}</span>
-        <div className="gameplay-turnbar__countRow">
-          <Die value={4} className="gameplay-turnbar__countDie" />
-          <span className="gameplay-turnbar__countValue">{getPlayerDiceCount(turnDicePlayer || activePlayer, 0) || '-'}</span>
-        </div>
-        <div className={`gameplay-turnbar__diceRow ${isTurnIntroPlaying ? 'is-turn-intro-waiting' : ''}`}>
-          {renderDice(turnDicePlayer || activePlayer || viewerPlayer, 'gameplay-turnbar__die', 5)}
-        </div>
-      </div>
-
-      <div className="gameplay-timer">
-        <img className="gameplay-timer__skin" src={`${asset}4.png`} alt="" draggable="false" />
-        <img className="gameplay-timer__icon" src={`${asset}tt.png`} alt="" draggable="false" />
-        <span className="gameplay-timer__value">{formatTimer(liveTurnSeconds)}</span>
-      </div>
 
       <button className="gameplay-leave" type="button" onClick={submitLeaveMatch} disabled={!currentMatchId || isBusy || isFinished}>
         <img className="gameplay-leave__skin" src="/assets/liars-dice/gameplay/leave-button-red.png" alt="" draggable="false" />
@@ -1731,6 +1799,14 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         <div className="gameplay-current-bid__cleanSpacer" aria-hidden="true" />
       </div>
 
+      <div className="gameplay-time-remaining" aria-label={tx('TIME REMAINING')}>
+        <div className="gameplay-time-remaining__header">{tx('TIME REMAINING')}</div>
+        <div className="gameplay-time-remaining__main">
+          <img className="gameplay-time-remaining__icon" src={`${asset}tt.png`} alt="" draggable="false" />
+          <span className="gameplay-time-remaining__value">{formatTimer(liveTurnSeconds)}</span>
+        </div>
+      </div>
+
       <div className="gameplay-round-badge">
         <span className="gameplay-round-badge__label">{tx('ROUND')}</span>
         <span className="gameplay-round-badge__value">{toNumber(match?.roundNumber, 1)}</span>
@@ -1777,55 +1853,115 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         {renderCupSlots(tablePlayerCount)}
       </div>
 
-      <div className="gameplay-bid-selector">
+      <div className="gameplay-bid-selector gameplay-bid-selector--casino-v2">
         <img className="gameplay-bid-selector__skin" src={bidSelectorSkin} alt="" draggable="false" />
         <div className="gameplay-bid-selector__quantityCaption">{tx('Total dice in play')}: {totalDice || '-'}</div>
-        <div className="gameplay-bid-selector__quantityTrack">
-          <img className="gameplay-bid-selector__quantityTrackSkin" src={`${asset}p4.png`} alt="" draggable="false" />
-          <div className="gameplay-bid-selector__quantityRow gameplay-bid-selector__quantityStepper" role="group" aria-label={tx('Quantity')}>
-            <button
-              type="button"
-              className="gameplay-bid-selector__quantityStep gameplay-bid-selector__quantityStep--minus"
-              onClick={decreaseQuantity}
-              disabled={selectedQuantity <= quantityMin}
-              aria-label={tx('Decrease quantity')}
-            >
-              −
-            </button>
-            <div className="gameplay-bid-selector__quantityValue" aria-live="polite">
-              <span className="gameplay-bid-selector__quantityValueNumber">{selectedQuantity}</span>
-              <span className="gameplay-bid-selector__quantityValueMax">/ {quantityMax}</span>
-            </div>
-            <button
-              type="button"
-              className="gameplay-bid-selector__quantityStep gameplay-bid-selector__quantityStep--plus"
-              onClick={increaseQuantity}
-              disabled={selectedQuantity >= quantityMax}
-              aria-label={tx('Increase quantity')}
-            >
-              +
-            </button>
+
+        <section className="gameplay-bid-selector__quantityBlock" aria-label={tx('Quantity')}>
+          <div className="gameplay-bid-selector__sectionTitle gameplay-bid-selector__sectionTitle--quantity">{tx('QUANTITY (TOTAL DICE)')}</div>
+          <div className="gameplay-bid-selector__quantityValue" aria-live="polite">
+            <span className="gameplay-bid-selector__quantityValueNumber">{selectedQuantity}</span>
+            <span className="gameplay-bid-selector__quantityValueMax">/ {quantityMax}</span>
           </div>
-        </div>
-        <div className="gameplay-bid-selector__faceRow">
-          {faceOptions.map((value) => {
-            const disabled = Boolean(currentBid && selectedQuantity === toNumber(currentBid.quantity, 0) && value <= toNumber(currentBid.face, 0));
-            return (
+          <div className="gameplay-bid-selector__quantityTrack">
+            <div className="gameplay-bid-selector__quantityRow gameplay-bid-selector__quantityStepper" role="group" aria-label={tx('Quantity')}>
               <button
-                key={`face-${value}`}
                 type="button"
-                className={`gameplay-bid-selector__faceBtn ${value === selectedFace ? 'is-active' : ''}`}
-                onClick={() => setSelectedFace(value)}
-                aria-pressed={value === selectedFace}
-                disabled={disabled}
+                className="gameplay-bid-selector__quantityStep gameplay-bid-selector__quantityStep--minus"
+                onClick={decreaseQuantity}
+                disabled={selectedQuantity <= quantityMin}
+                aria-label={tx('Decrease quantity')}
               >
-                <Die value={value} variant={value === selectedFace ? 'red' : 'white'} className="gameplay-bid-selector__die" />
+                −
               </button>
-            );
-          })}
-        </div>
+              <div
+                className={`gameplay-bid-selector__sliderRail ${quantityMax <= quantityMin ? 'is-locked' : ''}`}
+                ref={quantitySliderRef}
+                role="slider"
+                tabIndex={0}
+                aria-label={tx('Quantity')}
+                aria-valuemin={quantityMin}
+                aria-valuemax={quantityMax}
+                aria-valuenow={selectedQuantity}
+                onPointerDown={handleQuantitySliderPointerDown}
+                onPointerMove={handleQuantitySliderPointerMove}
+                onPointerUp={stopQuantitySliderDrag}
+                onPointerCancel={stopQuantitySliderDrag}
+                onLostPointerCapture={stopQuantitySliderDrag}
+                onKeyDown={handleQuantitySliderKeyDown}
+              >
+                <span
+                  className="gameplay-bid-selector__sliderKnob"
+                  style={{ left: `${sliderPercent}%` }}
+                />
+              </div>
+              <button
+                type="button"
+                className="gameplay-bid-selector__quantityStep gameplay-bid-selector__quantityStep--plus"
+                onClick={increaseQuantity}
+                disabled={selectedQuantity >= quantityMax}
+                aria-label={tx('Increase quantity')}
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="gameplay-bid-selector__ownDice" aria-label={tx('Your dice')}>
+          <div className="gameplay-bid-selector__sectionTitle gameplay-bid-selector__sectionTitle--ownDice">{tx('YOUR DICE')}</div>
+          <div className="gameplay-bid-selector__ownDiceRow">
+            {ownDiceValues.length ? ownDiceValues.slice(0, 6).map((value, index) => (
+              <Die key={`own-die-${index}-${value}`} value={value} className="gameplay-bid-selector__ownDie" />
+            )) : Array.from({ length: Math.min(ownDiceCount, 6) }, (_, index) => (
+              <HiddenDie key={`own-hidden-die-${index}`} className="gameplay-bid-selector__ownDie" />
+            ))}
+          </div>
+        </section>
+
+        <section
+          className={`gameplay-bid-selector__faceDial ${isDiceFacePickerOpen ? 'is-open' : ''}`}
+          aria-label={tx('Dice face')}
+          ref={faceDialRef}
+        >
+          <div className="gameplay-bid-selector__sectionTitle gameplay-bid-selector__sectionTitle--face">{tx('DICE FACE')}</div>
+          <div className="gameplay-bid-selector__faceDialStage">
+            <button
+              type="button"
+              className={`gameplay-bid-selector__faceDialCenter ${isDiceFacePickerOpen ? 'is-open' : ''}`}
+              onClick={() => setDiceFacePickerOpen((value) => !value)}
+              aria-label={`${tx('Dice face')}: ${selectedFace}`}
+              aria-expanded={isDiceFacePickerOpen}
+            >
+              <Die value={selectedFace} className="gameplay-bid-selector__faceDialCenterDie" />
+            </button>
+            {isDiceFacePickerOpen ? (
+              <div className="gameplay-bid-selector__faceDialRing" role="listbox" aria-label={tx('Dice face')}>
+                {diceFacePickerOptions.map((value, index) => {
+                  const disabled = Boolean(currentBid && selectedQuantity === toNumber(currentBid.quantity, 0) && value <= toNumber(currentBid.face, 0));
+                  return (
+                    <button
+                      key={`face-${value}`}
+                      type="button"
+                      className={`gameplay-bid-selector__faceBtn gameplay-bid-selector__faceBtn--slot-${index}`}
+                      onClick={() => {
+                        setSelectedFace(value);
+                        setDiceFacePickerOpen(false);
+                      }}
+                      role="option"
+                      aria-selected={false}
+                      disabled={disabled}
+                    >
+                      <Die value={value} className="gameplay-bid-selector__die" />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+        </section>
+
         <div className="gameplay-bid-selector__actionRow" role="group" aria-label={tx('Bid actions')}>
-          <ActionButton className="gameplay-action--reroll gameplay-action--compact" skin="B!.png" title="REROLL" subtitle={rerollButtonSubtitle} onClick={submitReroll} disabled={rerollDisabled} tx={tx} />
           <ActionButton className="gameplay-action--raise gameplay-action--compact" skin="B!.png" title="CONFIRM BID" subtitle={bidSubmitSubtitle} onClick={submitBid} disabled={bidDisabled} tx={tx} />
           <ActionButton className="gameplay-action--call gameplay-action--compact" skin="B2.png" title="CALL LIAR" subtitle={`Risk ${formatAmount(pekSettings.perGameAmount || currentCoinBet)}`} onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
           {pekSettings.pekEnabled ? (
@@ -1840,7 +1976,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           >
             <img className="gameplay-action__skin" src={`${asset}B3.png`} alt="" draggable="false" />
             <span className="gameplay-action__title">{tx('ZAI')}</span>
-            <span className="gameplay-action__subtitle">{directZaiSubtitle}</span>
+            <span className="gameplay-action__subtitle">{tx('View 1 Die')}</span>
           </button>
         </div>
       </div>
