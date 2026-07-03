@@ -379,34 +379,30 @@ function getMatchJokerDisplay(match = {}, bid = null, tx = (value) => value) {
 }
 
 function buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match }) {
-  const currentQuantity = toNumber(currentBid?.quantity, 0);
-  const chaiStep = getChaiQuantityStep(match);
   const currentJokerInfo = getMatchJokerDisplay(match, currentBid);
   const face = toNumber(selectedFace, 1);
   const zai = Boolean(zaiEnabled && face !== 1);
-  const chai = Boolean(
-    !zai
-      && currentBid
-      && currentJokerInfo.mode === 'zai'
-      && face !== 1
-      && toNumber(selectedQuantity, 0) >= currentQuantity + chaiStep
-  );
-  const onesLocked = face === 1;
-  const jokerMode = zai ? 'zai' : chai ? 'chai' : onesLocked ? 'ones_locked' : 'normal';
+  const zaiInherited = Boolean(!zai && currentBid && currentJokerInfo.mode === 'zai' && face !== 1);
+  const chai = false;
+  const onesLocked = face === 1 || currentJokerInfo.mode === 'ones_locked';
+  const jokerMode = zai ? 'zai' : onesLocked ? 'ones_locked' : zaiInherited ? 'zai_locked' : 'normal';
 
   return {
     zai,
     isZai: zai,
+    zaiInherited,
     chai,
     isChai: chai,
+    chaiAutoApplied: false,
+    chaiReopensJoker: false,
     jokerMode,
-    jokerWildActive: jokerMode === 'normal' || jokerMode === 'chai',
+    jokerWildActive: jokerMode === 'normal',
   };
 }
 
 function getSelectedBidJokerInfo({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match, tx = (value) => value }) {
   const payload = buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match });
-  if (payload.zai) return { ...payload, label: tx('ZAI'), detail: tx('Joker OFF'), className: 'is-zai' };
+  if (payload.zai || payload.jokerMode === 'zai_locked') return { ...payload, label: tx('ZAI'), detail: tx('Joker OFF'), className: 'is-zai' };
   if (payload.chai) return { ...payload, label: tx('CHAI'), detail: tx('Joker ON'), className: 'is-chai' };
   if (payload.jokerMode === 'ones_locked') return { ...payload, label: tx('1s LOCKED'), detail: tx('Joker OFF'), className: 'is-locked' };
   return { ...payload, label: tx('Joker ON'), detail: tx('1s are wild'), className: 'is-normal' };
@@ -870,11 +866,7 @@ function getBidderPlayer(match) {
 }
 
 function getPekStackBlockReason({ pekSettings, viewerPlayer, bidderPlayer, tx }) {
-  if (!pekSettings?.pekEnabled) return '';
-  const required = Number(pekSettings.finalPekAmount || 0);
-  if (!required) return '';
-  if (getPlayerStack(viewerPlayer, 0) < required) return tx(`Need ${formatAmount(required)} stack`);
-  if (bidderPlayer && getPlayerStack(bidderPlayer, 0) < required) return tx(`Bidder needs ${formatAmount(required)} stack`);
+  // Patch: do not disable Slam because of stack cover. Backend caps the actual loss to the loser's available stack.
   return '';
 }
 
@@ -1624,10 +1616,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const directZaiSubtitle = zaiAvailable
     ? `${directZaiBid.quantity} x ${directZaiBid.face} · ${tx('Joker OFF')}`
     : tx('Joker OFF');
-  const chaiStep = getChaiQuantityStep(match);
-  const chaiHint = currentBid && currentBidJokerInfo.mode === 'zai' && !zaiEnabled
-    ? `${tx('Increase by +2 to reopen joker')} (${toNumber(currentBid.quantity, 0) + chaiStep}+)`
-    : '';
+  const chaiHint = '';
   const bidSubmitSubtitle = openingBidError || (bidIsValid ? (coinBetIsValid ? selectedBidJokerInfo.detail : tx('Coin bet out of range')) : tx('Bid must be higher'));
   useEffect(() => {
     setSelectedQuantity((value) => Math.min(quantityMax, Math.max(quantityMin, toNumber(value, quantityMin))));

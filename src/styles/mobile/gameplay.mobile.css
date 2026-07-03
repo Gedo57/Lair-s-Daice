@@ -1253,3 +1253,13 @@ html[data-device='mobile'] .gameplay-bid-selector__jokerHint {
 }
 html[data-device='mobile'] .gameplay-bid-selector__jokerHint span { flex: 0 0 auto; font-size: 12px; line-height: 1; font-weight: 950; }
 html[data-device='mobile'] .gameplay-bid-selector__jokerHint small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; line-height: 1; font-weight: 900; opacity: .92; }
+
+
+/* Patch: landscape cups table alignment. */
+html[data-device='mobile']:not([data-orientation='portrait']) .gameplay-cups {
+  left: 520px !important;
+  top: 240px !important;
+  width: 245px !important;
+  height: 190px !important;
+  z-index: 21 !important;
+}

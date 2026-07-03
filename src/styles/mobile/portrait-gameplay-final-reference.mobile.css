@@ -67,10 +67,10 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
   --pg-current-bid-y: 0px;
   --pg-current-bid-scale: 1;
 
-  --pg-cups-left: 235px;
-  --pg-cups-top: 450px;
-  --pg-cups-width: 250px;
-  --pg-cups-height: 220px;
+  --pg-cups-left: 220px;
+  --pg-cups-top: 430px;
+  --pg-cups-width: 280px;
+  --pg-cups-height: 235px;
   --pg-cups-x: 0px;
   --pg-cups-y: 0px;
   --pg-cups-scale: 1;
@@ -1562,4 +1562,13 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   line-height: 1 !important;
   font-weight: 900 !important;
   opacity: .92 !important;
+}
+
+
+/* Patch: portrait cups table alignment. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups {
+  left: var(--pg-cups-left) !important;
+  top: var(--pg-cups-top) !important;
+  width: var(--pg-cups-width) !important;
+  height: var(--pg-cups-height) !important;
 }
