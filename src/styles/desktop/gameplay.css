@@ -1328,7 +1328,7 @@ html[data-device='desktop'] .gameplay-current-bid__coinValue--pot { font-size: 2
 
 html[data-device='desktop'] .gameplay-cups {
   left: 532px;
-  top: 215px;
+  top: 355px;
   width: 220px;
   height: 150px;
 }
@@ -1603,7 +1603,7 @@ html[data-device='desktop'] .gameplay-round-badge {
 
 html[data-device='desktop'] .gameplay-bid-selector {
   left: 359px;
-  top: 470px;
+  top: 490px;
   width: 522px;
   height: 236px;
 }
