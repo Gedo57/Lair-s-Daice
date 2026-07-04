@@ -1871,7 +1871,7 @@ html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--ga
 
 /* Portrait safety spacing: keep the lower dice row above the action strip. */
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityCaption {
-  top: 56px !important;
+  top: 20px !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityBlock {
