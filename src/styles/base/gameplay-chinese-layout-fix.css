@@ -2284,3 +2284,405 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   font-weight: 950 !important;
   text-shadow: 0 2px 3px rgba(0, 0, 0, .75), 0 0 8px rgba(255, 108, 46, .35) !important;
 }
+
+/* Patch 11: Chinese portrait bid panel parity.
+   Keep zh in portrait on the same casino-v2 geometry as English; text remains translated by i18n. */
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 {
+  position: absolute !important;
+  left: 35px !important;
+  right: auto !important;
+  top: 820px !important;
+  width: 650px !important;
+  height: 330px !important;
+  min-height: 0 !important;
+  z-index: 130 !important;
+  display: block !important;
+  overflow: visible !important;
+  color: #fff5d6 !important;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .42)) !important;
+  transform: none !important;
+  transform-origin: left top !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2::before,
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2::after {
+  content: none !important;
+  display: none !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__skin {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill !important;
+  display: block !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityCaption {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 20px !important;
+  z-index: 7 !important;
+  color: #fff6dc !important;
+  font-size: 17px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  text-align: center !important;
+  text-shadow: 0 2px 2px rgba(0, 0, 0, .65) !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sectionTitle {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  z-index: 8 !important;
+  color: #fff4d2 !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .72) !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityBlock {
+  position: absolute !important;
+  left: 44px !important;
+  top: 86px !important;
+  width: 300px !important;
+  height: 96px !important;
+  z-index: 7 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValue {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 25px !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: 28px !important;
+  z-index: 9 !important;
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #fff7dc !important;
+  text-shadow: 0 2px 2px rgba(0, 0, 0, .72) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueNumber {
+  font-size: 27px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueMax {
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  opacity: .92 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityTrack {
+  position: absolute !important;
+  left: 0 !important;
+  top: 58px !important;
+  width: 100% !important;
+  height: 34px !important;
+  z-index: 8 !important;
+  background: transparent !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityTrack::before {
+  content: none !important;
+  display: none !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityRow,
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStepper {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 9 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStep {
+  position: relative !important;
+  width: 30px !important;
+  height: 30px !important;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 30px !important;
+  border: 2px solid #f5c748 !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 35% 30%, #245b24 0%, #113615 58%, #051b09 100%) !important;
+  color: #fff9d9 !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, .22), 0 2px 4px rgba(0, 0, 0, .52) !important;
+  cursor: pointer !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderRail {
+  position: relative !important;
+  width: 188px !important;
+  height: 5px !important;
+  flex: 0 0 188px !important;
+  border-radius: 99px !important;
+  background: linear-gradient(90deg, #fbe69c, #ab7a18) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .52), 0 1px 2px rgba(255, 236, 157, .28) !important;
+  cursor: pointer !important;
+  touch-action: none !important;
+  pointer-events: auto !important;
+  outline: none !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderKnob {
+  position: absolute !important;
+  left: 0;
+  top: 50% !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  border: 2px solid #ffe894 !important;
+  background: radial-gradient(circle at 35% 28%, #fff0a3 0%, #f6a91a 62%, #9b5600 100%) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .48), 0 0 7px rgba(255, 205, 63, .45) !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: none !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice {
+  position: absolute !important;
+  left: 34px !important;
+  top: 184px !important;
+  width: 352px !important;
+  height: 62px !important;
+  z-index: 12 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 22px !important;
+  height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  z-index: 13 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDie,
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-hidden-die.gameplay-bid-selector__ownDie {
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px !important;
+  flex-basis: 38px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDial {
+  position: absolute !important;
+  right: 40px !important;
+  top: 84px !important;
+  width: 190px !important;
+  height: 140px !important;
+  z-index: 12 !important;
+  overflow: visible !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDialStage {
+  position: absolute !important;
+  left: 36px !important;
+  top: 25px !important;
+  width: 118px !important;
+  height: 104px !important;
+  z-index: 18 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDialRing {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 118px !important;
+  height: 104px !important;
+  z-index: 18 !important;
+  border: 2px solid rgba(229, 184, 54, .86) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 12px rgba(255, 201, 54, .18), inset 0 0 16px rgba(255, 212, 80, .08) !important;
+  pointer-events: none !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDialCenter {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 50px !important;
+  height: 50px !important;
+  z-index: 22 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 13px !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  transform: translate(-50%, -50%) !important;
+  box-shadow: 0 0 0 2px #ffce55, 0 0 14px rgba(255, 201, 54, .65) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDialCenterDie {
+  width: 48px !important;
+  height: 48px !important;
+  object-fit: contain !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceBtn {
+  position: absolute !important;
+  width: 35px !important;
+  height: 35px !important;
+  z-index: 20 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  transition: transform .14s ease, filter .14s ease !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__die {
+  width: 35px !important;
+  height: 35px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceBtn--slot-0 { left: 41px !important; top: -8px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceBtn--slot-1 { right: -12px !important; top: 24px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceBtn--slot-2 { right: 4px !important; bottom: -5px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceBtn--slot-3 { left: 4px !important; bottom: -5px !important; }
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceBtn--slot-4 { left: -12px !important; top: 24px !important; }
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow {
+  position: absolute !important;
+  left: 34px !important;
+  right: 34px !important;
+  bottom: 16px !important;
+  height: 56px !important;
+  z-index: 30 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 56px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+  transform: none !important;
+  z-index: 31 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-action__skin {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill !important;
+  pointer-events: none !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-action--zai .gameplay-action__skin {
+  filter: hue-rotate(76deg) saturate(1.18) brightness(.98) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-action__title,
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-action--raise .gameplay-action__title,
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-action--call .gameplay-action__title,
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-action--slam .gameplay-action__title {
+  position: absolute !important;
+  left: 7px !important;
+  right: 7px !important;
+  top: 14px !important;
+  width: auto !important;
+  color: #fff8e8 !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .76) !important;
+  z-index: 2 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-action__subtitle {
+  position: absolute !important;
+  left: 7px !important;
+  right: 7px !important;
+  top: 35px !important;
+  width: auto !important;
+  color: #fff2c8 !important;
+  font-size: 7.5px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .72) !important;
+  z-index: 2 !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-action:disabled,
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceBtn:disabled,
+html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStep:disabled {
+  opacity: .56 !important;
+  filter: grayscale(.34) brightness(.84) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
