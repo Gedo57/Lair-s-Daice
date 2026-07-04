@@ -678,3 +678,130 @@ html[data-device='mobile'] .main-menu-card:hover .main-menu-card__art {
   0% { opacity: 0; transform: translateY(16px) scale(.992); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Patch: Main Menu softer button contrast
+   Goal: keep the existing layout/assets, but make the menu buttons calmer on the casino background. */
+html[data-device='mobile'] .main-menu-action__skin,
+html[data-device='mobile'] .main-menu-card__skin {
+  filter: saturate(.76) contrast(.84) brightness(.91) sepia(.08);
+}
+
+html[data-device='mobile'] .main-menu-action__title,
+html[data-device='mobile'] .main-menu-card__header {
+  color: #fff3dc;
+  text-shadow: 0 1.6px 2.4px rgba(0, 0, 0, .68);
+}
+
+html[data-device='mobile'] .main-menu-action__subtitle {
+  color: #ead5b5;
+  text-shadow: 0 1.25px 2px rgba(0, 0, 0, .58);
+}
+
+html[data-device='mobile'] .main-menu-card__copy {
+  color: #241304;
+  text-shadow: none;
+}
+
+html[data-device='mobile'] .main-menu-card__art {
+  filter: saturate(.9) contrast(.92) brightness(.96) drop-shadow(0 3.83px 3.83px rgba(0,0,0,.34));
+}
+
+html[data-device='mobile'] .main-menu-card__cta {
+  color: #fff0dc;
+  border-color: rgba(158, 111, 45, .78);
+  text-shadow: 0 1.35px 2.1px rgba(0,0,0,.68);
+  box-shadow:
+    inset 0 0.77px 1.53px rgba(255,255,255,.23),
+    0 2.3px 5.36px rgba(0,0,0,.32);
+}
+
+html[data-device='mobile'] .main-menu-card__cta--daily,
+html[data-device='mobile'] .main-menu-card__cta--pass,
+html[data-device='mobile'] .main-menu-card__cta--tournaments {
+  background: linear-gradient(#0f6118, #06350b);
+}
+
+html[data-device='mobile'] .main-menu-card__cta--events {
+  background: linear-gradient(#7f1114, #4e0508);
+}
+
+html[data-device='mobile'] .main-menu-vfx--vignette {
+  background:
+    radial-gradient(circle at center, rgba(255, 219, 116, .028) 0%, rgba(255, 219, 116, 0) 45%),
+    radial-gradient(circle at center, rgba(0,0,0,0) 58%, rgba(0,0,0,.30) 100%);
+}
+
+html[data-device='mobile'] .main-menu-vfx--lightRays {
+  opacity: .24;
+  background:
+    conic-gradient(from 210deg at 50% 0%, transparent 0deg, rgba(255, 210, 116, .13) 7deg, transparent 16deg, transparent 34deg, rgba(255, 210, 116, .10) 43deg, transparent 56deg, transparent 78deg, rgba(255, 210, 116, .08) 88deg, transparent 102deg);
+}
+
+html[data-device='mobile'] .main-menu-vfx--bannerShine {
+  opacity: .28;
+}
+
+html[data-device='mobile'] .main-menu-vfx--bannerShine::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.34) 50%, transparent 100%);
+}
+
+html[data-device='mobile'] .main-menu-sparkle {
+  background: rgba(255, 232, 165, .58);
+  box-shadow: 0 0 5px rgba(255, 198, 82, .42), 0 0 10px rgba(202, 126, 35, .22);
+}
+
+html[data-device='mobile'] .main-menu-sparkle::before,
+html[data-device='mobile'] .main-menu-sparkle::after {
+  background: rgba(255, 235, 180, .55);
+}
+
+html[data-device='mobile'] .main-menu-action::before,
+html[data-device='mobile'] .main-menu-card::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.30) 50%, transparent 100%);
+  filter: blur(7px);
+}
+
+html[data-device='mobile'] .main-menu-action::after,
+html[data-device='mobile'] .main-menu-card::after {
+  box-shadow: 0 0 8px rgba(199, 151, 72, .18), inset 0 0 8px rgba(255, 234, 185, .06);
+}
+
+html[data-device='mobile'] .main-menu-action:hover,
+html[data-device='mobile'] .main-menu-card:hover {
+  transform: translateY(-1.4px) scale(1.01);
+  filter: brightness(1.025);
+}
+
+html[data-device='mobile'] .main-menu-action:hover .main-menu-action__skin,
+html[data-device='mobile'] .main-menu-card:hover .main-menu-card__skin {
+  filter: saturate(.82) contrast(.87) brightness(.94) sepia(.08);
+}
+
+html[data-device='mobile'] .main-menu-action:hover::before,
+html[data-device='mobile'] .main-menu-card:hover::before {
+  opacity: .42;
+}
+
+html[data-device='mobile'] .main-menu-action:hover::after,
+html[data-device='mobile'] .main-menu-card:hover::after {
+  opacity: .55;
+}
+
+html[data-device='mobile'] .main-menu-action:active,
+html[data-device='mobile'] .main-menu-card:active {
+  transform: translateY(1px) scale(.985);
+  filter: brightness(1.035);
+}
+
+html[data-device='mobile'] .main-menu-action:hover .main-menu-action__title,
+html[data-device='mobile'] .main-menu-card:hover .main-menu-card__header,
+html[data-device='mobile'] .main-menu-card:hover .main-menu-card__cta {
+  text-shadow:
+    0 1.7px 2.6px rgba(0,0,0,.68),
+    0 0 5px rgba(255,239,206,.22),
+    0 0 8px rgba(201, 155, 76, .16);
+}
+
+html[data-device='mobile'] .main-menu-card:hover .main-menu-card__art {
+  filter: saturate(.94) contrast(.94) brightness(.98) drop-shadow(0 3.83px 3.83px rgba(0,0,0,.34));
+}

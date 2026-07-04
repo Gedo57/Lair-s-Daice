@@ -254,3 +254,90 @@ html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__cta {
     background-position: center top !important;
   }
 }
+
+/* Patch: Portrait main menu softer button contrast.
+   Loaded after the portrait reference layout so only visual tone is adjusted here. */
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-action__skin,
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__skin {
+  filter: saturate(.76) contrast(.84) brightness(.91) sepia(.08) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-action__title,
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__header {
+  color: #fff3dc !important;
+  text-shadow: 0 1.6px 2.4px rgba(0, 0, 0, .68) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-action__subtitle {
+  color: #ead5b5 !important;
+  text-shadow: 0 1.25px 2px rgba(0, 0, 0, .58) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__copy {
+  color: #241304 !important;
+  text-shadow: none !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__art {
+  filter: saturate(.9) contrast(.92) brightness(.96) drop-shadow(0 5px 6px rgba(0, 0, 0, .34)) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__cta {
+  color: #fff0dc !important;
+  border-color: rgba(158, 111, 45, .78) !important;
+  text-shadow: 0 1.35px 2.1px rgba(0,0,0,.68) !important;
+  box-shadow:
+    inset 0 0.77px 1.53px rgba(255,255,255,.23),
+    0 2.3px 5.36px rgba(0,0,0,.32) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__cta--daily,
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__cta--pass,
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__cta--tournaments {
+  background: linear-gradient(#0f6118, #06350b) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card__cta--events {
+  background: linear-gradient(#7f1114, #4e0508) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-vfx--vignette {
+  background:
+    radial-gradient(circle at 50% 27%, rgba(255, 221, 132, .065) 0%, rgba(255, 221, 132, 0) 34%),
+    radial-gradient(circle at 50% 51%, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, .34) 100%) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-vfx--lightRays {
+  opacity: .22 !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-vfx--bannerShine {
+  opacity: .24 !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-action:hover,
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card:hover {
+  transform: translateY(-1.4px) scale(1.01) !important;
+  filter: brightness(1.025) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-action:hover .main-menu-action__skin,
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card:hover .main-menu-card__skin {
+  filter: saturate(.82) contrast(.87) brightness(.94) sepia(.08) !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-action:hover::before,
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card:hover::before {
+  opacity: .38 !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-action:hover::after,
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card:hover::after {
+  opacity: .48 !important;
+}
+
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-action:active,
+html[data-device='mobile'] .app-shell--mainmenu .main-menu-card:active {
+  transform: translateY(2px) scale(.985) !important;
+  filter: brightness(1.03) !important;
+}
