@@ -11,16 +11,16 @@ html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom 
 
 html[data-device='desktop'] .app-shell--createroom .create-room-board,
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-board {
-  left: 50px;
-  top: 30px;
-  width: 1180px;
-  height: 600px;
+  left: 60px;
+  top: 100px;
+  width: 1080px;
+  height: 550px;
 }
 
 html[data-device='desktop'] .app-shell--createroom .create-room-character,
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-character {
   left: 58px;
-  bottom: 58px;
+  bottom: -50px;
   width: 300px;
   height: 410px;
 }

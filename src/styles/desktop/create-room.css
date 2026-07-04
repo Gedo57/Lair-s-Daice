@@ -79,7 +79,8 @@ html[data-device='desktop'] .create-room-board {
 html[data-device='desktop'] .create-room-board__skin {
   position: absolute;
   inset: 0;
-  width: 100%;
+   left: 80px;
+  width: 90%;
   height: 100%;
   object-fit: fill;
 }
@@ -87,7 +88,7 @@ html[data-device='desktop'] .create-room-board__skin {
 html[data-device='desktop'] .create-room-character {
   position: absolute;
   left: -5px;
-  bottom: 14px;
+  bottom: 34px;
   width: 315px;
   height: 430px;
   object-fit: contain;
