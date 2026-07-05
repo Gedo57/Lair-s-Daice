@@ -27,7 +27,7 @@ html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom 
 
 html[data-device='desktop'] .app-shell--createroom .create-room-form,
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--createroom .create-room-form {
-  left: 408px;
+  left: 308px;
   top: 45px;
   width: 680px;
   height: 505px;
