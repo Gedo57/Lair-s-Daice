@@ -7,7 +7,7 @@ const sparkles = Array.from({ length: 20 }, (_, index) => index + 1);
 const ROOM_ORDER = ['beginner', 'high-roller', 'private'];
 const PLAYER_COUNT_SEQUENCE = [2, 3, 4];
 const TIER_PEK_PERCENTAGES = {
-  beginner: 25,
+  beginner: 10,
   'high-roller': 50,
   highroller: 50,
   high_roller: 50,
@@ -55,7 +55,7 @@ function firstCardValue(...values) {
 function resolveTierPekPercentage(room = {}, pricing = {}) {
   const key = normalizeRoomKey(room.key || room.id || room.tableId || room.tier || room.tableTier || room.title);
   if (key === 'private') return '25-100%';
-  if (key === 'beginner') return 25;
+  if (key === 'beginner') return 10;
   if (key === 'high-roller') return 50;
 
   const direct = firstCardValue(
@@ -258,12 +258,15 @@ function RoomCard({ room, onPlay, onCreatePrivate, onCyclePlayers, tx }) {
   const cycleable = isCycleableRoom(room);
   const handleCardClick = () => {
     if (isPrivate) onCreatePrivate?.();
-    else if (cycleable) onCyclePlayers?.(room);
   };
   const handleCardKeyDown = (event) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     handleCardClick();
+  };
+  const handlePlayersClick = (event) => {
+    event.stopPropagation();
+    onCyclePlayers?.(room);
   };
   const handlePlayClick = (event) => {
     event.stopPropagation();
@@ -276,8 +279,8 @@ function RoomCard({ room, onPlay, onCreatePrivate, onCyclePlayers, tx }) {
       className={`room-select-card room-select-card--${room.key} room-select-card--players-${room.selectedPlayers || room.maxPlayers || 2}${cycleable ? ' room-select-card--cycleable' : ''}`}
       data-background-key={room.backgroundKey || undefined}
       data-background-url={room.backgroundUrl || undefined}
-      role="button"
-      tabIndex={0}
+      role={isPrivate ? 'button' : undefined}
+      tabIndex={isPrivate ? 0 : undefined}
       onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
       aria-label={cycleable ? `${tx(room.title)} ${room.selectedPlayers} ${tx('Players')}` : tx(room.title)}
@@ -293,6 +296,12 @@ function RoomCard({ room, onPlay, onCreatePrivate, onCyclePlayers, tx }) {
           </span>
         ))}
       </span>
+      {cycleable ? (
+        <button className="room-select-card__playersButton" type="button" onClick={handlePlayersClick} aria-label={`${tx('PLAYERS')} ${room.selectedPlayers || 2}`}>
+          <span className="room-select-card__playersButtonLabel">{tx('PLAYERS')}</span>
+          <span className="room-select-card__playersButtonValue">{room.selectedPlayers || 2}P</span>
+        </button>
+      ) : null}
       <span className="room-select-card__rules">
         {rows.map((row) => (
           <span className="room-select-card__rule" key={`${room.key}-${row.text}`}>

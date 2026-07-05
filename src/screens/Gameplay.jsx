@@ -1612,6 +1612,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const directZaiBid = getDirectZaiBid({ currentBid, selectedQuantity, selectedFace });
   const zaiAvailable = isValidZaiBid(currentBid, directZaiBid.quantity, directZaiBid.face, { match, playerCount: tablePlayerCount });
   const currentBidJokerInfo = getMatchJokerDisplay(match, currentBid, tx);
+  const showCurrentBidJokerBadge = Boolean(currentBid && currentBidJokerInfo?.mode && currentBidJokerInfo.mode !== 'normal');
+  const showDangerTurnTimer = Boolean(match?.status === 'active' && Number(liveTurnSeconds) > 0 && Number(liveTurnSeconds) <= 10);
   const selectedBidJokerInfo = getSelectedBidJokerInfo({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match, tx });
   const directZaiSubtitle = zaiAvailable
     ? `${directZaiBid.quantity} x ${directZaiBid.face} · ${tx('Joker OFF')}`
@@ -1785,10 +1787,21 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           {currentBid ? <span>{toNumber(currentBid.quantity, 0)} x</span> : <span>- x</span>}
           <Die value={currentBid?.face || 1} className="gameplay-current-bid__die" />
         </div>
+        {showCurrentBidJokerBadge ? (
+          <div className={`gameplay-current-bid__jokerBadge ${currentBidJokerInfo.className || ''}`}>
+            <span>{currentBidJokerInfo.label}</span>
+            <small>{currentBidJokerInfo.detail}</small>
+          </div>
+        ) : null}
         <div className="gameplay-current-bid__cleanSpacer" aria-hidden="true" />
       </div>
 
-      <div className="gameplay-time-remaining" aria-label={tx('TIME REMAINING')}>
+      <div
+        className={`gameplay-time-remaining ${showDangerTurnTimer ? 'gameplay-time-remaining--dangerCenter' : ''}`}
+        aria-label={tx('TIME REMAINING')}
+        role={showDangerTurnTimer ? 'status' : undefined}
+        aria-live={showDangerTurnTimer ? 'assertive' : undefined}
+      >
         <div className="gameplay-time-remaining__header">{tx('TIME REMAINING')}</div>
         <div className="gameplay-time-remaining__main">
           <img className="gameplay-time-remaining__icon" src={`${asset}tt.png`} alt="" draggable="false" />
