@@ -1145,7 +1145,7 @@ html[data-device='desktop'] .gameplay-player--you .gameplay-player__diceRow { le
 
 html[data-device='desktop'] .gameplay-player--dragon {
   right: 28px;
-  top: 372px;
+  top: 302px;
   width: 250px;
   height: 100px;
 
@@ -1157,7 +1157,7 @@ html[data-device='desktop'] .gameplay-player--dragon .gameplay-player__diceRow {
 
 html[data-device='desktop'] .gameplay-player--fourth {
   right: 28px;
-  top: 486px;
+  top: 406px;
   width: 250px;
   height: 100px;
     rotate: 180deg;
