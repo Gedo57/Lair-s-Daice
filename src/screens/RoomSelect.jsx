@@ -7,7 +7,7 @@ const sparkles = Array.from({ length: 20 }, (_, index) => index + 1);
 const ROOM_ORDER = ['beginner', 'high-roller', 'private'];
 const PLAYER_COUNT_SEQUENCE = [2, 3, 4];
 const TIER_PEK_PERCENTAGES = {
-  beginner: 10,
+  beginner: 25,
   'high-roller': 50,
   highroller: 50,
   high_roller: 50,
@@ -55,7 +55,7 @@ function firstCardValue(...values) {
 function resolveTierPekPercentage(room = {}, pricing = {}) {
   const key = normalizeRoomKey(room.key || room.id || room.tableId || room.tier || room.tableTier || room.title);
   if (key === 'private') return '25-100%';
-  if (key === 'beginner') return 10;
+  if (key === 'beginner') return 25;
   if (key === 'high-roller') return 50;
 
   const direct = firstCardValue(

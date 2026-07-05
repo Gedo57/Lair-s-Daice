@@ -273,3 +273,17 @@ html[data-device='mobile'] .app-shell--roomselect .room-select-card__playersButt
 html[data-device='mobile'] .app-shell--roomselect .room-select-card__playersButtonValue {
   font-size: 16px !important;
 }
+
+/* Patch: Current Bid joker state must remain visible.
+   Older gameplay cleanup CSS hides .gameplay-current-bid__jokerBadge with display:none!important.
+   This file is imported last, so force the existing badge back on for ZAI/CHAI/locked states. */
+html[data-device='desktop'] .app-shell--gameplay .gameplay-current-bid__jokerBadge,
+html[data-device='mobile'] .app-shell--gameplay .gameplay-current-bid__jokerBadge,
+html[data-physical-device='mobile'] .app-shell--gameplay .gameplay-current-bid__jokerBadge,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-current-bid__jokerBadge,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__jokerBadge {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+}

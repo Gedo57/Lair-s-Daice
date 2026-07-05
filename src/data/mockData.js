@@ -127,17 +127,17 @@ export const mockEventMissions = [
 export const mockRooms = [
   {
     id: 'beginner', key: 'beginner', title: 'BEGINNER', card: 'card-1.png', tableArt: '213.png', button: '15.png',
-    pricing: { entryFee: 5, buyInAmount: 5, minCoinBet: 50, maxCoinBet: 50, defaultCoinBet: 50, coinBetOptions: [50], perGameMode: 'static', pekEnabled: true, slamEnabled: true, pekPercentage: 10, slamPercentage: 10 },
+    pricing: { entryFee: 50, buyInAmount: 50, minCoinBet: 50, maxCoinBet: 50, defaultCoinBet: 50, coinBetOptions: [50], perGameMode: 'static', pekEnabled: true, slamEnabled: true, pekPercentage: 25, slamPercentage: 25 },
     rewards: { xpWin: 50, xpLose: 15, rewardMultiplier: 1 },
-    entryFee: 5, buyInAmount: 5, minCoinBet: 50, maxCoinBet: 50, defaultCoinBet: 50, coinBetOptions: [50], perGameMode: 'static', xpWin: 50, xpLose: 15, rewardMultiplier: 1, pekEnabled: true, slamEnabled: true, pekPercentage: 10, slamPercentage: 10, minPlayers: 2, maxPlayers: 4, selectedPlayers: 2,
-    rows: [{ icon: 'IC1.png', text: '2 Players' }, { icon: 'IC3.png', text: 'PEK 10%' }, { icon: 'IC5.png', text: 'Bet 50' }],
+    entryFee: 50, buyInAmount: 50, minCoinBet: 50, maxCoinBet: 50, defaultCoinBet: 50, coinBetOptions: [50], perGameMode: 'static', xpWin: 50, xpLose: 15, rewardMultiplier: 1, pekEnabled: true, slamEnabled: true, pekPercentage: 25, slamPercentage: 25, minPlayers: 2, maxPlayers: 4, selectedPlayers: 2,
+    rows: [{ icon: 'IC1.png', text: '2 Players' }, { icon: 'IC3.png', text: 'PEK 25%' }, { icon: 'IC5.png', text: 'Bet 50' }],
   },
   {
     id: 'high-roller', key: 'high-roller', title: 'HIGH ROLLER', card: 'card-3.png', tableArt: '3323423.png', button: '12.png',
-    pricing: { entryFee: 250, buyInAmount: 250, minCoinBet: 1000, maxCoinBet: 1000, defaultCoinBet: 1000, coinBetOptions: [1000], perGameMode: 'static', pekEnabled: true, slamEnabled: true, pekPercentage: 50, slamPercentage: 50 },
+    pricing: { entryFee: 250, buyInAmount: 250, minCoinBet: 50, maxCoinBet: 50, defaultCoinBet: 50, coinBetOptions: [50], perGameMode: 'static', pekEnabled: true, slamEnabled: true, pekPercentage: 50, slamPercentage: 50 },
     rewards: { xpWin: 180, xpLose: 55, rewardMultiplier: 2 },
-    entryFee: 250, buyInAmount: 250, minCoinBet: 1000, maxCoinBet: 1000, defaultCoinBet: 1000, coinBetOptions: [1000], perGameMode: 'static', xpWin: 180, xpLose: 55, rewardMultiplier: 2, pekEnabled: true, slamEnabled: true, pekPercentage: 50, slamPercentage: 50, minPlayers: 2, maxPlayers: 4, selectedPlayers: 2,
-    rows: [{ icon: 'IC1.png', text: '2 Players' }, { icon: 'IC3.png', text: 'PEK 50%' }, { icon: 'IC5.png', text: 'Bet 1K' }],
+    entryFee: 250, buyInAmount: 250, minCoinBet: 50, maxCoinBet: 50, defaultCoinBet: 50, coinBetOptions: [50], perGameMode: 'static', xpWin: 180, xpLose: 55, rewardMultiplier: 2, pekEnabled: true, slamEnabled: true, pekPercentage: 50, slamPercentage: 50, minPlayers: 2, maxPlayers: 4, selectedPlayers: 2,
+    rows: [{ icon: 'IC1.png', text: '2 Players' }, { icon: 'IC3.png', text: 'PEK 50%' }, { icon: 'IC5.png', text: 'Bet 50' }],
   },
   {
     id: 'private', key: 'private', title: 'PRIVATE ROOM', card: 'card-5.png', tableArt: '1232131.png', button: 'back-button.png',

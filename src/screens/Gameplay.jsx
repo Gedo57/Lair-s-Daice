@@ -254,16 +254,38 @@ function truthyFlag(value) {
 }
 
 function normalizeJokerMode(source = {}) {
+  const nested = source?.metadata || source?.meta || source?.joker || source?.jokerState || source?.rules || {};
   const mode = String(
     source?.jokerMode
+      ?? source?.currentJokerMode
       ?? source?.jokerStatus
       ?? source?.wildMode
       ?? source?.onesMode
+      ?? source?.jokerRule
+      ?? source?.wildStatus
+      ?? nested?.jokerMode
+      ?? nested?.currentJokerMode
+      ?? nested?.jokerStatus
+      ?? nested?.wildMode
       ?? ''
   ).toLowerCase();
 
-  if (truthyFlag(source?.zai) || truthyFlag(source?.isZai) || ['zai', 'zai_locked', 'joker_off', 'joker_still_off', 'wild_off'].includes(mode)) return 'zai';
-  if (truthyFlag(source?.chai) || truthyFlag(source?.isChai) || ['chai', 'joker_on', 'open_joker', 'reopen_joker', 'wild_on'].includes(mode)) return 'chai';
+  if (
+    truthyFlag(source?.zai)
+    || truthyFlag(source?.isZai)
+    || truthyFlag(source?.zaiActive)
+    || truthyFlag(source?.zaiDeclared)
+    || truthyFlag(source?.zaiInherited)
+    || truthyFlag(source?.noJoker)
+    || truthyFlag(source?.noJokers)
+    || truthyFlag(source?.jokerOff)
+    || truthyFlag(source?.jokersOff)
+    || truthyFlag(source?.wildOff)
+    || truthyFlag(nested?.zai)
+    || truthyFlag(nested?.isZai)
+    || ['zai', 'zai_locked', 'zai_active', 'joker_off', 'joker_still_off', 'no_joker', 'no_jokers', 'wild_off', 'wild_still_off'].includes(mode)
+  ) return 'zai';
+  if (truthyFlag(source?.chai) || truthyFlag(source?.isChai) || truthyFlag(source?.chaiActive) || truthyFlag(nested?.chai) || truthyFlag(nested?.isChai) || ['chai', 'joker_on', 'open_joker', 'reopen_joker', 'wild_on'].includes(mode)) return 'chai';
   if (
     truthyFlag(source?.jokerLockedThisRound)
     || truthyFlag(source?.onesWereCalledThisRound)
@@ -352,12 +374,43 @@ function getBidJokerTag(bid = {}) {
 }
 
 function getMatchJokerDisplay(match = {}, bid = null, tx = (value) => value) {
+  const controls = getBidControls(match);
+  const bidMeta = bid?.metadata || bid?.meta || bid?.joker || bid?.jokerState || {};
+  const matchBid = match?.currentBid || match?.lastBid || {};
   const source = {
     ...(match || {}),
+    ...(controls || {}),
+    ...(matchBid || {}),
     ...(bid || {}),
-    jokerMode: bid?.jokerMode ?? match?.jokerMode,
-    zai: bid?.zai ?? bid?.isZai ?? match?.zaiActive,
-    chai: bid?.chai ?? bid?.isChai ?? match?.chaiActive,
+    ...(bidMeta || {}),
+    jokerMode: bid?.jokerMode
+      ?? bidMeta?.jokerMode
+      ?? matchBid?.jokerMode
+      ?? match?.currentJokerMode
+      ?? controls?.currentJokerMode
+      ?? match?.jokerMode
+      ?? controls?.jokerMode,
+    currentJokerMode: bid?.currentJokerMode
+      ?? bidMeta?.currentJokerMode
+      ?? matchBid?.currentJokerMode
+      ?? match?.currentJokerMode
+      ?? controls?.currentJokerMode,
+    zai: bid?.zai
+      ?? bid?.isZai
+      ?? bidMeta?.zai
+      ?? bidMeta?.isZai
+      ?? matchBid?.zai
+      ?? matchBid?.isZai
+      ?? match?.zaiActive
+      ?? controls?.zaiActive,
+    chai: bid?.chai
+      ?? bid?.isChai
+      ?? bidMeta?.chai
+      ?? bidMeta?.isChai
+      ?? matchBid?.chai
+      ?? matchBid?.isChai
+      ?? match?.chaiActive
+      ?? controls?.chaiActive,
   };
   const mode = normalizeJokerMode(source);
   const bidFace = Number(bid?.face);
