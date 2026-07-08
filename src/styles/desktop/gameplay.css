@@ -1974,3 +1974,42 @@ html[data-device='desktop'] .gameplay-cups {
   height: 190px !important;
   z-index: 21 !important;
 }
+
+/* Patch: landscape gameplay cups tuning.
+   This is for the 1280x720 landscape gameplay layout.
+   Change only these values when you need to move the 2-cup or 3-cup setups. */
+html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .gameplay-cups {
+  left: 505px !important;
+  top: 220px !important;
+  width: 245px !important;
+  height: 190px !important;
+  z-index: 21 !important;
+}
+
+/* 2 cups - landscape */
+html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .gameplay-cups.gameplay-cups--count-2 .gameplay-cups__cup--2-1 {
+  left: 6% !important;
+  top: 16% !important;
+}
+
+html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .gameplay-cups.gameplay-cups--count-2 .gameplay-cups__cup--2-2 {
+  right: 6% !important;
+  top: 16% !important;
+}
+
+/* 3 cups - landscape */
+html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .gameplay-cups.gameplay-cups--count-3 .gameplay-cups__cup--3-1 {
+  left: 50% !important;
+  top: -5% !important;
+  transform: translateX(-50%) !important;
+}
+
+html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .gameplay-cups.gameplay-cups--count-3 .gameplay-cups__cup--3-2 {
+  left: 10% !important;
+  top: 36% !important;
+}
+
+html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .gameplay-cups.gameplay-cups--count-3 .gameplay-cups__cup--3-3 {
+  right: 10% !important;
+  top: 36% !important;
+}
