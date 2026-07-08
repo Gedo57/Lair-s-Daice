@@ -1840,8 +1840,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
           {currentBid ? <span>{toNumber(currentBid.quantity, 0)} x</span> : <span>- x</span>}
           <Die value={currentBid?.face || 1} className="gameplay-current-bid__die" />
         </div>
-        {/* Current Bid should only show quantity + dice face.
-            Hide joker/ZAI status text such as "Joker OFF" or "ZAI" here. */}
+        {showCurrentBidJokerBadge ? (
+          <div className={`gameplay-current-bid__jokerBadge ${currentBidJokerInfo.className || ''}`}>
+            <span>{currentBidJokerInfo.label}</span>
+            <small>{currentBidJokerInfo.detail}</small>
+          </div>
+        ) : null}
         <div className="gameplay-current-bid__cleanSpacer" aria-hidden="true" />
       </div>
 
