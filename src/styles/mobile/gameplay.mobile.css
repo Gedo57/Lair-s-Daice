@@ -1263,3 +1263,80 @@ html[data-device='mobile']:not([data-orientation='portrait']) .gameplay-cups {
   height: 190px !important;
   z-index: 21 !important;
 }
+
+/* =========================================================
+   PATCH 1 - CURRENT BID MANUAL CONTROLS - MOBILE LANDSCAPE
+   Edit the values below to move or resize Current Bid safely.
+   Portrait has its own controls in portrait-gameplay.mobile.css.
+   ========================================================= */
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-current-bid {
+  --cb-right: 18px;
+  --cb-top: 93px;
+  --cb-width: 224px;
+  --cb-height: 239px;
+  --cb-z: 64;
+
+  --cb-skin-left: 0px;
+  --cb-skin-top: 0px;
+  --cb-skin-width: 100%;
+  --cb-skin-height: 100%;
+
+  --cb-header-left: 15px;
+  --cb-header-top: 0px;
+  --cb-header-width: 193px;
+  --cb-header-height: 43px;
+  --cb-header-font: 18px;
+
+  --cb-main-left: 0px;
+  --cb-main-right: 0px;
+  --cb-main-top: 64px;
+  --cb-main-gap: 10px;
+  --cb-main-font: 34px;
+
+  --cb-die-size: 42px;
+
+  right: var(--cb-right) !important;
+  top: var(--cb-top) !important;
+  width: var(--cb-width) !important;
+  height: var(--cb-height) !important;
+  z-index: var(--cb-z) !important;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-current-bid__skin {
+  left: var(--cb-skin-left) !important;
+  top: var(--cb-skin-top) !important;
+  width: var(--cb-skin-width) !important;
+  height: var(--cb-skin-height) !important;
+  right: auto !important;
+  bottom: auto !important;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-current-bid__header {
+  left: var(--cb-header-left) !important;
+  top: var(--cb-header-top) !important;
+  width: var(--cb-header-width) !important;
+  height: var(--cb-header-height) !important;
+  font-size: var(--cb-header-font) !important;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-current-bid__main {
+  left: var(--cb-main-left) !important;
+  right: var(--cb-main-right) !important;
+  top: var(--cb-main-top) !important;
+  gap: var(--cb-main-gap) !important;
+  font-size: var(--cb-main-font) !important;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-current-bid__die {
+  width: var(--cb-die-size) !important;
+  height: var(--cb-die-size) !important;
+}
+
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-current-bid__jokerBadge {
+  left: var(--cb-joker-left) !important;
+  top: var(--cb-joker-top) !important;
+  width: var(--cb-joker-width) !important;
+  min-width: var(--cb-joker-width) !important;
+  height: var(--cb-joker-height) !important;
+  transform: translateX(var(--cb-joker-translate-x)) !important;
+}

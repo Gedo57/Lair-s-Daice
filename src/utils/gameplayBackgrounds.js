@@ -1,4 +1,5 @@
 const GAMEPLAY_ASSET_ROOT = '/assets/liars-dice/gameplay';
+const GAMEPLAY_MOBILE_PORTRAIT_ASSET_ROOT = '/assets/liars-dice/mobile-portrait/gameplay';
 
 export const DEFAULT_GAMEPLAY_BACKGROUND_KEY = 'table_buyin_500';
 export const PRIVATE_ROOM_BACKGROUND_KEY = 'private_room';
@@ -8,7 +9,9 @@ export const GAMEPLAY_BACKGROUND_CONTRACTS = Object.freeze({
   table_buyin_500: Object.freeze({
     key: 'table_buyin_500',
     asset: 'BG.png',
+    portraitAsset: 'mobile-BG.png',
     url: `${GAMEPLAY_ASSET_ROOT}/BG.png`,
+    portraitUrl: `${GAMEPLAY_MOBILE_PORTRAIT_ASSET_ROOT}/mobile-BG.png`,
     source: 'buy_in',
     scope: 'gameplay',
     variant: 'table_buyin_500',
@@ -17,7 +20,9 @@ export const GAMEPLAY_BACKGROUND_CONTRACTS = Object.freeze({
   table_buyin_5000: Object.freeze({
     key: 'table_buyin_5000',
     asset: 'BG-2.png',
+    portraitAsset: 'mobile-BG-2.png',
     url: `${GAMEPLAY_ASSET_ROOT}/BG-2.png`,
+    portraitUrl: `${GAMEPLAY_MOBILE_PORTRAIT_ASSET_ROOT}/mobile-BG-2.png`,
     source: 'buy_in',
     scope: 'gameplay',
     variant: 'table_buyin_5000',
@@ -26,7 +31,9 @@ export const GAMEPLAY_BACKGROUND_CONTRACTS = Object.freeze({
   private_room: Object.freeze({
     key: 'private_room',
     asset: 'BG-3.png',
+    portraitAsset: 'mobile-BG-3.png',
     url: `${GAMEPLAY_ASSET_ROOT}/BG-3.png`,
+    portraitUrl: `${GAMEPLAY_MOBILE_PORTRAIT_ASSET_ROOT}/mobile-BG-3.png`,
     source: 'private_room',
     scope: 'gameplay',
     variant: 'private_room',
@@ -237,6 +244,8 @@ function buildPayload(contract, overrides = {}) {
   const key = overrides.key || contract.key || DEFAULT_GAMEPLAY_BACKGROUND_KEY;
   const asset = overrides.asset || contract.asset || normalizeAssetName(overrides.url) || 'BG.png';
   const url = overrides.url || contract.url || normalizeGameplayBackgroundUrl(asset, key);
+  const portraitAsset = overrides.portraitAsset || contract.portraitAsset || asset;
+  const portraitUrl = overrides.portraitUrl || contract.portraitUrl || url;
   const source = overrides.source || contract.source || 'buy_in';
   const scope = overrides.scope || contract.scope || 'gameplay';
   const variant = overrides.variant || contract.variant || key;
@@ -249,7 +258,13 @@ function buildPayload(contract, overrides = {}) {
     asset,
     backgroundAsset: asset,
     gameplayBackgroundAsset: asset,
+    portraitAsset,
+    backgroundPortraitAsset: portraitAsset,
+    gameplayPortraitBackgroundAsset: portraitAsset,
     url,
+    portraitUrl,
+    backgroundPortraitUrl: portraitUrl,
+    gameplayPortraitBackgroundUrl: portraitUrl,
     path: url,
     image: url,
     backgroundUrl: url,
@@ -267,7 +282,13 @@ function buildPayload(contract, overrides = {}) {
       asset,
       backgroundAsset: asset,
       gameplayBackgroundAsset: asset,
+      portraitAsset,
+      backgroundPortraitAsset: portraitAsset,
+      gameplayPortraitBackgroundAsset: portraitAsset,
       url,
+      portraitUrl,
+      backgroundPortraitUrl: portraitUrl,
+      gameplayPortraitBackgroundUrl: portraitUrl,
       path: url,
       image: url,
       backgroundUrl: url,
@@ -295,6 +316,8 @@ export function resolveGameplayBackgroundContract(sources = [], options = {}) {
         key: finalKey,
         asset: normalizeAssetName(url || baseContract.asset) || baseContract.asset,
         url: url || baseContract.url,
+        portraitAsset: baseContract.portraitAsset,
+        portraitUrl: baseContract.portraitUrl,
         source: sourceLooksPrivate(source) ? 'private_room' : baseContract.source,
       });
     }
@@ -342,5 +365,5 @@ export function toCssBackgroundImageValue(url) {
 }
 
 export const GAMEPLAY_BACKGROUND_PRELOAD_ASSETS = Object.freeze(
-  Object.values(GAMEPLAY_BACKGROUND_CONTRACTS).map((contract) => contract.url),
+  Object.values(GAMEPLAY_BACKGROUND_CONTRACTS).flatMap((contract) => [contract.url, contract.portraitUrl].filter(Boolean)),
 );

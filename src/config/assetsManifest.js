@@ -17,6 +17,7 @@ export const ASSET_FOLDERS = {
   help: `${ASSET_ROOT}/help/`,
   win: `${ASSET_ROOT}/win/`,
   portrait: `${ASSET_ROOT}/mobile-portrait/`,
+  gameplayPortrait: `${ASSET_ROOT}/mobile-portrait/gameplay/`,
   zh: `${ASSET_ROOT}/localized/zh/`,
 };
 
@@ -87,7 +88,10 @@ const createRoomSharedAssets = [
   ]),
 ];
 
-const gameplayBackgroundAssets = files(ASSET_FOLDERS.gameplay, ['BG.png', 'BG-2.png', 'BG-3.png']);
+const gameplayBackgroundAssets = [
+  ...files(ASSET_FOLDERS.gameplay, ['BG.png', 'BG-2.png', 'BG-3.png']),
+  ...files(ASSET_FOLDERS.gameplayPortrait, ['mobile-BG.png', 'mobile-BG-2.png', 'mobile-BG-3.png']),
+];
 const gameplayDiceAssets = files(ASSET_FOLDERS.gameplay, Array.from({ length: 6 }, (_, index) => `n${index + 1}.png`));
 const gameplayRedDiceAssets = files(ASSET_FOLDERS.gameplay, ['n11.png', 'n22.png', 'n33.png', 'n44.png', 'n55.png', 'n66.png']);
 

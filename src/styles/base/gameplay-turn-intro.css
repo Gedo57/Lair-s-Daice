@@ -233,13 +233,17 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   --turn-intro-cup-size: 138px;
 }
 
+/* PATCH 3 - DICE FLY TARGET CONTROLS
+   The dice now flies into the Current Bid panel area instead of the top turn bar.
+   Tune only the target values below if the Current Bid panel is moved later.
+*/
 html[data-device='desktop'] .gameplay-screen {
   --turn-intro-cup-left: 50%;
   --turn-intro-cup-top: 41%;
   --turn-intro-dice-center-left: 50%;
   --turn-intro-dice-center-top: 50%;
-  --turn-intro-dice-target-left: 634px;
-  --turn-intro-dice-target-top: 96px;
+  --turn-intro-dice-target-left: 1150px;
+  --turn-intro-dice-target-top: 156px;
 }
 
 html[data-device='mobile'][data-orientation='landscape'] .gameplay-screen {
@@ -247,8 +251,8 @@ html[data-device='mobile'][data-orientation='landscape'] .gameplay-screen {
   --turn-intro-cup-top: 41%;
   --turn-intro-dice-center-left: 50%;
   --turn-intro-dice-center-top: 50%;
-  --turn-intro-dice-target-left: 634px;
-  --turn-intro-dice-target-top: 96px;
+  --turn-intro-dice-target-left: 1150px;
+  --turn-intro-dice-target-top: 178px;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
@@ -257,8 +261,9 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
   --pg-turn-intro-cup-size: 168px;
   --pg-turn-intro-dice-center-left: 50%;
   --pg-turn-intro-dice-center-top: 45%;
-  --pg-turn-intro-dice-target-left: 277px;
-  --pg-turn-intro-dice-target-top: 101px;
+  /* PATCH 3 - portrait dice target: Current Bid panel main row */
+  --pg-turn-intro-dice-target-left: 360px;
+  --pg-turn-intro-dice-target-top: 491px;
   --pg-turn-intro-die-size: 43px;
   --pg-turn-intro-dice-gap: 6px;
 }

@@ -2,6 +2,23 @@
    Scope: physical mobile portrait only. Landscape keeps the legacy 1280x720 layout.
    This file does not redraw gameplay panels/table with CSS shapes; it only positions existing assets. */
 
+/* Portrait gameplay table-specific backgrounds.
+   Each table keeps its original desktop/landscape background,
+   but portrait mode uses the supplied portrait asset for the selected table. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
+  background-image: var(--gameplay-portrait-background-image, var(--gameplay-background-image)) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen {
+  background-image: var(--gameplay-portrait-background-image, var(--gameplay-background-image)) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+}
+
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
   background-size: cover;
   background-position: center center;
@@ -850,4 +867,219 @@ html[data-device='mobile'][data-orientation='portrait'][data-language='zh'] .app
 /* Pek/Slam portrait action label patch */
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-action--slam .gameplay-action__title {
   font-size: 25px !important;
+}
+
+/* =========================================================
+   PATCH 1 - CURRENT BID MANUAL CONTROLS - PORTRAIT
+   Edit the values below only. This keeps portrait tuning isolated.
+   - Move panel: --cb-left / --cb-top
+   - Resize panel: --cb-width / --cb-height
+   - Move header/main/dice/joker using their own variables
+   ========================================================= */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid {
+  --cb-left: 220px;
+  --cb-top: 408px;
+  --cb-width: 280px;
+  --cb-height: 220px;
+  --cb-z: 64;
+
+  --cb-skin-left: 0px;
+  --cb-skin-top: 0px;
+  --cb-skin-width: 100%;
+  --cb-skin-height: 100%;
+
+  --cb-header-left: 32px;
+  --cb-header-top: 14px;
+  --cb-header-width: 216px;
+  --cb-header-height: 34px;
+  --cb-header-font: 17px;
+
+  --cb-main-left: 0px;
+  --cb-main-right: 0px;
+  --cb-main-top: 58px;
+  --cb-main-gap: 13px;
+  --cb-main-font: 42px;
+
+  --cb-die-size: 50px;
+
+  --cb-joker-left: 50%;
+  --cb-joker-top: 122px;
+  --cb-joker-width: 120px;
+  --cb-joker-height: 46px;
+  --cb-joker-translate-x: -50%;
+
+  left: var(--cb-left) !important;
+  right: auto !important;
+  top: var(--cb-top) !important;
+  width: var(--cb-width) !important;
+  height: var(--cb-height) !important;
+  z-index: var(--cb-z) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__skin {
+  left: var(--cb-skin-left) !important;
+  top: var(--cb-skin-top) !important;
+  width: var(--cb-skin-width) !important;
+  height: var(--cb-skin-height) !important;
+  right: auto !important;
+  bottom: auto !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__header {
+  left: var(--cb-header-left) !important;
+  top: var(--cb-header-top) !important;
+  width: var(--cb-header-width) !important;
+  height: var(--cb-header-height) !important;
+  font-size: var(--cb-header-font) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__main {
+  left: var(--cb-main-left) !important;
+  right: var(--cb-main-right) !important;
+  top: var(--cb-main-top) !important;
+  gap: var(--cb-main-gap) !important;
+  font-size: var(--cb-main-font) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__die {
+  width: var(--cb-die-size) !important;
+  height: var(--cb-die-size) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-current-bid__jokerBadge {
+  left: var(--cb-joker-left) !important;
+  top: var(--cb-joker-top) !important;
+  width: var(--cb-joker-width) !important;
+  min-width: var(--cb-joker-width) !important;
+  height: var(--cb-joker-height) !important;
+  transform: translateX(var(--cb-joker-translate-x)) !important;
+}
+
+
+/* =========================================================
+   PATCH 3 - PORTRAIT CUPS MANUAL CONTROLS
+   Edit this block only when you need to move/scale cups in portrait.
+   Coordinate space: 720x1280 portrait gameplay screen.
+
+   Container:
+   - --pg-cups-left / --pg-cups-top move the full cup group
+   - --pg-cups-width / --pg-cups-height resize the layout box
+
+   Individual cups:
+   - --pg-cup-*-left / --pg-cup-*-top move a cup inside the group
+   - --pg-cup-*-width changes its size
+   ========================================================= */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
+  --pg-cups-left: 140px;
+  --pg-cups-top: 486px;
+  --pg-cups-width: 440px;
+  --pg-cups-height: 255px;
+  --pg-cups-z: 24;
+
+  --pg-cup-filter: drop-shadow(0 9px 11px rgba(0, 0, 0, .34));
+
+  --pg-cup-2-width: 46%;
+  --pg-cup-2-1-left: 4%;
+  --pg-cup-2-1-top: 34%;
+  --pg-cup-2-1-transform: none;
+  --pg-cup-2-2-left: 50%;
+  --pg-cup-2-2-top: 34%;
+  --pg-cup-2-2-transform: none;
+
+  --pg-cup-3-width: 38%;
+  --pg-cup-3-1-left: 50%;
+  --pg-cup-3-1-top: 0%;
+  --pg-cup-3-1-transform: translateX(-50%);
+  --pg-cup-3-2-left: 9%;
+  --pg-cup-3-2-top: 42%;
+  --pg-cup-3-2-transform: none;
+  --pg-cup-3-3-left: 53%;
+  --pg-cup-3-3-top: 42%;
+  --pg-cup-3-3-transform: none;
+
+  --pg-cup-4-width: 34%;
+  --pg-cup-4-1-left: 8%;
+  --pg-cup-4-1-top: 7%;
+  --pg-cup-4-1-transform: none;
+  --pg-cup-4-2-left: 58%;
+  --pg-cup-4-2-top: 7%;
+  --pg-cup-4-2-transform: none;
+  --pg-cup-4-3-left: 8%;
+  --pg-cup-4-3-top: 51%;
+  --pg-cup-4-3-transform: none;
+  --pg-cup-4-4-left: 58%;
+  --pg-cup-4-4-top: 51%;
+  --pg-cup-4-4-transform: none;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups {
+  left: var(--pg-cups-left) !important;
+  top: var(--pg-cups-top) !important;
+  width: var(--pg-cups-width) !important;
+  height: var(--pg-cups-height) !important;
+  z-index: var(--pg-cups-z) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup {
+  right: auto !important;
+  height: auto !important;
+  filter: var(--pg-cup-filter) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups--count-2 .gameplay-cups__cup {
+  width: var(--pg-cup-2-width) !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups--count-3 .gameplay-cups__cup {
+  width: var(--pg-cup-3-width) !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups--count-4 .gameplay-cups__cup {
+  width: var(--pg-cup-4-width) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--2-1 {
+  left: var(--pg-cup-2-1-left) !important;
+  top: var(--pg-cup-2-1-top) !important;
+  transform: var(--pg-cup-2-1-transform) !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--2-2 {
+  left: var(--pg-cup-2-2-left) !important;
+  top: var(--pg-cup-2-2-top) !important;
+  transform: var(--pg-cup-2-2-transform) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--3-1 {
+  left: var(--pg-cup-3-1-left) !important;
+  top: var(--pg-cup-3-1-top) !important;
+  transform: var(--pg-cup-3-1-transform) !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--3-2 {
+  left: var(--pg-cup-3-2-left) !important;
+  top: var(--pg-cup-3-2-top) !important;
+  transform: var(--pg-cup-3-2-transform) !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--3-3 {
+  left: var(--pg-cup-3-3-left) !important;
+  top: var(--pg-cup-3-3-top) !important;
+  transform: var(--pg-cup-3-3-transform) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--4-1 {
+  left: var(--pg-cup-4-1-left) !important;
+  top: var(--pg-cup-4-1-top) !important;
+  transform: var(--pg-cup-4-1-transform) !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--4-2 {
+  left: var(--pg-cup-4-2-left) !important;
+  top: var(--pg-cup-4-2-top) !important;
+  transform: var(--pg-cup-4-2-transform) !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--4-3 {
+  left: var(--pg-cup-4-3-left) !important;
+  top: var(--pg-cup-4-3-top) !important;
+  transform: var(--pg-cup-4-3-transform) !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-cups__cup--4-4 {
+  left: var(--pg-cup-4-4-left) !important;
+  top: var(--pg-cup-4-4-top) !important;
+  transform: var(--pg-cup-4-4-transform) !important;
 }

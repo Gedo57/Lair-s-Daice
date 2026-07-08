@@ -689,33 +689,21 @@ function getTurnIntroKey(match, activePlayer) {
   if (!match || match.status !== 'active' || !activePlayer || !hasTurnTimerStarted(match)) return '';
 
   const matchKey = firstTurnIntroKeyPart(match.id, match.matchId, match._id, 'local-match');
-  const roundKey = firstTurnIntroKeyPart(match.roundId, match.roundNumber, match.round, 'round-1');
-  const playerKey = firstTurnIntroKeyPart(...playerIdentityValues(activePlayer), playerName(activePlayer, 'active-player'));
-  const explicitTurnKey = firstTurnIntroKeyPart(
-    match.turnId,
-    match.currentTurnId,
-    match.turnSequence,
-    match.turnNumber,
-    match.turnIndex,
-    match.turnStartedAt,
-    match.turnDeadlineAt,
+  const roundKey = firstTurnIntroKeyPart(
+    match.roundId,
+    match.currentRoundId,
+    match.roundNumber,
+    match.currentRoundNumber,
+    match.round,
+    match.roundStartedAt,
+    match.cupShakenAt,
+    'round-1',
   );
 
-  if (explicitTurnKey) return [matchKey, roundKey, playerKey, explicitTurnKey].join('::');
-
-  const bid = match.currentBid || {};
-  const lastAction = match.lastAction || {};
-  const fallbackTurnKey = [
-    firstTurnIntroKeyPart(lastAction.id, lastAction.actionId, lastAction.createdAt, lastAction.updatedAt, lastAction.type),
-    firstTurnIntroKeyPart(lastAction.by, lastAction.playerId, lastAction.actorId),
-    firstTurnIntroKeyPart(bid.id, bid.bidId, bid.createdAt, bid.updatedAt),
-    firstTurnIntroKeyPart(bid.by, bid.playerId, bid.actorId),
-    firstTurnIntroKeyPart(bid.quantity),
-    firstTurnIntroKeyPart(bid.face),
-    firstTurnIntroKeyPart(match.actionSequence, match.actionCount, match.version),
-  ].filter(Boolean).join(':') || 'initial-turn';
-
-  return [matchKey, roundKey, playerKey, fallbackTurnKey].join('::');
+  // The cup shake / dice reveal should run once per round, not once per turn.
+  // Keep this key independent from turn ids, active player ids, current bid changes,
+  // action counters, and deadline updates so regular turn/bid updates do not replay it.
+  return [matchKey, roundKey].join('::');
 }
 
 
@@ -723,7 +711,16 @@ function getTurnIntroResetKey(match) {
   if (!match) return 'no-match';
   return [
     firstTurnIntroKeyPart(match.id, match.matchId, match._id, 'local-match'),
-    firstTurnIntroKeyPart(match.roundId, match.roundNumber, match.round, 'round-1'),
+    firstTurnIntroKeyPart(
+      match.roundId,
+      match.currentRoundId,
+      match.roundNumber,
+      match.currentRoundNumber,
+      match.round,
+      match.roundStartedAt,
+      match.cupShakenAt,
+      'round-1',
+    ),
     firstTurnIntroKeyPart(match.status, 'unknown-status'),
   ].join('::');
 }
@@ -1761,7 +1758,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   return (
     <section
       className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${activePlayer ? 'has-active-player' : ''} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''}`}
-      style={{ '--gameplay-background-image': toCssBackgroundImageValue(backgroundContract.backgroundUrl) }}
+      style={{
+        '--gameplay-background-image': toCssBackgroundImageValue(backgroundContract.backgroundUrl),
+        '--gameplay-portrait-background-image': toCssBackgroundImageValue(backgroundContract.gameplayPortraitBackgroundUrl || backgroundContract.portraitUrl || backgroundContract.backgroundUrl),
+      }}
       data-background-key={backgroundContract.backgroundKey}
       data-background-url={backgroundContract.backgroundUrl}
       data-turn-intro-phase={turnIntroPhase}
