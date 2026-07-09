@@ -44,11 +44,8 @@ const TABLE_KEY_ALIASES = {
 };
 
 const MUSIC_ENABLED_SCREENS = new Set([
-  'matchmaking',
   'gameplay',
   'mockgame',
-  'roomlobby',
-  'win',
 ]);
 
 function slugifyMusicKey(value) {
@@ -75,18 +72,19 @@ function firstValue(...values) {
 
 function resolveSelectedTableSource(gameData = {}) {
   return firstValue(
+    gameData.match?.selectedTable,
+    gameData.match?.table,
+    gameData.match?.tier,
+    gameData.currentRoom?.selectedTable,
+    gameData.currentRoom?.table,
+    gameData.currentRoom?.tier,
+    gameData.currentRoom,
     gameData.selectedTable,
     gameData.currentTable,
     gameData.table,
     gameData.tier,
-    gameData.match?.selectedTable,
-    gameData.match?.table,
-    gameData.match?.tier,
     gameData.matchmaking?.selectedTable,
     gameData.matchmaking?.table,
-    gameData.currentRoom?.selectedTable,
-    gameData.currentRoom?.table,
-    gameData.currentRoom?.tier,
     gameData.defaultTable,
     gameData.playNowTable,
   );
@@ -99,7 +97,7 @@ function resolveMusicKeyFromTable(table) {
     return normalizeTableMusicKey(table);
   }
 
-  return normalizeTableMusicKey(firstValue(
+  const explicitMusicKey = normalizeTableMusicKey(firstValue(
     table.musicKey,
     table.key,
     table.slug,
@@ -110,12 +108,40 @@ function resolveMusicKeyFromTable(table) {
     table.id,
     table.name,
     table.title,
+    table.type,
+    table.roomType,
   ));
+
+  if (explicitMusicKey) return explicitMusicKey;
+
+  const looksLikePrivateRoom = Boolean(
+    table.isPrivate
+    || table.private
+    || table.roomCode
+    || table.code
+    || table.roomName
+  );
+
+  return looksLikePrivateRoom ? 'createroom' : null;
+}
+
+function isActiveGameplayMusicScreen(screenName, gameData = {}) {
+  if (screenName === 'mockgame') return true;
+  if (!MUSIC_ENABLED_SCREENS.has(screenName)) return false;
+
+  const match = gameData.match || {};
+  const status = String(match.status || match.matchStatus || gameData.status || '').toLowerCase();
+
+  return Boolean(
+    gameData.currentMatchId
+    || match.id
+    || match.matchId
+    || ['active', 'in_progress', 'started', 'game_started'].includes(status)
+  );
 }
 
 export function resolveTableMusicTrack(screenName, gameData = {}) {
-  if (screenName === 'createroom') return TABLE_MUSIC_TRACKS.createroom;
-  if (!MUSIC_ENABLED_SCREENS.has(screenName)) return null;
+  if (!isActiveGameplayMusicScreen(screenName, gameData)) return null;
 
   const musicKey = resolveMusicKeyFromTable(resolveSelectedTableSource(gameData));
   if (!musicKey) return null;

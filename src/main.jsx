@@ -59,6 +59,7 @@ import './styles/mobile/portrait-tournament-pass-fix.mobile.css';
 
 import './styles/mobile/mobile-landscape-browser-fix.css';
 import './styles/base/gameplay-chat.css';
+import './styles/base/gameplay-music-control.css';
 import './styles/base/bots-mode.css';
 import './styles/base/create-room-responsive-layout.css';
 import './styles/mobile/portrait-gameplay-final-reference.mobile.css';

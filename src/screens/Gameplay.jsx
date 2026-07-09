@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveProfileAvatarSrc as resolveAvatarSrc } from '../utils/profileAvatars.js';
+import { getTableMusicVolume, resumeTableMusic, setTableMusicVolume } from '../services/tableMusicPlayer.js';
 import { startVoiceChatSession } from '../services/voiceChatService.js';
 import { resolveGameDataBackground, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
 
@@ -1324,6 +1325,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const chatStatus = data?.chatStatus || {};
   const [chatOpen, setChatOpen] = useState(false);
   const [chatDraft, setChatDraft] = useState('');
+  const [musicPanelOpen, setMusicPanelOpen] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(() => Math.round(getTableMusicVolume() * 100));
   const chatListRef = useRef(null);
   const voiceSessionRef = useRef(null);
   const canUseChat = Boolean(currentMatchId && !botsMatch);
@@ -1623,6 +1626,19 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     if (!confirmed) return;
     backendActions?.leaveMatch?.(currentMatchId);
   };
+
+  const toggleMusicPanel = () => {
+    setMusicPanelOpen((open) => !open);
+    resumeTableMusic();
+  };
+
+  const handleMusicVolumeChange = (event) => {
+    const nextVolume = Math.min(100, Math.max(0, Number(event.target.value) || 0));
+    setMusicVolume(nextVolume);
+    setTableMusicVolume(nextVolume / 100);
+    resumeTableMusic();
+  };
+
   const submitChatMessage = async (event) => {
     event?.preventDefault?.();
     const text = chatDraft.trim().slice(0, 200);
@@ -1832,6 +1848,43 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       {canUseVoice && voiceState.error ? (
         <div className="gameplay-voice-status gameplay-voice-status--error">{voiceState.error}</div>
       ) : null}
+
+      <div className={`gameplay-music-control ${musicPanelOpen ? 'is-open' : ''}`}>
+        <button
+          className="gameplay-music-button"
+          type="button"
+          onClick={toggleMusicPanel}
+          aria-expanded={musicPanelOpen}
+          aria-controls="gameplay-music-volume-panel"
+          title={tx('Music volume')}
+        >
+          <img
+            className="gameplay-music-button__skin"
+            src="/assets/liars-dice/gameplay/chat-button-red.png"
+            alt=""
+            draggable="false"
+          />
+          <span className="gameplay-music-button__icon" aria-hidden="true">🔊</span>
+          <span className="gameplay-music-button__title">{tx('SOUND')}</span>
+        </button>
+
+        {musicPanelOpen ? (
+          <div id="gameplay-music-volume-panel" className="gameplay-music-panel" role="group" aria-label={tx('Music volume')}>
+            <div className="gameplay-music-panel__label">{tx('MUSIC')}</div>
+            <input
+              className="gameplay-music-panel__slider"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={musicVolume}
+              onChange={handleMusicVolumeChange}
+              aria-label={tx('Music volume')}
+            />
+            <div className="gameplay-music-panel__value">{musicVolume}%</div>
+          </div>
+        ) : null}
+      </div>
 
       <div className="gameplay-current-bid">
         <img className="gameplay-current-bid__skin" src={`${asset}4.png`} alt="" draggable="false" />

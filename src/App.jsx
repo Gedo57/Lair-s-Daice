@@ -477,6 +477,43 @@ function resolveSelectedTableForMatchmaking(payload = {}, state = {}) {
   return state.playNowTable || state.defaultTable || state.selectedTable || {};
 }
 
+function withPrivateRoomMusicMetadata(settings = {}) {
+  const rawKey = settings.musicKey
+    || settings.key
+    || settings.slug
+    || settings.tierKey
+    || settings.tierId
+    || settings.tableId
+    || settings.id
+    || settings.name
+    || settings.title
+    || settings.type
+    || settings.roomType;
+  const slug = slugifyRoomKey(rawKey, '');
+  const normalizedKey = normalizeSelectableRoomKey(rawKey, '');
+  const shouldUsePrivateMusic = Boolean(
+    settings.isPrivate
+    || settings.private
+    || settings.roomCode
+    || settings.code
+    || settings.roomName
+    || !rawKey
+    || normalizedKey === 'private'
+    || slug === 'create-room'
+    || slug === 'createroom'
+  );
+
+  if (!shouldUsePrivateMusic) return settings;
+
+  return {
+    ...settings,
+    key: settings.key || 'private',
+    type: settings.type || 'private',
+    roomType: settings.roomType || 'private',
+    musicKey: settings.musicKey || 'createroom',
+  };
+}
+
 function buildInsufficientFundsMessage(requiredCoins = 0, availableCoins = 0) {
   return `Not enough chips. Required: ${formatCurrency(requiredCoins)}. Available: ${formatCurrency(availableCoins)}.`;
 }
@@ -2176,11 +2213,18 @@ export default function App() {
       }
     },
     joinRoom: (room) => runBackendAction('rooms.join', () => backendBridge.joinRoom(room), navigation.goRoomLobby),
-    createRoom: (settings) => {
-      const isBotsMode = isBotsModeSettings(settings);
+    createRoom: (settings = {}) => {
+      const roomSettings = withPrivateRoomMusicMetadata(settings);
+      const isBotsMode = isBotsModeSettings(roomSettings);
+
+      setGameData((current) => ({
+        ...current,
+        selectedTable: roomSettings,
+      }));
+
       return runBackendAction(
         isBotsMode ? 'bots.start' : 'rooms.create',
-        () => (isBotsMode ? backendBridge.startBotsMatch(settings) : backendBridge.createRoom(settings)),
+        () => (isBotsMode ? backendBridge.startBotsMatch(roomSettings) : backendBridge.createRoom(roomSettings)),
         (result) => {
           const patch = extractGameDataPatch(result || {});
           if (isBotsDirectStartResult(result || {}, patch, settings) || (isBotsMode && (patch.match || patch.currentMatchId || isGameStartedPayload(result || {})))) {
@@ -2192,24 +2236,33 @@ export default function App() {
         },
       );
     },
-    startBotsMatch: (settings = {}) => runBackendAction(
-      'bots.start',
-      () => backendBridge.startBotsMatch(settings),
-      (result) => {
-        const patch = extractGameDataPatch(result || {});
-        if (isBotsDirectStartResult(result || {}, patch, settings) || patch.match || patch.currentMatchId || isGameStartedPayload(result || {})) {
-          clearChatForMatch();
-          navigation.goGameplay();
-          return;
-        }
+    startBotsMatch: (settings = {}) => {
+      const matchSettings = withPrivateRoomMusicMetadata(settings);
 
-        setBackendStatus({
-          loading: false,
-          error: 'Bots mode did not return an active match. Please try again.',
-          lastAction: 'bots.start.error',
-        });
-      },
-    ),
+      setGameData((current) => ({
+        ...current,
+        selectedTable: matchSettings,
+      }));
+
+      return runBackendAction(
+        'bots.start',
+        () => backendBridge.startBotsMatch(matchSettings),
+        (result) => {
+          const patch = extractGameDataPatch(result || {});
+          if (isBotsDirectStartResult(result || {}, patch, settings) || patch.match || patch.currentMatchId || isGameStartedPayload(result || {})) {
+            clearChatForMatch();
+            navigation.goGameplay();
+            return;
+          }
+
+          setBackendStatus({
+            loading: false,
+            error: 'Bots mode did not return an active match. Please try again.',
+            lastAction: 'bots.start.error',
+          });
+        },
+      );
+    },
     getMyRoom: () => runBackendAction('rooms.my', () => backendBridge.getMyRoom(), navigation.goRoomLobby),
     refreshRoom: (room) => runBackendAction('rooms.get', () => backendBridge.getRoom(room || gameData.currentRoom || gameData.currentRoomId)),
     refreshRooms: () => runBackendAction('rooms.refresh', () => backendBridge.refreshRooms()),

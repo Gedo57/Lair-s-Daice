@@ -1,12 +1,42 @@
 const DEFAULT_VOLUME = 0.35;
+const VOLUME_STORAGE_KEY = 'liarsDice.tableMusic.volume';
 
 let audioElement = null;
 let currentTrackId = null;
 let currentAudioSrc = null;
 let hasLoopFallbackListener = false;
+let currentVolume = readStoredVolume();
 
 function canUseAudio() {
   return typeof window !== 'undefined' && typeof Audio !== 'undefined';
+}
+
+function clampVolume(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return DEFAULT_VOLUME;
+  return Math.min(1, Math.max(0, number));
+}
+
+function readStoredVolume() {
+  if (typeof window === 'undefined') return DEFAULT_VOLUME;
+
+  try {
+    const storedValue = window.localStorage?.getItem?.(VOLUME_STORAGE_KEY);
+    if (storedValue === null || storedValue === undefined || storedValue === '') return DEFAULT_VOLUME;
+    return clampVolume(storedValue);
+  } catch (_) {
+    return DEFAULT_VOLUME;
+  }
+}
+
+function writeStoredVolume(volume) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage?.setItem?.(VOLUME_STORAGE_KEY, String(volume));
+  } catch (_) {
+    // Storage can be unavailable in private browsing or embedded webviews.
+  }
 }
 
 function playAudio(audio) {
@@ -36,7 +66,7 @@ function getAudioElement() {
   if (!audioElement) {
     audioElement = new Audio();
     audioElement.preload = 'auto';
-    audioElement.volume = DEFAULT_VOLUME;
+    audioElement.volume = currentVolume;
   }
 
   // Main loop behavior: when the track ends it starts again automatically.
@@ -84,7 +114,7 @@ export function syncTableMusic(track) {
   audio.pause();
   audio.src = nextAudioSrc;
   audio.loop = true;
-  audio.volume = track.volume ?? DEFAULT_VOLUME;
+  audio.volume = currentVolume;
 
   try {
     audio.currentTime = 0;
@@ -94,4 +124,24 @@ export function syncTableMusic(track) {
 
   audio.load();
   playAudio(audio);
+}
+
+export function getTableMusicVolume() {
+  return currentVolume;
+}
+
+export function setTableMusicVolume(volume) {
+  currentVolume = clampVolume(volume);
+  writeStoredVolume(currentVolume);
+
+  if (audioElement) {
+    audioElement.volume = currentVolume;
+  }
+
+  return currentVolume;
+}
+
+export function resumeTableMusic() {
+  if (!audioElement || !currentAudioSrc) return;
+  playAudio(audioElement);
 }
