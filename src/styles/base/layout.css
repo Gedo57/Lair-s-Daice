@@ -81,7 +81,7 @@ html[data-language='zh'] .app-shell--help {
 }
 
 .app-shell--createroom {
-  background-image: var(--create-room-background-image, url('/assets/liars-dice/gameplay/BG-3.png'));
+  background-image: var(--create-room-background-image, url('/assets/liars-dice/room-select/BG.png'));
 }
 
 .app-shell--joinroom {

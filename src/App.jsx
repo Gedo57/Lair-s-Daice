@@ -7,6 +7,7 @@ import { getAssetsForPhase, getAssetsForScreen } from './config/assetsManifest.j
 import { resolveCreateRoomMusicKeyFromSettings, resolveTableMusicTrack } from './config/tableMusic.js';
 import {
   resolveCreateRoomBackgroundContract,
+  resolveCreateRoomScreenBackgroundContract,
   resolveGameDataBackground,
   resolveGameplayBackgroundContract,
   resolveRoomLobbyBackgroundContract,
@@ -477,8 +478,44 @@ function resolveSelectedTableForMatchmaking(payload = {}, state = {}) {
   return state.playNowTable || state.defaultTable || state.selectedTable || {};
 }
 
+function isCreateRoomGameplaySource(source = {}) {
+  if (!source || typeof source !== 'object') return false;
+  const modeText = String(source.roomMode || source.gameMode || source.playMode || source.selectedRoomMode || source.mode || source.roomType || source.type || '').toLowerCase();
+  const keyText = String(source.key || source.id || source.tableId || source.tierId || source.roomTypeId || source.name || source.title || '').toLowerCase();
+  return Boolean(
+    source.gameplayThemeLocked
+    || source.createRoomGameplayTheme
+    || source.createRoomBuyInTier
+    || source.roomCode
+    || source.code
+    || source.roomName
+    || source.isPrivate
+    || source.private
+    || source.botsEnabled
+    || modeText.includes('bot')
+    || modeText.includes('private')
+    || keyText.includes('private')
+    || keyText.includes('create-room')
+  );
+}
+
+function normalizeCreateRoomGameplaySelection(settings = {}) {
+  const gameplayBackgroundContract = resolveCreateRoomBackgroundContract(settings);
+  const createRoomMusicKey = resolveCreateRoomMusicKeyFromSettings(settings);
+
+  return {
+    ...settings,
+    ...gameplayBackgroundContract,
+    gameplayThemeLocked: true,
+    createRoomGameplayTheme: true,
+    createRoomBuyInTier: gameplayBackgroundContract.backgroundKey,
+    createRoomMusicKey,
+    musicKey: createRoomMusicKey,
+    tableMusicKey: createRoomMusicKey,
+  };
+}
+
 function withPrivateRoomMusicMetadata(settings = {}) {
-  const createRoomBackgroundContract = resolveCreateRoomBackgroundContract(settings);
   const rawKey = settings.musicKey
     || settings.key
     || settings.slug
@@ -506,17 +543,13 @@ function withPrivateRoomMusicMetadata(settings = {}) {
 
   if (!shouldUsePrivateMusic) return settings;
 
-  const createRoomMusicKey = resolveCreateRoomMusicKeyFromSettings(settings);
+  const normalizedSelection = normalizeCreateRoomGameplaySelection(settings);
 
   return {
-    ...settings,
-    ...createRoomBackgroundContract,
-    key: settings.key || createRoomBackgroundContract.backgroundKey || 'private',
+    ...normalizedSelection,
+    key: settings.key || normalizedSelection.backgroundKey || 'private',
     type: settings.type || 'private',
     roomType: settings.roomType || 'private',
-    createRoomBuyInTier: createRoomBackgroundContract.backgroundKey,
-    musicKey: settings.musicKey || createRoomMusicKey,
-    tableMusicKey: settings.tableMusicKey || settings.musicKey || createRoomMusicKey,
   };
 }
 
@@ -1499,8 +1532,8 @@ function extractGameDataPatch(payload = {}) {
     }
   }
 
-  if (source.selectedTable || source.table || source.tier || source.defaultTable || source.playNowTable) {
-    const selectedTableSource = source.selectedTable || source.table || source.tier || source.defaultTable || source.playNowTable;
+  if (source.selectedTable || source.table || source.tier) {
+    const selectedTableSource = source.selectedTable || source.table || source.tier;
     patch.selectedTable = normalizeSelectableRoom(selectedTableSource, 0) || selectedTableSource;
   }
 
@@ -1560,7 +1593,14 @@ function mergeGameData(current, patch) {
   if (Object.prototype.hasOwnProperty.call(patch, 'roundResult')) next.roundResult = patch.roundResult;
   if (patch.matchResult) next.matchResult = { ...current.matchResult, ...patch.matchResult };
   if (Object.prototype.hasOwnProperty.call(patch, 'serverMatchmaking')) next.serverMatchmaking = patch.serverMatchmaking;
-  if (patch.selectedTable) next.selectedTable = patch.selectedTable;
+  if (patch.selectedTable) {
+    const currentSelectionLocked = isCreateRoomGameplaySource(current.selectedTable);
+    const incomingSelectionLocked = isCreateRoomGameplaySource(patch.selectedTable);
+    const incomingLooksCatalogDefault = !incomingSelectionLocked && ['beginner', 'table_buyin_500', 'table-buyin-500'].includes(String(patch.selectedTable.key || patch.selectedTable.tableId || patch.selectedTable.id || patch.selectedTable.backgroundKey || '').toLowerCase());
+    if (!currentSelectionLocked || incomingSelectionLocked || !incomingLooksCatalogDefault) {
+      next.selectedTable = patch.selectedTable;
+    }
+  }
   if (patch.matchmaking) next.matchmaking = patch.matchmaking;
   if (patch.transactions) next.transactions = patch.transactions;
   if (patch.activeRooms) next.activeRooms = patch.activeRooms;
@@ -1854,7 +1894,7 @@ export default function App() {
   const activeBackgroundData = screen === 'mockgame' ? mockGameplayData : gameData;
   const activeTableMusicTrack = useMemo(() => resolveTableMusicTrack(screen, activeBackgroundData), [screen, activeBackgroundData]);
   const gameplayBackground = useMemo(() => resolveGameDataBackground(activeBackgroundData), [activeBackgroundData]);
-  const createRoomBackground = useMemo(() => resolveCreateRoomBackgroundContract(), []);
+  const createRoomBackground = useMemo(() => resolveCreateRoomScreenBackgroundContract(), []);
   const roomLobbyBackground = useMemo(() => resolveRoomLobbyBackgroundContract(activeBackgroundData), [activeBackgroundData]);
 
   useEffect(() => {

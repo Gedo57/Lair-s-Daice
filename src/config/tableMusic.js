@@ -145,12 +145,27 @@ function resolveMusicKeyFromTable(table) {
 
   if (directMusicKey) return directMusicKey;
 
+  const privateLikeKey = normalizeTableMusicKey(firstValue(
+    table.key,
+    table.slug,
+    table.tierKey,
+    table.tierId,
+    table.tableId,
+    table.roomTypeId,
+    table.id,
+    table.name,
+    table.title,
+    table.type,
+    table.roomType,
+  ));
+
   const looksLikePrivateRoom = Boolean(
     table.isPrivate
     || table.private
     || table.roomCode
     || table.code
     || table.roomName
+    || privateLikeKey === 'createroom'
   );
 
   if (looksLikePrivateRoom && readCreateRoomBidAmount(table) !== undefined) {

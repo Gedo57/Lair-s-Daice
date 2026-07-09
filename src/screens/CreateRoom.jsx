@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ProfileHud from '../components/ProfileHud.jsx';
 import { resolveCreateRoomMusicKeyForBid } from '../config/tableMusic.js';
-import { resolveCreateRoomBackgroundContract, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
+import { resolveCreateRoomBackgroundContract, resolveCreateRoomScreenBackgroundContract, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
 const asset = '/assets/liars-dice/create-room/';
 const shared = '/assets/liars-dice/room-select/';
 
@@ -259,12 +259,13 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const createDisabled = isCreating || perGameInvalid || pekRiskInvalid || insufficientFunds;
   const perGameCopy = `Bet ${formatStakeOption(safeSelectedPerGame)}`;
   const selectedRulesCopy = `Rules: 5 dice each • Buy-in ${formatStakeOption(selectedBuyIn)} • ${perGameCopy} • Pek/Slam ${selectedPekPercentage}%`;
-  const backgroundContract = resolveCreateRoomBackgroundContract({ buyInAmount: selectedBuyIn });
+  const gameplayBackgroundContract = resolveCreateRoomBackgroundContract({ buyInAmount: selectedBuyIn });
+  const screenBackgroundContract = resolveCreateRoomScreenBackgroundContract();
   const selectedMusicKey = resolveCreateRoomMusicKeyForBid(selectedBuyIn);
 
   const currentSettings = {
     ...settings,
-    ...backgroundContract,
+    ...gameplayBackgroundContract,
     roomName,
     musicKey: selectedMusicKey,
     tableMusicKey: selectedMusicKey,
@@ -399,9 +400,9 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   return (
     <section
       className="screen create-room-screen"
-      style={{ '--create-room-background-image': toCssBackgroundImageValue(backgroundContract.backgroundUrl) }}
-      data-background-key={backgroundContract.backgroundKey}
-      data-background-url={backgroundContract.backgroundUrl}
+      style={{ '--create-room-background-image': toCssBackgroundImageValue(screenBackgroundContract.backgroundUrl) }}
+      data-background-key={screenBackgroundContract.backgroundKey}
+      data-background-url={screenBackgroundContract.backgroundUrl}
       aria-label={tx('Create Room')}
     >
       <TopHud user={user} wallet={wallet} />

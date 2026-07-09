@@ -34,6 +34,16 @@ function getEntityId(entity, keys = ['id', '_id', 'key']) {
   return null;
 }
 
+
+function asCatalogTablePayload(payload = {}, targetKey = 'defaultTable') {
+  if (!payload || typeof payload !== 'object') return payload;
+  const { selectedTable, table, ...rest } = payload;
+  return {
+    ...rest,
+    [targetKey]: selectedTable || table || payload,
+  };
+}
+
 async function loadPublicBackendState() {
   return collectSettledPayloads([
     () => healthApi.getApiHealth(),
@@ -54,8 +64,8 @@ async function loadGameData() {
     () => economyApi.getTransactions({ limit: 20 }),
     () => roomsApi.getRoomTiers({ includePrivate: true }),
     () => tablesApi.getTables({ includePrivate: true }),
-    () => tablesApi.getDefaultTable(),
-    () => tablesApi.getPlayNowTable(),
+    () => tablesApi.getDefaultTable().then((payload) => asCatalogTablePayload(payload, 'defaultTable')),
+    () => tablesApi.getPlayNowTable().then((payload) => asCatalogTablePayload(payload, 'playNowTable')),
     () => roomsApi.getRooms(),
     () => roomsApi.getActiveRooms(),
     () => roomsApi.getMyRoom(),

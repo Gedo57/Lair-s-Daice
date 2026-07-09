@@ -1,6 +1,6 @@
 html[data-device='desktop'] .create-room-screen {
   color: #2b1808;
-  background-image: var(--create-room-background-image, url('/assets/liars-dice/gameplay/BG.png'));
+  background-image: var(--create-room-background-image, url('/assets/liars-dice/room-select/BG.png'));
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;

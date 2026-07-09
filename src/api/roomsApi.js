@@ -131,7 +131,7 @@ function normalizeCreateRoomPayload(settings = {}) {
   // Create Room is a custom-room flow. The private toggle controls visibility only;
   // the custom players/timer/buy-in rules should stay custom whether the room is public or private.
   const roomMode = isBotsModeSettings(settings) ? 'bots' : 'normal';
-  const tableId = settings.tableId || settings.selectedTableId || settings.tierId || (roomMode === 'bots' ? 'bots' : 'private');
+  const tableId = settings.tableId || settings.selectedTableId || settings.tierId || 'private';
   const maxPlayers = Number(settings.maxPlayers || settings.selectedPlayers || settings.playersCount || 4);
   const safeMaxPlayers = Number.isFinite(maxPlayers) ? Math.min(Math.max(maxPlayers, 2), 4) : 4;
 

@@ -1,48 +1,67 @@
 const GAMEPLAY_ASSET_ROOT = '/assets/liars-dice/gameplay';
+const GAMEPLAY_PORTRAIT_ASSET_ROOT = '/assets/liars-dice/mobile-portrait/gameplay';
 const ROOM_SELECT_ASSET_ROOT = '/assets/liars-dice/room-select';
 
 export const DEFAULT_GAMEPLAY_BACKGROUND_KEY = 'table_buyin_500';
 export const PRIVATE_ROOM_BACKGROUND_KEY = 'private_room';
 export const HIGH_ROLLER_BACKGROUND_KEY = 'table_buyin_5000';
 
+export const CREATE_ROOM_SCREEN_BACKGROUND_CONTRACT = Object.freeze({
+  key: 'create_room_screen',
+  backgroundKey: 'create_room_screen',
+  gameplayBackgroundKey: DEFAULT_GAMEPLAY_BACKGROUND_KEY,
+  asset: 'BG.png',
+  backgroundAsset: 'BG.png',
+  url: `${ROOM_SELECT_ASSET_ROOT}/BG.png`,
+  backgroundUrl: `${ROOM_SELECT_ASSET_ROOT}/BG.png`,
+  backgroundImage: `${ROOM_SELECT_ASSET_ROOT}/BG.png`,
+  tableBackgroundUrl: `${ROOM_SELECT_ASSET_ROOT}/BG.png`,
+  source: 'room_select',
+  scope: 'create_room_screen',
+  variant: 'fixed_create_room_screen',
+  label: 'Create Room screen background',
+});
+
 export const GAMEPLAY_BACKGROUND_CONTRACTS = Object.freeze({
   table_buyin_500: Object.freeze({
     key: 'table_buyin_500',
     asset: 'BG.png',
-    portraitAsset: 'BG.png',
-    url: `${ROOM_SELECT_ASSET_ROOT}/BG.png`,
-    portraitUrl: `${ROOM_SELECT_ASSET_ROOT}/BG.png`,
+    portraitAsset: 'mobile-BG.png',
+    url: `${GAMEPLAY_ASSET_ROOT}/BG.png`,
+    portraitUrl: `${GAMEPLAY_PORTRAIT_ASSET_ROOT}/mobile-BG.png`,
     source: 'create_room_buy_in',
     scope: 'gameplay',
-    variant: 'table_buyin_500',
-    label: 'Table buy-in 500',
+    variant: 'create_room_bid_50_245',
+    label: 'Create Room bid 50-245',
   }),
   table_buyin_5000: Object.freeze({
     key: 'table_buyin_5000',
     asset: 'BG-2.png',
-    portraitAsset: 'BG-2.png',
-    url: `${ROOM_SELECT_ASSET_ROOT}/BG-2.png`,
-    portraitUrl: `${ROOM_SELECT_ASSET_ROOT}/BG-2.png`,
+    portraitAsset: 'mobile-BG-2.png',
+    url: `${GAMEPLAY_ASSET_ROOT}/BG-2.png`,
+    portraitUrl: `${GAMEPLAY_PORTRAIT_ASSET_ROOT}/mobile-BG-2.png`,
     source: 'create_room_buy_in',
     scope: 'gameplay',
-    variant: 'table_buyin_5000',
-    label: 'Table buy-in 5000',
+    variant: 'create_room_bid_250_495',
+    label: 'Create Room bid 250-495',
   }),
   private_room: Object.freeze({
     key: 'private_room',
     asset: 'BG-3.png',
-    portraitAsset: 'BG-3.png',
-    url: `${ROOM_SELECT_ASSET_ROOT}/BG-3.png`,
-    portraitUrl: `${ROOM_SELECT_ASSET_ROOT}/BG-3.png`,
+    portraitAsset: 'mobile-BG-3.png',
+    url: `${GAMEPLAY_ASSET_ROOT}/BG-3.png`,
+    portraitUrl: `${GAMEPLAY_PORTRAIT_ASSET_ROOT}/mobile-BG-3.png`,
     source: 'create_room_buy_in',
     scope: 'gameplay',
-    variant: 'private_room',
-    label: 'Private room',
+    variant: 'create_room_bid_500_plus',
+    label: 'Create Room bid 500+',
   }),
 });
 
 const BACKGROUND_KEY_ALIASES = Object.freeze({
   bg: DEFAULT_GAMEPLAY_BACKGROUND_KEY,
+  'mobile-bg': DEFAULT_GAMEPLAY_BACKGROUND_KEY,
+  mobilebg: DEFAULT_GAMEPLAY_BACKGROUND_KEY,
   default: DEFAULT_GAMEPLAY_BACKGROUND_KEY,
   beginner: DEFAULT_GAMEPLAY_BACKGROUND_KEY,
   'table-1': DEFAULT_GAMEPLAY_BACKGROUND_KEY,
@@ -51,6 +70,8 @@ const BACKGROUND_KEY_ALIASES = Object.freeze({
   table_buyin_500: DEFAULT_GAMEPLAY_BACKGROUND_KEY,
   buyin500: DEFAULT_GAMEPLAY_BACKGROUND_KEY,
   'buy-in-500': DEFAULT_GAMEPLAY_BACKGROUND_KEY,
+  'mobile-bg-2': HIGH_ROLLER_BACKGROUND_KEY,
+  mobilebg2: HIGH_ROLLER_BACKGROUND_KEY,
   highroller: HIGH_ROLLER_BACKGROUND_KEY,
   'high-roller': HIGH_ROLLER_BACKGROUND_KEY,
   high_roller: HIGH_ROLLER_BACKGROUND_KEY,
@@ -60,6 +81,8 @@ const BACKGROUND_KEY_ALIASES = Object.freeze({
   table_buyin_5000: HIGH_ROLLER_BACKGROUND_KEY,
   buyin5000: HIGH_ROLLER_BACKGROUND_KEY,
   'buy-in-5000': HIGH_ROLLER_BACKGROUND_KEY,
+  'mobile-bg-3': PRIVATE_ROOM_BACKGROUND_KEY,
+  mobilebg3: PRIVATE_ROOM_BACKGROUND_KEY,
   private: PRIVATE_ROOM_BACKGROUND_KEY,
   'private-room': PRIVATE_ROOM_BACKGROUND_KEY,
   private_room: PRIVATE_ROOM_BACKGROUND_KEY,
@@ -118,9 +141,9 @@ function normalizeAssetName(value) {
 
 function keyFromAssetOrUrl(value) {
   const asset = normalizeAssetName(value).toLowerCase();
-  if (asset === 'bg-2.png' || asset === 'bg2.png') return HIGH_ROLLER_BACKGROUND_KEY;
-  if (asset === 'bg-3.png' || asset === 'bg3.png') return PRIVATE_ROOM_BACKGROUND_KEY;
-  if (asset === 'bg.png' || asset === 'bg-1.png' || asset === 'bg1.png') return DEFAULT_GAMEPLAY_BACKGROUND_KEY;
+  if (asset === 'bg-2.png' || asset === 'bg2.png' || asset === 'mobile-bg-2.png' || asset === 'mobile-bg2.png') return HIGH_ROLLER_BACKGROUND_KEY;
+  if (asset === 'bg-3.png' || asset === 'bg3.png' || asset === 'mobile-bg-3.png' || asset === 'mobile-bg3.png') return PRIVATE_ROOM_BACKGROUND_KEY;
+  if (asset === 'bg.png' || asset === 'bg-1.png' || asset === 'bg1.png' || asset === 'mobile-bg.png' || asset === 'mobile-bg-1.png' || asset === 'mobile-bg1.png') return DEFAULT_GAMEPLAY_BACKGROUND_KEY;
   return null;
 }
 
@@ -137,7 +160,7 @@ export function normalizeGameplayBackgroundKey(value, fallback = DEFAULT_GAMEPLA
 }
 
 export function backgroundKeyForBuyIn(value) {
-  return numericAmount(value, 0) >= 5000 ? HIGH_ROLLER_BACKGROUND_KEY : DEFAULT_GAMEPLAY_BACKGROUND_KEY;
+  return backgroundKeyForCreateRoomBid(value);
 }
 
 export function backgroundKeyForCreateRoomBid(value) {
@@ -157,11 +180,26 @@ export function normalizeGameplayBackgroundUrl(value, fallbackKey = DEFAULT_GAME
   if (!text) return getGameplayBackgroundContract(fallbackKey).url;
 
   if (/^(https?:)?\/\//i.test(text) || /^(data|blob):/i.test(text)) return text;
-  if (text.startsWith('/')) return text;
+
+  const textWithoutQuery = text.split(/[?#]/)[0];
+  const assetKey = keyFromAssetOrUrl(textWithoutQuery);
+  const usesGameplayBackgroundAsset = /^\/?assets\/liars-dice\/(?:room-select|gameplay|mobile-portrait\/gameplay)\/(?:mobile-)?bg(?:-?[123])?\.png$/i.test(textWithoutQuery);
+  if (assetKey && usesGameplayBackgroundAsset) return getGameplayBackgroundContract(assetKey).url;
+
   if (text.startsWith('assets/')) return `/${text}`;
   if (text.includes('/assets/liars-dice/')) return text.startsWith('/') ? text : `/${text}`;
+  if (text.startsWith('/')) return text;
   if (text.includes('/')) return text;
-  if (/^bg(?:-?[123])?\.png$/i.test(text)) return `${ROOM_SELECT_ASSET_ROOT}/${text}`;
+
+  if (/^mobile-bg(?:-?[123])?\.png$/i.test(text)) {
+    const key = keyFromAssetOrUrl(text) || fallbackKey;
+    return getGameplayBackgroundContract(key).portraitUrl;
+  }
+
+  if (/^bg(?:-?[123])?\.png$/i.test(text)) {
+    const key = keyFromAssetOrUrl(text) || fallbackKey;
+    return getGameplayBackgroundContract(key).url;
+  }
 
   return `${GAMEPLAY_ASSET_ROOT}/${text}`;
 }
@@ -285,7 +323,7 @@ function buildPayload(contract, overrides = {}) {
     backgroundSource: source,
     backgroundScope: scope,
     backgroundVariant: variant,
-    backgroundContractVersion: 1,
+    backgroundContractVersion: 2,
     background: {
       key,
       backgroundKey: key,
@@ -308,7 +346,7 @@ function buildPayload(contract, overrides = {}) {
       source,
       scope,
       label,
-      contractVersion: 1,
+      contractVersion: 2,
     },
   };
 }
@@ -321,12 +359,16 @@ export function resolveGameplayBackgroundContract(sources = [], options = {}) {
     const inferredKey = inferBackgroundKey(source);
     const url = readBackgroundUrl(source, inferredKey || fallbackKey);
     if (url || inferredKey) {
-      const finalKey = normalizeGameplayBackgroundKey(inferredKey || keyFromAssetOrUrl(url), fallbackKey);
+      const urlKey = keyFromAssetOrUrl(url);
+      const finalKey = normalizeGameplayBackgroundKey(inferredKey || urlKey, fallbackKey);
       const baseContract = getGameplayBackgroundContract(finalKey);
+      const officialUrlForFinalKey = urlKey && urlKey === finalKey;
+      const finalUrl = officialUrlForFinalKey || !inferredKey ? (url || baseContract.url) : baseContract.url;
+
       return buildPayload(baseContract, {
         key: finalKey,
-        asset: normalizeAssetName(url || baseContract.asset) || baseContract.asset,
-        url: url || baseContract.url,
+        asset: normalizeAssetName(finalUrl || baseContract.asset) || baseContract.asset,
+        url: finalUrl || baseContract.url,
         portraitAsset: baseContract.portraitAsset,
         portraitUrl: baseContract.portraitUrl,
         source: sourceLooksPrivate(source) ? 'private_room' : baseContract.source,
@@ -335,6 +377,10 @@ export function resolveGameplayBackgroundContract(sources = [], options = {}) {
   }
 
   return buildPayload(getGameplayBackgroundContract(fallbackKey));
+}
+
+export function resolveCreateRoomScreenBackgroundContract() {
+  return CREATE_ROOM_SCREEN_BACKGROUND_CONTRACT;
 }
 
 export function resolveCreateRoomBackgroundContract(source = {}) {
@@ -386,7 +432,21 @@ export function resolveRoomLobbyBackgroundContract(data = {}) {
 }
 
 export function toCssBackgroundImageValue(url) {
-  const normalizedUrl = normalizeGameplayBackgroundUrl(url, DEFAULT_GAMEPLAY_BACKGROUND_KEY);
+  const rawUrl = stripCssUrlWrapper(url);
+  let normalizedUrl = rawUrl || getGameplayBackgroundContract(DEFAULT_GAMEPLAY_BACKGROUND_KEY).url;
+
+  if (/^assets\//i.test(normalizedUrl)) {
+    normalizedUrl = `/${normalizedUrl}`;
+  } else if (
+    normalizedUrl
+    && !/^(https?:)?\/\//i.test(normalizedUrl)
+    && !/^(data|blob):/i.test(normalizedUrl)
+    && !normalizedUrl.startsWith('/')
+    && !normalizedUrl.includes('/')
+  ) {
+    normalizedUrl = normalizeGameplayBackgroundUrl(normalizedUrl, DEFAULT_GAMEPLAY_BACKGROUND_KEY);
+  }
+
   const escapedUrl = normalizedUrl.replace(/["\\\n\r]/g, (char) => encodeURIComponent(char));
   return `url("${escapedUrl}")`;
 }
