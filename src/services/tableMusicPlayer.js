@@ -1,11 +1,13 @@
 const DEFAULT_VOLUME = 0.35;
 const VOLUME_STORAGE_KEY = 'liarsDice.tableMusic.volume';
+const MUTE_STORAGE_KEY = 'liarsDice.tableMusic.muted';
 
 let audioElement = null;
 let currentTrackId = null;
 let currentAudioSrc = null;
 let hasLoopFallbackListener = false;
 let currentVolume = readStoredVolume();
+let currentMuted = readStoredMuted();
 
 function canUseAudio() {
   return typeof window !== 'undefined' && typeof Audio !== 'undefined';
@@ -29,6 +31,17 @@ function readStoredVolume() {
   }
 }
 
+function readStoredMuted() {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    const storedValue = window.localStorage?.getItem?.(MUTE_STORAGE_KEY);
+    return storedValue === '1' || storedValue === 'true';
+  } catch (_) {
+    return false;
+  }
+}
+
 function writeStoredVolume(volume) {
   if (typeof window === 'undefined') return;
 
@@ -36,6 +49,27 @@ function writeStoredVolume(volume) {
     window.localStorage?.setItem?.(VOLUME_STORAGE_KEY, String(volume));
   } catch (_) {
     // Storage can be unavailable in private browsing or embedded webviews.
+  }
+}
+
+function writeStoredMuted(muted) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage?.setItem?.(MUTE_STORAGE_KEY, muted ? '1' : '0');
+  } catch (_) {
+    // Storage can be unavailable in private browsing or embedded webviews.
+  }
+}
+
+function getEffectiveVolume() {
+  return currentMuted ? 0 : currentVolume;
+}
+
+function applyAudioVolume() {
+  if (audioElement) {
+    audioElement.volume = getEffectiveVolume();
+    audioElement.muted = currentMuted;
   }
 }
 
@@ -66,7 +100,8 @@ function getAudioElement() {
   if (!audioElement) {
     audioElement = new Audio();
     audioElement.preload = 'auto';
-    audioElement.volume = currentVolume;
+    audioElement.volume = getEffectiveVolume();
+    audioElement.muted = currentMuted;
   }
 
   // Main loop behavior: when the track ends it starts again automatically.
@@ -114,7 +149,8 @@ export function syncTableMusic(track) {
   audio.pause();
   audio.src = nextAudioSrc;
   audio.loop = true;
-  audio.volume = currentVolume;
+  audio.volume = getEffectiveVolume();
+  audio.muted = currentMuted;
 
   try {
     audio.currentTime = 0;
@@ -134,11 +170,30 @@ export function setTableMusicVolume(volume) {
   currentVolume = clampVolume(volume);
   writeStoredVolume(currentVolume);
 
-  if (audioElement) {
-    audioElement.volume = currentVolume;
+  if (currentVolume > 0 && currentMuted) {
+    currentMuted = false;
+    writeStoredMuted(currentMuted);
   }
 
+  applyAudioVolume();
+
   return currentVolume;
+}
+
+export function getTableMusicMuted() {
+  return currentMuted;
+}
+
+export function setTableMusicMuted(muted) {
+  currentMuted = Boolean(muted);
+  writeStoredMuted(currentMuted);
+  applyAudioVolume();
+
+  return currentMuted;
+}
+
+export function toggleTableMusicMuted() {
+  return setTableMusicMuted(!currentMuted);
 }
 
 export function resumeTableMusic() {

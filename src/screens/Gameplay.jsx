@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveProfileAvatarSrc as resolveAvatarSrc } from '../utils/profileAvatars.js';
-import { getTableMusicVolume, resumeTableMusic, setTableMusicVolume } from '../services/tableMusicPlayer.js';
+import { getTableMusicMuted, getTableMusicVolume, resumeTableMusic, setTableMusicMuted, setTableMusicVolume } from '../services/tableMusicPlayer.js';
 import { startVoiceChatSession } from '../services/voiceChatService.js';
 import { resolveGameDataBackground, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
 
@@ -1327,6 +1327,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const [chatDraft, setChatDraft] = useState('');
   const [musicPanelOpen, setMusicPanelOpen] = useState(false);
   const [musicVolume, setMusicVolume] = useState(() => Math.round(getTableMusicVolume() * 100));
+  const [musicMuted, setMusicMuted] = useState(() => getTableMusicMuted());
   const chatListRef = useRef(null);
   const voiceSessionRef = useRef(null);
   const canUseChat = Boolean(currentMatchId && !botsMatch);
@@ -1636,7 +1637,14 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     const nextVolume = Math.min(100, Math.max(0, Number(event.target.value) || 0));
     setMusicVolume(nextVolume);
     setTableMusicVolume(nextVolume / 100);
+    setMusicMuted(false);
     resumeTableMusic();
+  };
+
+  const toggleMusicMuted = () => {
+    const nextMuted = !musicMuted;
+    setMusicMuted(setTableMusicMuted(nextMuted));
+    if (!nextMuted) resumeTableMusic();
   };
 
   const submitChatMessage = async (event) => {
@@ -1871,17 +1879,28 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         {musicPanelOpen ? (
           <div id="gameplay-music-volume-panel" className="gameplay-music-panel" role="group" aria-label={tx('Music volume')}>
             <div className="gameplay-music-panel__label">{tx('MUSIC')}</div>
-            <input
-              className="gameplay-music-panel__slider"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value={musicVolume}
-              onChange={handleMusicVolumeChange}
-              aria-label={tx('Music volume')}
-            />
-            <div className="gameplay-music-panel__value">{musicVolume}%</div>
+            <div className="gameplay-music-panel__row">
+              <input
+                className="gameplay-music-panel__slider"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={musicVolume}
+                onChange={handleMusicVolumeChange}
+                aria-label={tx('Music volume')}
+              />
+              <button
+                className={`gameplay-music-panel__mute ${musicMuted ? 'is-muted' : ''}`}
+                type="button"
+                onClick={toggleMusicMuted}
+                aria-pressed={musicMuted}
+                aria-label={tx(musicMuted ? 'Unmute music' : 'Mute music')}
+              >
+                {tx(musicMuted ? 'UNMUTE' : 'MUTE')}
+              </button>
+            </div>
+            <div className="gameplay-music-panel__value">{musicMuted ? tx('Muted') : `${musicVolume}%`}</div>
           </div>
         ) : null}
       </div>

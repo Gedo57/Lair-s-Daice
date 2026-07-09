@@ -1,5 +1,5 @@
 const GAMEPLAY_ASSET_ROOT = '/assets/liars-dice/gameplay';
-const GAMEPLAY_MOBILE_PORTRAIT_ASSET_ROOT = '/assets/liars-dice/mobile-portrait/gameplay';
+const ROOM_SELECT_ASSET_ROOT = '/assets/liars-dice/room-select';
 
 export const DEFAULT_GAMEPLAY_BACKGROUND_KEY = 'table_buyin_500';
 export const PRIVATE_ROOM_BACKGROUND_KEY = 'private_room';
@@ -9,10 +9,10 @@ export const GAMEPLAY_BACKGROUND_CONTRACTS = Object.freeze({
   table_buyin_500: Object.freeze({
     key: 'table_buyin_500',
     asset: 'BG.png',
-    portraitAsset: 'mobile-BG.png',
-    url: `${GAMEPLAY_ASSET_ROOT}/BG.png`,
-    portraitUrl: `${GAMEPLAY_MOBILE_PORTRAIT_ASSET_ROOT}/mobile-BG.png`,
-    source: 'buy_in',
+    portraitAsset: 'BG.png',
+    url: `${ROOM_SELECT_ASSET_ROOT}/BG.png`,
+    portraitUrl: `${ROOM_SELECT_ASSET_ROOT}/BG.png`,
+    source: 'create_room_buy_in',
     scope: 'gameplay',
     variant: 'table_buyin_500',
     label: 'Table buy-in 500',
@@ -20,10 +20,10 @@ export const GAMEPLAY_BACKGROUND_CONTRACTS = Object.freeze({
   table_buyin_5000: Object.freeze({
     key: 'table_buyin_5000',
     asset: 'BG-2.png',
-    portraitAsset: 'mobile-BG-2.png',
-    url: `${GAMEPLAY_ASSET_ROOT}/BG-2.png`,
-    portraitUrl: `${GAMEPLAY_MOBILE_PORTRAIT_ASSET_ROOT}/mobile-BG-2.png`,
-    source: 'buy_in',
+    portraitAsset: 'BG-2.png',
+    url: `${ROOM_SELECT_ASSET_ROOT}/BG-2.png`,
+    portraitUrl: `${ROOM_SELECT_ASSET_ROOT}/BG-2.png`,
+    source: 'create_room_buy_in',
     scope: 'gameplay',
     variant: 'table_buyin_5000',
     label: 'Table buy-in 5000',
@@ -31,10 +31,10 @@ export const GAMEPLAY_BACKGROUND_CONTRACTS = Object.freeze({
   private_room: Object.freeze({
     key: 'private_room',
     asset: 'BG-3.png',
-    portraitAsset: 'mobile-BG-3.png',
-    url: `${GAMEPLAY_ASSET_ROOT}/BG-3.png`,
-    portraitUrl: `${GAMEPLAY_MOBILE_PORTRAIT_ASSET_ROOT}/mobile-BG-3.png`,
-    source: 'private_room',
+    portraitAsset: 'BG-3.png',
+    url: `${ROOM_SELECT_ASSET_ROOT}/BG-3.png`,
+    portraitUrl: `${ROOM_SELECT_ASSET_ROOT}/BG-3.png`,
+    source: 'create_room_buy_in',
     scope: 'gameplay',
     variant: 'private_room',
     label: 'Private room',
@@ -140,6 +140,13 @@ export function backgroundKeyForBuyIn(value) {
   return numericAmount(value, 0) >= 5000 ? HIGH_ROLLER_BACKGROUND_KEY : DEFAULT_GAMEPLAY_BACKGROUND_KEY;
 }
 
+export function backgroundKeyForCreateRoomBid(value) {
+  const amount = numericAmount(value, 0);
+  if (amount >= 500) return PRIVATE_ROOM_BACKGROUND_KEY;
+  if (amount >= 250) return HIGH_ROLLER_BACKGROUND_KEY;
+  return DEFAULT_GAMEPLAY_BACKGROUND_KEY;
+}
+
 export function getGameplayBackgroundContract(key = DEFAULT_GAMEPLAY_BACKGROUND_KEY) {
   const normalizedKey = normalizeGameplayBackgroundKey(key, DEFAULT_GAMEPLAY_BACKGROUND_KEY);
   return GAMEPLAY_BACKGROUND_CONTRACTS[normalizedKey] || GAMEPLAY_BACKGROUND_CONTRACTS[DEFAULT_GAMEPLAY_BACKGROUND_KEY];
@@ -154,6 +161,7 @@ export function normalizeGameplayBackgroundUrl(value, fallbackKey = DEFAULT_GAME
   if (text.startsWith('assets/')) return `/${text}`;
   if (text.includes('/assets/liars-dice/')) return text.startsWith('/') ? text : `/${text}`;
   if (text.includes('/')) return text;
+  if (/^bg(?:-?[123])?\.png$/i.test(text)) return `${ROOM_SELECT_ASSET_ROOT}/${text}`;
 
   return `${GAMEPLAY_ASSET_ROOT}/${text}`;
 }
@@ -205,15 +213,18 @@ function inferBackgroundKey(source = {}) {
   if (!source || typeof source !== 'object') return null;
 
   const directKey = readDirectBackgroundKey(source);
+  const isPrivateSource = sourceLooksPrivate(source);
+  const buyInAmount = getPricingValue(source, BUY_IN_FIELD_KEYS);
+
+  if (isPrivateSource && hasValue(buyInAmount)) return backgroundKeyForCreateRoomBid(buyInAmount);
   if (directKey) return directKey;
-  if (sourceLooksPrivate(source)) return PRIVATE_ROOM_BACKGROUND_KEY;
+  if (hasValue(buyInAmount)) return backgroundKeyForBuyIn(buyInAmount);
 
   const tableLikeValue = getFirstValue(source, ['tableId', 'tierId', 'tierKey', 'roomTypeId', 'selectedTableId', 'key', 'slug', 'id', 'title', 'name']);
   const tableKey = normalizeGameplayBackgroundKey(tableLikeValue, null);
   if (tableKey) return tableKey;
 
-  const buyInAmount = getPricingValue(source, BUY_IN_FIELD_KEYS);
-  if (hasValue(buyInAmount)) return backgroundKeyForBuyIn(buyInAmount);
+  if (isPrivateSource) return PRIVATE_ROOM_BACKGROUND_KEY;
 
   return null;
 }
@@ -326,25 +337,41 @@ export function resolveGameplayBackgroundContract(sources = [], options = {}) {
   return buildPayload(getGameplayBackgroundContract(fallbackKey));
 }
 
-export function resolveCreateRoomBackgroundContract() {
-  return resolveGameplayBackgroundContract([{ key: 'private', isPrivate: true }], { fallbackKey: PRIVATE_ROOM_BACKGROUND_KEY });
+export function resolveCreateRoomBackgroundContract(source = {}) {
+  const amount = typeof source === 'number' || typeof source === 'string'
+    ? source
+    : getPricingValue(source, BUY_IN_FIELD_KEYS)
+      ?? getFirstValue(source, [
+        'selectedBuyIn',
+        'customBuyIn',
+        'customStake',
+        'buyInAmount',
+        'buyInCoins',
+        'entryFee',
+        'selectedPerGame',
+        'perGameAmount',
+        'roundStake',
+      ]);
+  const backgroundKey = backgroundKeyForCreateRoomBid(amount);
+
+  return resolveGameplayBackgroundContract([{ key: backgroundKey, backgroundKey, gameplayBackgroundKey: backgroundKey }], { fallbackKey: backgroundKey });
 }
 
 export function resolveGameDataBackground(data = {}, options = {}) {
   const match = data?.match || {};
   const sources = [
-    match,
-    match.background,
-    match.table,
-    match.selectedTable,
-    match.room,
-    data?.currentRoom,
-    data?.currentRoom?.background,
-    data?.serverMatchmaking,
-    data?.serverMatchmaking?.selectedTable,
-    data?.serverMatchmaking?.table,
     data?.selectedTable,
     data?.selectedTable?.background,
+    match?.selectedTable,
+    match?.table,
+    match,
+    match?.background,
+    match?.room,
+    data?.currentRoom,
+    data?.currentRoom?.background,
+    data?.serverMatchmaking?.selectedTable,
+    data?.serverMatchmaking?.table,
+    data?.serverMatchmaking,
     data?.playNowTable,
     data?.defaultTable,
     data?.createRoom,
@@ -355,7 +382,7 @@ export function resolveGameDataBackground(data = {}, options = {}) {
 
 export function resolveRoomLobbyBackgroundContract(data = {}) {
   if (!data?.currentRoom) return null;
-  return resolveGameplayBackgroundContract([data.currentRoom, data.selectedTable], { fallbackKey: DEFAULT_GAMEPLAY_BACKGROUND_KEY });
+  return resolveGameplayBackgroundContract([data.selectedTable, data.currentRoom], { fallbackKey: DEFAULT_GAMEPLAY_BACKGROUND_KEY });
 }
 
 export function toCssBackgroundImageValue(url) {

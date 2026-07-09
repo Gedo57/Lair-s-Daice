@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import ProfileHud from '../components/ProfileHud.jsx';
+import { resolveCreateRoomMusicKeyForBid } from '../config/tableMusic.js';
 import { resolveCreateRoomBackgroundContract, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
 const asset = '/assets/liars-dice/create-room/';
 const shared = '/assets/liars-dice/room-select/';
 
-const MIN_BUY_IN = 5;
+const MIN_BUY_IN = 50;
 const MIN_STATIC_PER_GAME = 5;
 const STATIC_PER_GAME_MODE = 'static';
 const DEFAULT_PEK_PERCENTAGE = 25;
@@ -34,18 +35,12 @@ function formatStakeOption(value) {
   return new Intl.NumberFormat('en-US').format(number);
 }
 
-function getStakeStep(value) {
-  const amount = parseCoinAmount(value, MIN_BUY_IN);
-  if (amount < 25) return 5;
-  if (amount < 200) return 25;
-  return 50;
+function getStakeStep() {
+  return 5;
 }
 
-function getPreviousStakeStep(value) {
-  const amount = parseCoinAmount(value, MIN_BUY_IN);
-  if (amount <= 25) return 5;
-  if (amount <= 200) return 25;
-  return 50;
+function getPreviousStakeStep() {
+  return 5;
 }
 
 function clampStakeValue(value, min = MIN_BUY_IN, max = Number.POSITIVE_INFINITY) {
@@ -56,11 +51,7 @@ function clampStakeValue(value, min = MIN_BUY_IN, max = Number.POSITIVE_INFINITY
 
 function snapStakeValue(value, min = MIN_BUY_IN, max = Number.POSITIVE_INFINITY) {
   const amount = clampStakeValue(value, min, max);
-  const snapped = amount <= 25
-    ? Math.round(amount / 5) * 5
-    : amount <= 200
-      ? Math.round(amount / 25) * 25
-      : Math.round(amount / 50) * 50;
+  const snapped = Math.round(amount / 5) * 5;
   return clampStakeValue(snapped, min, max);
 }
 
@@ -268,12 +259,15 @@ export default function CreateRoom({ navigation, data, backendActions, backendSt
   const createDisabled = isCreating || perGameInvalid || pekRiskInvalid || insufficientFunds;
   const perGameCopy = `Bet ${formatStakeOption(safeSelectedPerGame)}`;
   const selectedRulesCopy = `Rules: 5 dice each • Buy-in ${formatStakeOption(selectedBuyIn)} • ${perGameCopy} • Pek/Slam ${selectedPekPercentage}%`;
-  const backgroundContract = resolveCreateRoomBackgroundContract();
+  const backgroundContract = resolveCreateRoomBackgroundContract({ buyInAmount: selectedBuyIn });
+  const selectedMusicKey = resolveCreateRoomMusicKeyForBid(selectedBuyIn);
 
   const currentSettings = {
     ...settings,
     ...backgroundContract,
     roomName,
+    musicKey: selectedMusicKey,
+    tableMusicKey: selectedMusicKey,
     selectedPlayers,
     maxPlayers: Number(selectedPlayers),
     playersCount: Number(selectedPlayers),

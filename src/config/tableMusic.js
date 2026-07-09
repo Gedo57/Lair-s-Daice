@@ -70,8 +70,49 @@ function firstValue(...values) {
   return values.find((value) => value !== undefined && value !== null && value !== '');
 }
 
+function numericMusicAmount(value, fallback = 0) {
+  const number = Number(String(value ?? '').replace(/,/g, '').trim());
+  return Number.isFinite(number) ? Math.max(0, Math.trunc(number)) : fallback;
+}
+
+function readCreateRoomBidAmount(source = {}) {
+  if (!source || typeof source !== 'object') return undefined;
+
+  const pricing = source.pricing && typeof source.pricing === 'object' ? source.pricing : {};
+  return firstValue(
+    source.selectedBuyIn,
+    source.buyInAmount,
+    source.buyInCoins,
+    source.customBuyIn,
+    source.customStake,
+    source.entryFee,
+    pricing.buyInAmount,
+    pricing.buyInCoins,
+    pricing.entryFee,
+    source.selectedPerGame,
+    source.perGameAmount,
+    source.roundStake,
+    pricing.selectedPerGame,
+    pricing.perGameAmount,
+    pricing.roundStake,
+  );
+}
+
+export function resolveCreateRoomMusicKeyForBid(value) {
+  const amount = numericMusicAmount(value, 0);
+  if (amount >= 500) return 'createroom';
+  if (amount >= 250) return 'high-roller';
+  return 'beginner';
+}
+
+export function resolveCreateRoomMusicKeyFromSettings(settings = {}) {
+  return resolveCreateRoomMusicKeyForBid(readCreateRoomBidAmount(settings));
+}
+
 function resolveSelectedTableSource(gameData = {}) {
   return firstValue(
+    gameData.selectedTable,
+    gameData.selectedTable?.background,
     gameData.match?.selectedTable,
     gameData.match?.table,
     gameData.match?.tier,
@@ -79,7 +120,6 @@ function resolveSelectedTableSource(gameData = {}) {
     gameData.currentRoom?.table,
     gameData.currentRoom?.tier,
     gameData.currentRoom,
-    gameData.selectedTable,
     gameData.currentTable,
     gameData.table,
     gameData.tier,
@@ -97,8 +137,27 @@ function resolveMusicKeyFromTable(table) {
     return normalizeTableMusicKey(table);
   }
 
-  const explicitMusicKey = normalizeTableMusicKey(firstValue(
+  const directMusicKey = normalizeTableMusicKey(firstValue(
     table.musicKey,
+    table.tableMusicKey,
+    table.audioKey,
+  ));
+
+  if (directMusicKey) return directMusicKey;
+
+  const looksLikePrivateRoom = Boolean(
+    table.isPrivate
+    || table.private
+    || table.roomCode
+    || table.code
+    || table.roomName
+  );
+
+  if (looksLikePrivateRoom && readCreateRoomBidAmount(table) !== undefined) {
+    return resolveCreateRoomMusicKeyFromSettings(table);
+  }
+
+  const explicitMusicKey = normalizeTableMusicKey(firstValue(
     table.key,
     table.slug,
     table.tierKey,
@@ -114,30 +173,15 @@ function resolveMusicKeyFromTable(table) {
 
   if (explicitMusicKey) return explicitMusicKey;
 
-  const looksLikePrivateRoom = Boolean(
-    table.isPrivate
-    || table.private
-    || table.roomCode
-    || table.code
-    || table.roomName
-  );
+  if (looksLikePrivateRoom) {
+    return resolveCreateRoomMusicKeyFromSettings(table);
+  }
 
-  return looksLikePrivateRoom ? 'createroom' : null;
+  return null;
 }
 
-function isActiveGameplayMusicScreen(screenName, gameData = {}) {
-  if (screenName === 'mockgame') return true;
-  if (!MUSIC_ENABLED_SCREENS.has(screenName)) return false;
-
-  const match = gameData.match || {};
-  const status = String(match.status || match.matchStatus || gameData.status || '').toLowerCase();
-
-  return Boolean(
-    gameData.currentMatchId
-    || match.id
-    || match.matchId
-    || ['active', 'in_progress', 'started', 'game_started'].includes(status)
-  );
+function isActiveGameplayMusicScreen(screenName) {
+  return MUSIC_ENABLED_SCREENS.has(screenName);
 }
 
 export function resolveTableMusicTrack(screenName, gameData = {}) {

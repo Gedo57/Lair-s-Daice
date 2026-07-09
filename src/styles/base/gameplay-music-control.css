@@ -3,7 +3,7 @@
   --music-control-top: 174px;
   --music-button-width: 166px;
   --music-button-height: 58px;
-  --music-panel-width: 278px;
+  --music-panel-width: 330px;
   --music-panel-x: 0px;
   --music-panel-y: 70px;
 
@@ -87,7 +87,7 @@
   top: var(--music-panel-y);
   z-index: 1;
   width: var(--music-panel-width);
-  min-height: 86px;
+  min-height: 96px;
   padding: 12px 14px 10px;
   border: 3px solid rgba(255, 221, 139, .94);
   border-radius: 18px;
@@ -106,10 +106,41 @@
   text-transform: uppercase;
 }
 
+.gameplay-music-panel__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .gameplay-music-panel__slider {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   accent-color: #f0be57;
   cursor: pointer;
+}
+
+.gameplay-music-panel__mute {
+  flex: 0 0 86px;
+  height: 34px;
+  border: 2px solid rgba(255, 221, 139, .94);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #9b251a, #501008);
+  color: #fff5d9;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .04em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .45);
+}
+
+.gameplay-music-panel__mute.is-muted {
+  background: linear-gradient(180deg, #3a3a3a, #141414);
+  color: #ffe6a4;
+}
+
+.gameplay-music-panel__mute:active {
+  transform: translateY(1px);
 }
 
 .gameplay-music-panel__value {
@@ -125,7 +156,7 @@ html[data-device='desktop'] .app-shell--gameplay .gameplay-music-control {
   --music-control-top: 174px;
   --music-button-width: 166px;
   --music-button-height: 58px;
-  --music-panel-width: 278px;
+  --music-panel-width: 330px;
 }
 
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-music-control {
@@ -133,7 +164,7 @@ html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .g
   --music-control-top: 154px;
   --music-button-width: 150px;
   --music-button-height: 52px;
-  --music-panel-width: 250px;
+  --music-panel-width: 310px;
   --music-panel-y: 62px;
 }
 
@@ -146,7 +177,7 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   --music-control-top: 94px;
   --music-button-width: 154px;
   --music-button-height: 54px;
-  --music-panel-width: 260px;
+  --music-panel-width: 320px;
   --music-panel-y: 62px;
   z-index: 124;
 }
@@ -159,6 +190,12 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-music-button__title {
   inset: 0 10px 0 42px;
   font-size: 17px;
+}
+
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-music-panel__mute {
+  flex-basis: 92px;
+  font-size: 12px;
 }
 
 html.keyboard-open[data-device='mobile'] .app-shell--gameplay .gameplay-music-control {

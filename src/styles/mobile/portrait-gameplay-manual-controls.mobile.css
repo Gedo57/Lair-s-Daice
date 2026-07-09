@@ -47,11 +47,11 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   --pg-cup-filter: drop-shadow(0 9px 11px rgba(0, 0, 0, .34));
 
   /* 2 PLAYERS */
-  --pg-cup-2-width: 18%;
-  --pg-cup-2-1-left: 30%;
+  --pg-cup-2-width: 13%;
+  --pg-cup-2-1-left: 45%;
   --pg-cup-2-1-top: 40%;
   --pg-cup-2-1-transform: none;
-  --pg-cup-2-2-left: 30%;
+  --pg-cup-2-2-left: 45%;
   --pg-cup-2-2-top: 60%;
   --pg-cup-2-2-transform: none;
 

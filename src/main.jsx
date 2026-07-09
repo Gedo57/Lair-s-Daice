@@ -42,6 +42,7 @@ import './styles/mobile/special-event.mobile.css';
 import './styles/mobile/daily-reward.mobile.css';
 import './styles/mobile/tournament-pass.mobile.css';
 import './styles/mobile/portrait-main.mobile.css';
+import './styles/mobile/portrait-loading.mobile.css';
 import './styles/mobile/portrait-rooms.mobile.css';
 import './styles/mobile/portrait-gameplay.mobile.css';
 import './styles/mobile/portrait-gameplay-layout-correction.mobile.css';

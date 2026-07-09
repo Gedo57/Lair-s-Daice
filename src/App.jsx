@@ -4,7 +4,7 @@ import { useLanguage } from './i18n/useLanguage.js';
 import { initialGameData } from './data/initialGameData.js';
 import { createMockBackendActions, mockGameData } from './data/mockGameData.js';
 import { getAssetsForPhase, getAssetsForScreen } from './config/assetsManifest.js';
-import { resolveTableMusicTrack } from './config/tableMusic.js';
+import { resolveCreateRoomMusicKeyFromSettings, resolveTableMusicTrack } from './config/tableMusic.js';
 import {
   resolveCreateRoomBackgroundContract,
   resolveGameDataBackground,
@@ -478,6 +478,7 @@ function resolveSelectedTableForMatchmaking(payload = {}, state = {}) {
 }
 
 function withPrivateRoomMusicMetadata(settings = {}) {
+  const createRoomBackgroundContract = resolveCreateRoomBackgroundContract(settings);
   const rawKey = settings.musicKey
     || settings.key
     || settings.slug
@@ -505,12 +506,17 @@ function withPrivateRoomMusicMetadata(settings = {}) {
 
   if (!shouldUsePrivateMusic) return settings;
 
+  const createRoomMusicKey = resolveCreateRoomMusicKeyFromSettings(settings);
+
   return {
     ...settings,
-    key: settings.key || 'private',
+    ...createRoomBackgroundContract,
+    key: settings.key || createRoomBackgroundContract.backgroundKey || 'private',
     type: settings.type || 'private',
     roomType: settings.roomType || 'private',
-    musicKey: settings.musicKey || 'createroom',
+    createRoomBuyInTier: createRoomBackgroundContract.backgroundKey,
+    musicKey: settings.musicKey || createRoomMusicKey,
+    tableMusicKey: settings.tableMusicKey || settings.musicKey || createRoomMusicKey,
   };
 }
 
@@ -2268,17 +2274,36 @@ export default function App() {
     refreshRooms: () => runBackendAction('rooms.refresh', () => backendBridge.refreshRooms()),
     setRoomReady: (room, ready = true) => runBackendAction('rooms.ready', () => backendBridge.setRoomReady(room || gameData.currentRoom || gameData.currentRoomId, ready)),
     leaveRoom: (room) => runBackendAction('rooms.leave', () => backendBridge.leaveRoom(room || gameData.currentRoom || gameData.currentRoomId), navigation.goRoomSelect),
-    startRoomMatch: (room, payload) => runBackendAction(
-      'rooms.start',
-      () => backendBridge.startRoomMatch(room || gameData.currentRoom || gameData.currentRoomId, payload),
-      (result) => {
-        const patch = extractGameDataPatch(result || {});
-        const status = String(result?.status || result?.match?.status || patch.currentRoom?.status || '').toLowerCase();
-        if (status === 'countdown') navigation.goRoomLobby();
-        else if (patch.currentMatchId || patch.match) navigation.goGameplay();
-        else navigation.goRoomLobby();
-      },
-    ),
+    startRoomMatch: (room, payload) => {
+      const selectedRoom = room || gameData.currentRoom || gameData.selectedTable || {};
+      if (selectedRoom && typeof selectedRoom === 'object') {
+        const selectedTable = gameData.selectedTable && typeof gameData.selectedTable === 'object' ? gameData.selectedTable : {};
+        const roomSettings = withPrivateRoomMusicMetadata({
+          ...selectedRoom,
+          ...selectedTable,
+          id: selectedRoom.id || selectedRoom.roomId || selectedTable.id,
+          roomId: selectedRoom.roomId || selectedRoom.id || selectedTable.roomId,
+          code: selectedRoom.code || selectedRoom.roomCode || selectedTable.code,
+          roomCode: selectedRoom.roomCode || selectedRoom.code || selectedTable.roomCode,
+        });
+        setGameData((current) => ({
+          ...current,
+          selectedTable: roomSettings,
+        }));
+      }
+
+      return runBackendAction(
+        'rooms.start',
+        () => backendBridge.startRoomMatch(room || gameData.currentRoom || gameData.currentRoomId, payload),
+        (result) => {
+          const patch = extractGameDataPatch(result || {});
+          const status = String(result?.status || result?.match?.status || patch.currentRoom?.status || '').toLowerCase();
+          if (status === 'countdown') navigation.goRoomLobby();
+          else if (patch.currentMatchId || patch.match) navigation.goGameplay();
+          else navigation.goRoomLobby();
+        },
+      );
+    },
     startMatchmaking: async (payload = {}) => {
       const selectedTable = resolveSelectedTableForMatchmaking(payload, gameData);
       const requiredCoins = resolveEntryFee(selectedTable);

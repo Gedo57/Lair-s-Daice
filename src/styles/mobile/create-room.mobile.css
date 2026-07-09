@@ -4,6 +4,10 @@
 
 html[data-device='mobile'] .create-room-screen {
   color: #2b1808;
+  background-image: var(--create-room-background-image, url('/assets/liars-dice/gameplay/BG.png'));
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 html[data-device='mobile'] .create-room-profile {

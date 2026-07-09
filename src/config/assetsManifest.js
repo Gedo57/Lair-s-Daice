@@ -49,6 +49,8 @@ const sharedCurrencyAssets = files(ASSET_FOLDERS.mainMenu, ['6.png', '7.png', '8
 const roomCurrencyAssets = files(ASSET_FOLDERS.roomSelect, ['6.png', '7.png', '8.png']);
 
 const roomSelectTableAssets = files(ASSET_FOLDERS.roomSelect, [
+  'BG-2.png',
+  'BG-3.png',
   'card-1.png',
   'card-2.png',
   'card-3.png',
@@ -74,7 +76,9 @@ const roomSelectTableAssets = files(ASSET_FOLDERS.roomSelect, [
 ]);
 
 const createRoomSharedAssets = [
-  file(ASSET_FOLDERS.gameplay, 'BG-3.png'),
+  file(ASSET_FOLDERS.roomSelect, 'BG.png'),
+  file(ASSET_FOLDERS.roomSelect, 'BG-2.png'),
+  file(ASSET_FOLDERS.roomSelect, 'BG-3.png'),
   ...files(ASSET_FOLDERS.createRoom, [
   'bg.png',
   'p1.png',
@@ -89,6 +93,7 @@ const createRoomSharedAssets = [
 ];
 
 const gameplayBackgroundAssets = [
+  ...files(ASSET_FOLDERS.roomSelect, ['BG.png', 'BG-2.png', 'BG-3.png']),
   ...files(ASSET_FOLDERS.gameplay, ['BG.png', 'BG-2.png', 'BG-3.png']),
   ...files(ASSET_FOLDERS.gameplayPortrait, ['mobile-BG.png', 'mobile-BG-2.png', 'mobile-BG-3.png']),
 ];
@@ -104,6 +109,7 @@ export const ASSET_GROUPS = {
   ],
 
   loading: [
+    file(ASSET_FOLDERS.portrait, 'loading-portrait-bg.jpg'),
     file(ASSET_FOLDERS.portrait, 'starter-mainmenu-bg.png'),
     file(ASSET_FOLDERS.starter, 'BG.png'),
     ...files(ASSET_FOLDERS.loading, ['1.png', '2.png', '3.png']),
