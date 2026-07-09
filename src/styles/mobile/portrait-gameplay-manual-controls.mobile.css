@@ -6,10 +6,11 @@
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen {
   /* CURRENT BID PANEL */
   --pg-current-bid-left: 250px;
-  --pg-current-bid-top: 22px;
+  --pg-current-bid-top: 200px;
   --pg-current-bid-width: 245px;
   --pg-current-bid-height: 190px;
   --pg-current-bid-z: 35;
+  
 
   --pg-current-bid-skin-left: 0px;
   --pg-current-bid-skin-top: 0px;
