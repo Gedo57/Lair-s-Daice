@@ -56,15 +56,15 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   --pg-cup-2-2-transform: none;
 
   /* 3 PLAYERS */
-  --pg-cup-3-width: 22%;
-  --pg-cup-3-1-left: 30%;
-  --pg-cup-3-1-top: 30%;
+  --pg-cup-3-width: 15%;
+  --pg-cup-3-1-left: 40%;
+  --pg-cup-3-1-top: 40%;
   --pg-cup-3-1-transform: translateX(-50%);
-  --pg-cup-3-2-left: 20%;
-  --pg-cup-3-2-top: 70%;
+  --pg-cup-3-2-left: 30%;
+  --pg-cup-3-2-top: 60%;
   --pg-cup-3-2-transform: none;
   --pg-cup-3-3-left: 50%;
-  --pg-cup-3-3-top: 30%;
+  --pg-cup-3-3-top: 40%;
   --pg-cup-3-3-transform: none;
 
   /* 4 PLAYERS */
