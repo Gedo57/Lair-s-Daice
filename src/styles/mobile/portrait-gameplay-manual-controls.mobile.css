@@ -10,12 +10,12 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   --pg-current-bid-width: 245px;
   --pg-current-bid-height: 190px;
   --pg-current-bid-z: 35;
-  
 
   --pg-current-bid-skin-left: 0px;
   --pg-current-bid-skin-top: 0px;
   --pg-current-bid-skin-width: 100%;
   --pg-current-bid-skin-height: 100%;
+  --pg-current-bid-skin-opacity: 1;
 
   --pg-current-bid-header-left: 22px;
   --pg-current-bid-header-top: 0px;
@@ -102,6 +102,7 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   top: var(--pg-current-bid-skin-top) !important;
   width: var(--pg-current-bid-skin-width) !important;
   height: var(--pg-current-bid-skin-height) !important;
+  opacity: var(--pg-current-bid-skin-opacity) !important;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-screen .gameplay-current-bid__header {
