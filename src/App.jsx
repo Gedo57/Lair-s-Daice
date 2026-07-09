@@ -4,6 +4,7 @@ import { useLanguage } from './i18n/useLanguage.js';
 import { initialGameData } from './data/initialGameData.js';
 import { createMockBackendActions, mockGameData } from './data/mockGameData.js';
 import { getAssetsForPhase, getAssetsForScreen } from './config/assetsManifest.js';
+import { resolveTableMusicTrack } from './config/tableMusic.js';
 import {
   resolveCreateRoomBackgroundContract,
   resolveGameDataBackground,
@@ -12,6 +13,7 @@ import {
   toCssBackgroundImageValue,
 } from './utils/gameplayBackgrounds.js';
 import { preloadAssets, preloadAssetsInBackground } from './services/assetPreloader.js';
+import { syncTableMusic, stopTableMusic } from './services/tableMusicPlayer.js';
 import { backendBridge } from './services/backendBridge.js';
 import {
   cancelSocketMatchmaking,
@@ -1807,9 +1809,16 @@ export default function App() {
   }, []);
 
   const activeBackgroundData = screen === 'mockgame' ? mockGameplayData : gameData;
+  const activeTableMusicTrack = useMemo(() => resolveTableMusicTrack(screen, activeBackgroundData), [screen, activeBackgroundData]);
   const gameplayBackground = useMemo(() => resolveGameDataBackground(activeBackgroundData), [activeBackgroundData]);
   const createRoomBackground = useMemo(() => resolveCreateRoomBackgroundContract(), []);
   const roomLobbyBackground = useMemo(() => resolveRoomLobbyBackgroundContract(activeBackgroundData), [activeBackgroundData]);
+
+  useEffect(() => {
+    if (!starterAssetsReady) return undefined;
+    syncTableMusic(activeTableMusicTrack);
+    return () => stopTableMusic();
+  }, [starterAssetsReady, activeTableMusicTrack?.id, activeTableMusicTrack?.audioSrc]);
 
   const appStyle = useMemo(() => {
     const nextStyle = {
@@ -1817,6 +1826,12 @@ export default function App() {
       '--design-height': `${layout.resolution.height}px`,
       '--ui-scale': layout.scale,
       '--gameplay-background-image': toCssBackgroundImageValue(gameplayBackground.backgroundUrl),
+      '--gameplay-portrait-background-image': toCssBackgroundImageValue(
+        gameplayBackground.gameplayPortraitBackgroundUrl
+        || gameplayBackground.portraitUrl
+        || gameplayBackground.backgroundPortraitUrl
+        || gameplayBackground.backgroundUrl,
+      ),
       '--create-room-background-image': toCssBackgroundImageValue(createRoomBackground.backgroundUrl),
     };
 

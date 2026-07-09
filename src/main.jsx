@@ -69,6 +69,7 @@ import './styles/base/gameplay-chinese-layout-fix.css';
 import './styles/mobile/gameplay-round-result-manual.mobile.css';
 import './styles/base/gameplay-zai-timer-patch.css';
 import './styles/mobile/portrait-gameplay-manual-controls.mobile.css';
+import './styles/mobile/portrait-gameplay-background-blur.mobile.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
