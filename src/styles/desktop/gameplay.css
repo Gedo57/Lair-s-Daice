@@ -1989,12 +1989,14 @@ html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .
 /* 2 cups - landscape */
 html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .gameplay-cups.gameplay-cups--count-2 .gameplay-cups__cup--2-1 {
   left: 40% !important;
-  top: 5% !important;
+  top: 0% !important;
+  width: 40%;
 }
 
 html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .gameplay-cups.gameplay-cups--count-2 .gameplay-cups__cup--2-2 {
-  right: 14% !important;
-  top: 50% !important;
+  right: 18% !important;
+  top: 45% !important;
+  width: 45%;
 }
 
 /* 3 cups - landscape */

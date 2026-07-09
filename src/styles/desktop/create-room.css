@@ -1,9 +1,8 @@
 html[data-device='desktop'] .create-room-screen {
   color: #2b1808;
-  background-image: var(--create-room-background-image, url('/assets/liars-dice/room-select/BG.png'));
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  /* Create Room background is rendered on the app shell, not inside the fixed UI canvas. */
+  background: transparent;
+  background-image: none !important;
 }
 
 html[data-device='desktop'] .create-room-profile {
