@@ -26,8 +26,8 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
   --pg-timer-y: 0px;
   --pg-timer-scale: 1;
 
-  --pg-round-left: 520px;
-  --pg-round-top: 120px;
+  --pg-round-left: 500px;
+  --pg-round-top: 205px;
   --pg-round-width: 106px;
   --pg-round-height: 68px;
   --pg-round-x: 0px;

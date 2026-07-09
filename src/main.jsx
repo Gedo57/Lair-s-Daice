@@ -72,6 +72,7 @@ import './styles/mobile/gameplay-round-result-manual.mobile.css';
 import './styles/base/gameplay-zai-timer-patch.css';
 import './styles/mobile/portrait-gameplay-manual-controls.mobile.css';
 import './styles/mobile/portrait-gameplay-background-blur.mobile.css';
+import './styles/base/current-bid-time-reminder-style.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
