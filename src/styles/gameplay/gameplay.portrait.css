@@ -638,15 +638,6 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 }
 
 /* Bid selector */
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector {
-  left: 147px !important;
-  top: 884px !important;
-  width: 426px !important;
-  height: 190px !important;
-  z-index: 76 !important;
-  display: block !important;
-}
-
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__skin {
   position: absolute;
   inset: 0;
@@ -1560,15 +1551,6 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   z-index: 94 !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector {
-  left: 145px !important;
-  top: 884px !important;
-  width: 430px !important;
-  height: 190px !important;
-  z-index: 90 !important;
-  display: block !important;
-}
-
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector__skin {
   position: absolute !important;
   inset: 0 !important;
@@ -1866,7 +1848,7 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
   --pg-timer-y: 0px;
   --pg-timer-scale: 1;
 
-  --pg-round-left: 500px;
+  --pg-round-left: 140px;
   --pg-round-top: 205px;
   --pg-round-width: 106px;
   --pg-round-height: 68px;
@@ -1985,7 +1967,7 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay {
   --pg-bid-panel-left: 35px;
   --pg-bid-panel-top: 845px;
   --pg-bid-panel-width: 650px;
-  --pg-bid-panel-height: 292px;
+  --pg-bid-panel-height: 352px;
   --pg-bid-panel-x: 0px;
   --pg-bid-panel-y: 0px;
   --pg-bid-panel-scale: 1;

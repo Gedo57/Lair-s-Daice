@@ -307,7 +307,7 @@
   Edit these variables only. Positive X moves left because the button is right-anchored.
 */
 html[data-device='desktop'] .app-shell--gameplay .gameplay-chat-button {
-  --chat-button-right:950px;
+  --chat-button-right:300px;
   --chat-button-top: 30px;
   --chat-button-width: 184px;
   --chat-button-height: 64px;
@@ -350,7 +350,7 @@ html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .g
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-chat-button {
   --chat-button-right: 304px;
-  --chat-button-top: 44px;
+  --chat-button-top: 45px;
   --chat-button-width: 154px;
   --chat-button-height: 54px;
   --chat-button-x: 0px;
@@ -719,8 +719,8 @@ html.keyboard-open[data-physical-device='mobile'][data-orientation='landscape'] 
 }
 
 html[data-device='desktop'] .app-shell--gameplay .gameplay-voice-button {
-  --voice-button-right: 960px;
-  --voice-button-top: 100px;
+  --voice-button-right: 500px;
+  --voice-button-top: 30px;
   --voice-button-width: 154px;
   --voice-button-height: 64px;
 }
@@ -796,12 +796,12 @@ html.keyboard-open[data-device='mobile'][data-orientation='portrait'] .app-shell
 /* ===== SOURCE: ./styles/base/gameplay-music-control.css ===== */
 .gameplay-music-control {
   --music-control-left: 28px;
-  --music-control-top: 174px;
+  --music-control-top: 74px;
   --music-button-width: 166px;
   --music-button-height: 58px;
   --music-panel-width: 330px;
   --music-panel-x: 0px;
-  --music-panel-y: 70px;
+  --music-panel-y: -80px;
 
   position: absolute;
   left: var(--music-control-left);
@@ -814,8 +814,8 @@ html.keyboard-open[data-device='mobile'][data-orientation='portrait'] .app-shell
 
 .gameplay-music-button {
   position: absolute;
-  left: 0;
-  top: 0;
+  left: 2px;
+  top: -140px;
   z-index: 2;
   width: var(--music-button-width);
   height: var(--music-button-height);
@@ -4105,7 +4105,7 @@ html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--ga
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-time-remaining {
   left: 50% !important;
   right: auto !important;
-  top: 16px !important;
+  top: 122px !important;
   bottom: auto !important;
   width: 224px !important;
   height: 84px !important;

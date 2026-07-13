@@ -905,10 +905,10 @@ html[data-device='desktop'] .gameplay-round-badge__value {
 html[data-device='desktop'] .gameplay-round-result {
   position: absolute;
   left: 380px;
-  top: 230px;
+  top: 220px;
   width: 490px;
   min-height: 142px;
-  z-index: 25;
+  z-index: 225;
   padding: 16px 22px 14px;
   border-radius: 24px;
   background: linear-gradient(180deg, rgba(52, 18, 7, .94), rgba(20, 7, 3, .92));
@@ -1574,14 +1574,7 @@ html[data-device='desktop'] .gameplay-turnbar__die {
   height: 39px;
 }
 
-html[data-device='desktop'] .gameplay-timer {
-  left: 782px;
-  top: 31px;
-  width: 80px;
-  height: 90px;
-  z-index: 41;
-  filter: drop-shadow(0 5px 8px rgba(0,0,0,.35));
-}
+
 
 html[data-device='desktop'] .gameplay-timer__skin {
   width: 0%;
@@ -2033,9 +2026,9 @@ html[data-device='desktop'][data-orientation='landscape'] .app-shell--gameplay .
    ========================================================= */
 html[data-device='desktop'] .app-shell--gameplay .gameplay-current-bid {
   --cb-right: 18px;
-  --cb-top: 93px;
+  --cb-top: 523px;
   --cb-width: 224px;
-  --cb-height: 239px;
+  --cb-height: 180px;
   --cb-z: 64;
 
   --cb-skin-left: 0px;
@@ -2043,8 +2036,8 @@ html[data-device='desktop'] .app-shell--gameplay .gameplay-current-bid {
   --cb-skin-width: 100%;
   --cb-skin-height: 100%;
 
-  --cb-header-left: 15px;
-  --cb-header-top: 0px;
+  --cb-header-left: 10px;
+  --cb-header-top: -10px;
   --cb-header-width: 193px;
   --cb-header-height: 43px;
   --cb-header-font: 18px;
