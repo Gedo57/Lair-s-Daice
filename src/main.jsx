@@ -20,6 +20,7 @@ import './styles/gameplay/gameplay.portrait.css';
 import './styles/gameplay/gameplay.states.css';
 import './styles/gameplay/gameplay.controls.css';
 import './styles/gameplay/opening-coin-flip.css';
+import './styles/base/language.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
