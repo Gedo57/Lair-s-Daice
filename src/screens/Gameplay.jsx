@@ -161,29 +161,25 @@ function getPlayerDiceCount(player, fallback = 0) {
 }
 
 function getTurnDicePlayer(match, activePlayer, viewerPlayer, user, myTurn) {
-  const activeDice = getPlayerDiceValues(activePlayer);
   const viewerDice = getPlayerDiceValues(viewerPlayer);
   const matchViewerDice = getMatchViewerDiceValues(match);
-  const shouldUseViewerDice = Boolean(myTurn || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user));
-
-  const dice = activeDice.length
-    ? activeDice
-    : shouldUseViewerDice && viewerDice.length
-      ? viewerDice
-      : shouldUseViewerDice && matchViewerDice.length
-        ? matchViewerDice
-        : [];
-
-  const count = getPlayerDiceCount(activePlayer, getPlayerDiceCount(viewerPlayer, dice.length || 0));
+  const isViewerTurn = Boolean(myTurn || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user));
+  const dice = isViewerTurn
+    ? (viewerDice.length ? viewerDice : matchViewerDice)
+    : [];
+  const count = isViewerTurn
+    ? getPlayerDiceCount(viewerPlayer, dice.length || 5)
+    : getPlayerDiceCount(activePlayer, 5);
 
   return {
     ...(activePlayer || viewerPlayer || user || {}),
-    ...(shouldUseViewerDice && viewerPlayer ? {
+    ...(isViewerTurn && viewerPlayer ? {
       diceCount: getPlayerDiceCount(viewerPlayer, count),
       lives: viewerPlayer.lives ?? viewerPlayer.diceCount ?? count,
     } : {}),
     dice,
-    diceCount: count || dice.length || (shouldUseViewerDice ? 5 : 0),
+    diceCount: count || (isViewerTurn ? 5 : getPlayerDiceCount(activePlayer, 5)),
+    diceHidden: !isViewerTurn,
   };
 }
 
@@ -432,14 +428,14 @@ function getMatchJokerDisplay(match = {}, bid = null, tx = (value) => value) {
   return { mode: 'normal', label: tx('Joker ON'), detail: tx('1s are wild'), className: 'is-normal', jokerWildActive: true };
 }
 
-function buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match }) {
+function buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, chaiEnabled = false, match }) {
   const currentJokerInfo = getMatchJokerDisplay(match, currentBid);
   const face = toNumber(selectedFace, 1);
-  const zai = Boolean(zaiEnabled && face !== 1);
-  const zaiInherited = Boolean(!zai && currentBid && currentJokerInfo.mode === 'zai' && face !== 1);
-  const chai = false;
-  const onesLocked = face === 1 || currentJokerInfo.mode === 'ones_locked';
-  const jokerMode = zai ? 'zai' : onesLocked ? 'ones_locked' : zaiInherited ? 'zai_locked' : 'normal';
+  const chai = Boolean(chaiEnabled && currentBid && ['zai', 'zai_locked'].includes(currentJokerInfo.mode));
+  const zai = Boolean(!chai && zaiEnabled && face !== 1);
+  const zaiInherited = Boolean(!chai && !zai && currentBid && ['zai', 'zai_locked'].includes(currentJokerInfo.mode) && face !== 1);
+  const onesLocked = !chai && (face === 1 || currentJokerInfo.mode === 'ones_locked');
+  const jokerMode = chai ? 'chai' : zai ? 'zai' : onesLocked ? 'ones_locked' : zaiInherited ? 'zai_locked' : 'normal';
 
   return {
     zai,
@@ -448,14 +444,14 @@ function buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiE
     chai,
     isChai: chai,
     chaiAutoApplied: false,
-    chaiReopensJoker: false,
+    chaiReopensJoker: chai,
     jokerMode,
     jokerWildActive: jokerMode === 'normal',
   };
 }
 
-function getSelectedBidJokerInfo({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match, tx = (value) => value }) {
-  const payload = buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match });
+function getSelectedBidJokerInfo({ currentBid, selectedQuantity, selectedFace, zaiEnabled, chaiEnabled = false, match, tx = (value) => value }) {
+  const payload = buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, chaiEnabled, match });
   if (payload.zai || payload.jokerMode === 'zai_locked') return { ...payload, label: tx('ZAI'), detail: tx('Joker OFF'), className: 'is-zai' };
   if (payload.chai) return { ...payload, label: tx('CHAI'), detail: tx('Joker ON'), className: 'is-chai' };
   if (payload.jokerMode === 'ones_locked') return { ...payload, label: tx('1s LOCKED'), detail: tx('Joker OFF'), className: 'is-locked' };
@@ -894,6 +890,20 @@ function getActivePlayer(match) {
 function getViewerPlayer(match, user) {
   if (!match?.players?.length) return null;
 
+  const explicitViewerIds = [
+    match.viewerPlayerId,
+    match.selfPlayerId,
+    match.viewerUserId,
+    match.selfUserId,
+  ].filter(Boolean).map(String);
+
+  if (explicitViewerIds.length) {
+    const explicitViewer = match.players.find((player) =>
+      playerIdentityValues(player).some((id) => explicitViewerIds.includes(id))
+    );
+    if (explicitViewer) return explicitViewer;
+  }
+
   const viewerRefs = [match.me, match.viewer, match.currentUser, user]
     .filter((item) => item && typeof item === 'object');
 
@@ -902,7 +912,8 @@ function getViewerPlayer(match, user) {
     if (matchPlayer) return matchPlayer;
   }
 
-  return match.players.find((player) => !player?.isBot) || match.players[0];
+  // Never guess the viewer by selecting the first human player; that can expose or hide the wrong hand.
+  return null;
 }
 
 function getBidderPlayer(match) {
@@ -1204,10 +1215,23 @@ function revealedDiceRows(roundResult) {
   return Array.isArray(roundResult?.revealedDice) ? roundResult.revealedDice.filter(Boolean) : [];
 }
 
+const BID_FACE_ORDER = [2, 3, 4, 5, 6, 1];
+
+function bidFaceRank(face) {
+  const index = BID_FACE_ORDER.indexOf(toNumber(face, 0));
+  return index >= 0 ? index : -1;
+}
+
+function nextBidFace(face) {
+  const index = bidFaceRank(face);
+  return index >= 0 && index < BID_FACE_ORDER.length - 1 ? BID_FACE_ORDER[index + 1] : null;
+}
+
 function nextDefaultBid(currentBid, totalDice) {
   if (!currentBid) return { quantity: Math.min(1, totalDice || 1), face: 1 };
-  if (toNumber(currentBid.face, 1) < 6) return { quantity: currentBid.quantity, face: toNumber(currentBid.face, 1) + 1 };
-  return { quantity: Math.min(toNumber(currentBid.quantity, 1) + 1, totalDice || 7), face: 1 };
+  const higherFace = nextBidFace(currentBid.face);
+  if (higherFace !== null) return { quantity: currentBid.quantity, face: higherFace };
+  return { quantity: Math.min(toNumber(currentBid.quantity, 1) + 1, totalDice || 7), face: 2 };
 }
 
 function isValidBid(currentBid, quantity, face, options = {}) {
@@ -1220,17 +1244,10 @@ function isValidBid(currentBid, quantity, face, options = {}) {
   }
   const currentQuantity = toNumber(currentBid.quantity, 0);
   const currentFace = toNumber(currentBid.face, 0);
-  return normalizedQuantity > currentQuantity || (normalizedQuantity === currentQuantity && normalizedFace > currentFace);
+  return normalizedQuantity > currentQuantity || (normalizedQuantity === currentQuantity && bidFaceRank(normalizedFace) > bidFaceRank(currentFace));
 }
 
-function getDirectZaiBid({ currentBid, selectedQuantity, selectedFace }) {
-  const currentQuantity = toNumber(currentBid?.quantity, 0);
-  const currentFace = toNumber(currentBid?.face, 0);
-
-  if (currentBid && currentQuantity > 0 && currentFace >= 2 && currentFace <= 6 && !isBidZai(currentBid)) {
-    return { quantity: currentQuantity, face: currentFace, source: 'current_bid' };
-  }
-
+function getDirectZaiBid({ selectedQuantity, selectedFace }) {
   return {
     quantity: toNumber(selectedQuantity, 0),
     face: toNumber(selectedFace, 0),
@@ -1285,6 +1302,18 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const viewerPlayer = getViewerPlayer(match, user);
   const viewerEliminated = isPlayerEliminatedForMatch(match, viewerPlayer);
   const myTurn = !viewerEliminated && (Boolean(match?.myTurn) || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user));
+
+  useEffect(() => {
+    const shell = document.querySelector('.app-shell--gameplay');
+    if (!shell) return undefined;
+
+    shell.classList.toggle('is-opponent-turn-shell', !myTurn);
+    shell.classList.toggle('is-my-turn-shell', myTurn);
+
+    return () => {
+      shell.classList.remove('is-opponent-turn-shell', 'is-my-turn-shell');
+    };
+  }, [myTurn]);
   const turnDicePlayer = getTurnDicePlayer(match, activePlayer, viewerPlayer, user, myTurn);
   const [turnIntroPhase, setTurnIntroPhase] = useState(TURN_INTRO_PHASE.IDLE);
   const [turnIntroPlayer, setTurnIntroPlayer] = useState(null);
@@ -1292,6 +1321,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const activeTurnIntroKeyRef = useRef('');
   const turnIntroTimersRef = useRef([]);
   const turnIntroRunIdRef = useRef(0);
+  const lastOwnDiceRef = useRef([]);
   const turnIntroKey = getTurnIntroKey(match, activePlayer);
   const turnIntroResetKey = getTurnIntroResetKey(match);
   const isTurnIntroPlaying = TURN_INTRO_ACTIVE_PHASES.has(turnIntroPhase);
@@ -1457,6 +1487,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const [selectedFace, setSelectedFace] = useState(defaultBid.face || 1);
   const [selectedCoinBet, setSelectedCoinBet] = useState(getMatchCoinBet(match));
   const [zaiEnabled, setZaiEnabled] = useState(false);
+  const [chaiEnabled, setChaiEnabled] = useState(false);
   const [isDiceFacePickerOpen, setDiceFacePickerOpen] = useState(false);
   const faceDialRef = useRef(null);
   const quantitySliderRef = useRef(null);
@@ -1483,6 +1514,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     setSelectedQuantity(Math.max(1, Math.min(quantityValues.length, defaultBid.quantity || 1)));
     setSelectedFace(Math.max(1, Math.min(6, defaultBid.face || 1)));
     setZaiEnabled(false);
+    setChaiEnabled(false);
     setDiceFacePickerOpen(false);
   }, [defaultBid.quantity, defaultBid.face, quantityValues.length]);
 
@@ -1561,7 +1593,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
   const submitBid = () => {
     if (!canSubmitBid || isTurnIntroPlaying) return;
-    const jokerPayload = buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match });
+    const jokerPayload = buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, chaiEnabled, match });
     backendActions?.submitGameAction?.({
       matchId: currentMatchId,
       type: 'bid',
@@ -1582,13 +1614,16 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const submitZaiBid = () => {
     if (!canSubmitBid || isTurnIntroPlaying) return;
     const directZaiBid = getDirectZaiBid({ currentBid, selectedQuantity, selectedFace });
-    if (!isValidZaiBid(currentBid, directZaiBid.quantity, directZaiBid.face, { match, playerCount: tablePlayerCount })) return;
+    const currentMode = getMatchJokerDisplay(match, currentBid)?.mode;
+    const shouldChai = ['zai', 'zai_locked'].includes(currentMode);
+    if (!shouldChai && !isValidZaiBid(currentBid, directZaiBid.quantity, directZaiBid.face, { match, playerCount: tablePlayerCount })) return;
 
     const jokerPayload = buildBidJokerPayload({
       currentBid,
       selectedQuantity: directZaiBid.quantity,
       selectedFace: directZaiBid.face,
-      zaiEnabled: true,
+      zaiEnabled: !shouldChai,
+      chaiEnabled: shouldChai,
       match,
     });
 
@@ -1684,14 +1719,15 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const quantityMin = currentBid ? 1 : getOpeningMinimumQuantity(match, tablePlayerCount, selectedFace);
   const quantityMax = quantityValues[quantityValues.length - 1] || Math.max(1, toNumber(totalDice, 1));
   const directZaiBid = getDirectZaiBid({ currentBid, selectedQuantity, selectedFace });
-  const zaiAvailable = isValidZaiBid(currentBid, directZaiBid.quantity, directZaiBid.face, { match, playerCount: tablePlayerCount });
   const currentBidJokerInfo = getMatchJokerDisplay(match, currentBid, tx);
+  const chaiAvailable = Boolean(currentBid && ['zai', 'zai_locked'].includes(currentBidJokerInfo?.mode) && toNumber(selectedQuantity, 0) === toNumber(currentBid.quantity, 0));
+  const zaiAvailable = chaiAvailable || isValidZaiBid(currentBid, directZaiBid.quantity, directZaiBid.face, { match, playerCount: tablePlayerCount });
   const showCurrentBidJokerBadge = Boolean(currentBid && currentBidJokerInfo?.mode && currentBidJokerInfo.mode !== 'normal');
   const showDangerTurnTimer = Boolean(match?.status === 'active' && Number(liveTurnSeconds) > 0 && Number(liveTurnSeconds) <= 10);
-  const selectedBidJokerInfo = getSelectedBidJokerInfo({ currentBid, selectedQuantity, selectedFace, zaiEnabled, match, tx });
+  const selectedBidJokerInfo = getSelectedBidJokerInfo({ currentBid, selectedQuantity, selectedFace, zaiEnabled, chaiEnabled, match, tx });
   const directZaiSubtitle = zaiAvailable
-    ? `${directZaiBid.quantity} x ${directZaiBid.face} · ${tx('Joker OFF')}`
-    : tx('Joker OFF');
+    ? `${directZaiBid.quantity} x ${directZaiBid.face} · ${tx(chaiAvailable ? 'Joker ON' : 'Joker OFF')}`
+    : tx(chaiAvailable ? 'Joker ON' : 'Joker OFF');
   const chaiHint = '';
   const bidSubmitSubtitle = openingBidError || (bidIsValid ? (coinBetIsValid ? selectedBidJokerInfo.detail : tx('Coin bet out of range')) : tx('Bid must be higher'));
   useEffect(() => {
@@ -1775,13 +1811,16 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const turnIntroDisplayPlayer = turnIntroPlayer || turnDicePlayer || activePlayer || viewerPlayer;
   const viewerDiceValues = getPlayerDiceValues(viewerPlayer);
   const matchViewerDiceValues = getMatchViewerDiceValues(match);
-  const ownDiceValues = viewerDiceValues.length ? viewerDiceValues : matchViewerDiceValues;
-  const ownDiceCount = Math.max(getPlayerDiceCount(viewerPlayer, 0), ownDiceValues.length, 5);
+  const latestOwnDiceValues = viewerDiceValues.length ? viewerDiceValues : matchViewerDiceValues;
+  if (latestOwnDiceValues.length) lastOwnDiceRef.current = latestOwnDiceValues;
+  if (viewerEliminated) lastOwnDiceRef.current = [];
+  const ownDiceValues = latestOwnDiceValues.length ? latestOwnDiceValues : lastOwnDiceRef.current;
+  const ownDiceCount = Math.max(getPlayerDiceCount(viewerPlayer, 0), ownDiceValues.length, viewerEliminated ? 0 : 5);
   const backgroundContract = resolveGameDataBackground(data);
 
   return (
     <section
-      className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${activePlayer ? 'has-active-player' : ''} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''}`}
+      className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${activePlayer ? 'has-active-player' : ''} ${myTurn ? 'is-my-turn' : 'is-opponent-turn'} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''}`}
       style={{
         '--gameplay-background-image': toCssBackgroundImageValue(backgroundContract.backgroundUrl),
         '--gameplay-portrait-background-image': toCssBackgroundImageValue(backgroundContract.gameplayPortraitBackgroundUrl || backgroundContract.portraitUrl || backgroundContract.backgroundUrl),
@@ -2102,8 +2141,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
             disabled={zaiDisabled}
           >
             <img className="gameplay-action__skin" src={`${asset}B3.png`} alt="" draggable="false" />
-            <span className="gameplay-action__title">{tx('ZAI')}</span>
-            <span className="gameplay-action__subtitle">{tx('View 1 Die')}</span>
+            <span className="gameplay-action__title">{tx(chaiAvailable ? 'CHAI' : 'ZAI')}</span>
+            <span className="gameplay-action__subtitle">{directZaiSubtitle}</span>
           </button>
         </div>
       </div>

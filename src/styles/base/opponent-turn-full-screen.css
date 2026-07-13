@@ -1,0 +1,46 @@
+/*
+ * Full-screen opponent-turn grayscale patch.
+ * Uses a shell class set by Gameplay.jsx instead of :has(), making the
+ * portrait outer background reliable in mobile browsers and WebViews.
+ */
+
+.gameplay-screen {
+  isolation: isolate;
+  transition: filter 180ms ease;
+}
+
+.gameplay-screen.is-opponent-turn,
+.app-shell--gameplay.is-opponent-turn-shell .gameplay-screen,
+html[data-device='mobile'][data-orientation='portrait']
+  .app-shell--gameplay.is-opponent-turn-shell .game-frame .gameplay-screen {
+  -webkit-filter: grayscale(1) saturate(0) brightness(0.68) contrast(0.96) !important;
+  filter: grayscale(1) saturate(0) brightness(0.68) contrast(0.96) !important;
+  box-shadow: inset 0 0 0 9999px rgba(18, 20, 24, 0.13) !important;
+}
+
+.gameplay-screen.is-my-turn,
+.app-shell--gameplay.is-my-turn-shell .gameplay-screen,
+html[data-device='mobile'][data-orientation='portrait']
+  .app-shell--gameplay.is-my-turn-shell .game-frame .gameplay-screen {
+  -webkit-filter: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Portrait uses a separate pseudo-element for the blurred area outside the
+   fixed game canvas. Apply grayscale directly through the shell state class. */
+html[data-device='mobile'][data-orientation='portrait']
+  .app-shell--gameplay.is-opponent-turn-shell::before {
+  -webkit-filter: blur(var(--portrait-gameplay-outer-blur, 24px)) grayscale(1) saturate(0) brightness(0.58) contrast(0.96) !important;
+  filter: blur(var(--portrait-gameplay-outer-blur, 24px)) grayscale(1) saturate(0) brightness(0.58) contrast(0.96) !important;
+}
+
+html[data-device='mobile'][data-orientation='portrait']
+  .app-shell--gameplay.is-my-turn-shell::before {
+  -webkit-filter: blur(var(--portrait-gameplay-outer-blur, 24px)) brightness(.78) saturate(1.08) !important;
+  filter: blur(var(--portrait-gameplay-outer-blur, 24px)) brightness(.78) saturate(1.08) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gameplay-screen { transition: none; }
+}

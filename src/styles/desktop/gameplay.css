@@ -150,7 +150,7 @@ html[data-device='desktop'] .gameplay-turnbar__die { width: 39px; height: 39px; 
 html[data-device='desktop'] .gameplay-timer {
   position: absolute;
   left: 830px;
-  top: 60px;
+  top: 120px;
   width: 80px;
   height: 100px;
   z-index: 30;
@@ -899,7 +899,7 @@ html[data-device='desktop'] .gameplay-round-badge__value {
 html[data-device='desktop'] .gameplay-round-result {
   position: absolute;
   left: 380px;
-  top: 85px;
+  top: 230px;
   width: 490px;
   min-height: 142px;
   z-index: 25;
@@ -1597,8 +1597,8 @@ html[data-device='desktop'] .gameplay-timer__value {
 }
 
 html[data-device='desktop'] .gameplay-round-badge {
-  left: 904px;
-  top: 42px;
+  left: 764px;
+  top: 122px;
 }
 
 html[data-device='desktop'] .gameplay-bid-selector {

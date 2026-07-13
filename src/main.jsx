@@ -74,6 +74,7 @@ import './styles/mobile/portrait-gameplay-manual-controls.mobile.css';
 import './styles/mobile/portrait-gameplay-background-blur.mobile.css';
 import './styles/base/current-bid-time-reminder-style.css';
 import './styles/base/bid-selector-transparency-controls.css';
+import './styles/base/opponent-turn-full-screen.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
