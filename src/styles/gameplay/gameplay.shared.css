@@ -793,29 +793,33 @@ html.keyboard-open[data-device='mobile'][data-orientation='portrait'] .app-shell
 }
 
 
-/* ===== SOURCE: ./styles/base/gameplay-music-control.css ===== */
+/* ===== GAMEPLAY MUSIC CONTROL ===== */
 .gameplay-music-control {
-  --music-control-left: 28px;
-  --music-control-top: 74px;
+  /*
+    The wrapper is only a positioning canvas. The button and panel now have
+    independent coordinates, so portrait and landscape can be tuned without
+    moving one another.
+  */
+  --music-button-left: 50px;
+  --music-button-top: 104px;
   --music-button-width: 166px;
   --music-button-height: 58px;
+  --music-panel-left: 228px;
+  --music-panel-top: 94px;
   --music-panel-width: 330px;
-  --music-panel-x: 0px;
-  --music-panel-y: -80px;
 
   position: absolute;
-  left: var(--music-control-left);
-  top: var(--music-control-top);
+  inset: 0;
   z-index: 170;
-  width: var(--music-button-width);
-  height: var(--music-button-height);
+  width: 0;
+  height: 0;
   pointer-events: none;
 }
 
 .gameplay-music-button {
   position: absolute;
-  left: 2px;
-  top: -140px;
+  left: var(--music-button-left);
+  top: var(--music-button-top);
   z-index: 2;
   width: var(--music-button-width);
   height: var(--music-button-height);
@@ -879,8 +883,8 @@ html.keyboard-open[data-device='mobile'][data-orientation='portrait'] .app-shell
 
 .gameplay-music-panel {
   position: absolute;
-  left: var(--music-panel-x);
-  top: var(--music-panel-y);
+  left: var(--music-panel-left);
+  top: var(--music-panel-top);
   z-index: 1;
   width: var(--music-panel-width);
   min-height: 96px;
@@ -947,35 +951,8 @@ html.keyboard-open[data-device='mobile'][data-orientation='portrait'] .app-shell
   color: #ffe6a4;
 }
 
-html[data-device='desktop'] .app-shell--gameplay .gameplay-music-control {
-  --music-control-left: 28px;
-  --music-control-top: 174px;
-  --music-button-width: 166px;
-  --music-button-height: 58px;
-  --music-panel-width: 330px;
-}
-
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-music-control {
-  --music-control-left: 24px;
-  --music-control-top: 154px;
-  --music-button-width: 150px;
-  --music-button-height: 52px;
-  --music-panel-width: 310px;
-  --music-panel-y: 62px;
-}
-
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-music-button__title {
   font-size: 14px;
-}
-
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-music-control {
-  --music-control-left: 24px;
-  --music-control-top: 94px;
-  --music-button-width: 154px;
-  --music-button-height: 54px;
-  --music-panel-width: 320px;
-  --music-panel-y: 62px;
-  z-index: 124;
 }
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-music-button__icon {
@@ -987,7 +964,6 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   inset: 0 10px 0 42px;
   font-size: 17px;
 }
-
 
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-music-panel__mute {
   flex-basis: 92px;

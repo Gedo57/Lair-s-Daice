@@ -4,6 +4,7 @@ import { getTableMusicMuted, getTableMusicVolume, resumeTableMusic, setTableMusi
 import { startVoiceChatSession } from '../services/voiceChatService.js';
 import { resolveGameDataBackground, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
 import { GameplayChatDrawer, GameplayPlayersLayer, GameplayStatusLayer, GameplayUtilityControls } from '../components/gameplay/GameplaySections.jsx';
+import OpeningCoinFlipOverlay from '../components/gameplay/OpeningCoinFlipOverlay.jsx';
 
 const asset = '/assets/liars-dice/gameplay/';
 
@@ -1302,7 +1303,9 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const previousBid = match?.previousBid || null;
   const viewerPlayer = getViewerPlayer(match, user);
   const viewerEliminated = isPlayerEliminatedForMatch(match, viewerPlayer);
-  const myTurn = !viewerEliminated && (Boolean(match?.myTurn) || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user));
+  const openingCoinFlip = match?.openingCoinFlip || null;
+  const isOpeningCoinFlipActive = Boolean(match?.coinFlipActive || openingCoinFlip?.status === 'pending');
+  const myTurn = !isOpeningCoinFlipActive && !viewerEliminated && (Boolean(match?.myTurn) || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user));
 
   useEffect(() => {
     const shell = document.querySelector('.app-shell--gameplay');
@@ -1310,11 +1313,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
     shell.classList.toggle('is-opponent-turn-shell', !myTurn);
     shell.classList.toggle('is-my-turn-shell', myTurn);
+    shell.classList.toggle('is-opening-coin-flip-shell', isOpeningCoinFlipActive);
 
     return () => {
-      shell.classList.remove('is-opponent-turn-shell', 'is-my-turn-shell');
+      shell.classList.remove('is-opponent-turn-shell', 'is-my-turn-shell', 'is-opening-coin-flip-shell');
     };
-  }, [myTurn]);
+  }, [myTurn, isOpeningCoinFlipActive]);
   const turnDicePlayer = getTurnDicePlayer(match, activePlayer, viewerPlayer, user, myTurn);
   const [turnIntroPhase, setTurnIntroPhase] = useState(TURN_INTRO_PHASE.IDLE);
   const [turnIntroPlayer, setTurnIntroPlayer] = useState(null);
@@ -1323,12 +1327,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const turnIntroTimersRef = useRef([]);
   const turnIntroRunIdRef = useRef(0);
   const lastOwnDiceRef = useRef([]);
-  const turnIntroKey = getTurnIntroKey(match, activePlayer);
+  const turnIntroKey = isOpeningCoinFlipActive ? '' : getTurnIntroKey(match, activePlayer);
   const turnIntroResetKey = getTurnIntroResetKey(match);
   const isTurnIntroPlaying = TURN_INTRO_ACTIVE_PHASES.has(turnIntroPhase);
   const isFinished = match?.status === 'finished';
   const isBusy = Boolean(backendStatus?.loading && String(backendStatus.lastAction || '').startsWith('match.'));
-  const canAct = Boolean(currentMatchId && match && !isFinished && myTurn && !viewerEliminated && !isBusy && !isTurnIntroPlaying);
+  const canAct = Boolean(currentMatchId && match && !isFinished && !isOpeningCoinFlipActive && myTurn && !viewerEliminated && !isBusy && !isTurnIntroPlaying);
   const availableActions = normalizedActionList(match?.availableActions);
   const disabledActions = normalizedActionList(match?.disabledActions);
   const hasServerActionRules = availableActions.length > 0 || disabledActions.length > 0;
@@ -1351,7 +1355,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const [roundResultVisible, setRoundResultVisible] = useState(false);
   const showRoundResult = Boolean(match && roundResult && roundResultVisible && !isFinished);
   const [clockTick, setClockTick] = useState(() => Date.now());
-  const liveTurnSeconds = getLiveTurnSeconds(match, clockTick);
+  const liveTurnSeconds = isOpeningCoinFlipActive ? 0 : getLiveTurnSeconds(match, clockTick);
   const chatMessages = Array.isArray(data?.chatMessages) ? data.chatMessages : [];
   const chatStatus = data?.chatStatus || {};
   const [chatOpen, setChatOpen] = useState(false);
@@ -1821,7 +1825,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
   return (
     <section
-      className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${activePlayer ? 'has-active-player' : ''} ${myTurn ? 'is-my-turn' : 'is-opponent-turn'} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''}`}
+      className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${activePlayer ? 'has-active-player' : ''} ${myTurn ? 'is-my-turn' : 'is-opponent-turn'} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''} ${isOpeningCoinFlipActive ? 'is-opening-coin-flip' : ''}`}
       style={{
         '--gameplay-background-image': toCssBackgroundImageValue(backgroundContract.backgroundUrl),
         '--gameplay-portrait-background-image': toCssBackgroundImageValue(backgroundContract.gameplayPortraitBackgroundUrl || backgroundContract.portraitUrl || backgroundContract.backgroundUrl),
@@ -2094,6 +2098,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         draft={chatDraft}
         onDraftChange={(event) => setChatDraft(event.target.value.slice(0, 200))}
       />
+
+      <OpeningCoinFlipOverlay match={match} tx={tx} />
 
       <GameplayStatusLayer
         tx={tx}

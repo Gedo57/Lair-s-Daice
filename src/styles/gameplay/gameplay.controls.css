@@ -41,3 +41,47 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   --pg-cups-width: 440px;
   --pg-cups-height: 255px;
 }
+
+/* =========================================================
+   MUSIC BUTTON / PANEL CONTROLS
+   Button and panel are intentionally independent.
+   Edit these values only; do not move .gameplay-music-control.
+   ========================================================= */
+
+/* DESKTOP */
+html[data-device='desktop'] .app-shell--gameplay .gameplay-music-control {
+  --music-button-left: 50px;
+  --music-button-top: 104px;
+  --music-button-width: 166px;
+  --music-button-height: 58px;
+
+  --music-panel-left: 228px;
+  --music-panel-top: 94px;
+  --music-panel-width: 330px;
+}
+
+/* MOBILE LANDSCAPE */
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-music-control {
+  --music-button-left: 46px;
+  --music-button-top: 84px;
+  --music-button-width: 150px;
+  --music-button-height: 52px;
+
+  --music-panel-left: 224px;
+  --music-panel-top: 216px;
+  --music-panel-width: 310px;
+}
+
+/* MOBILE PORTRAIT */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-music-control {
+  --music-button-left: 26px;
+  --music-button-top: 24px;
+  --music-button-width: 154px;
+  --music-button-height: 54px;
+
+  --music-panel-left: 24px;
+  --music-panel-top: 86px;
+  --music-panel-width: 320px;
+
+  z-index: 124;
+}
