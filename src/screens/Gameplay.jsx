@@ -3,6 +3,7 @@ import { resolveProfileAvatarSrc as resolveAvatarSrc } from '../utils/profileAva
 import { getTableMusicMuted, getTableMusicVolume, resumeTableMusic, setTableMusicMuted, setTableMusicVolume } from '../services/tableMusicPlayer.js';
 import { startVoiceChatSession } from '../services/voiceChatService.js';
 import { resolveGameDataBackground, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
+import { GameplayChatDrawer, GameplayPlayersLayer, GameplayStatusLayer, GameplayUtilityControls } from '../components/gameplay/GameplaySections.jsx';
 
 const asset = '/assets/liars-dice/gameplay/';
 
@@ -1832,117 +1833,42 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       data-turn-intro-count={tablePlayerCount}
       aria-label={tx('Gameplay')}
     >
-      {panelItems.map((item) => (
-        <PlayerPanel
-          key={`${item.slot}-${playerId(item.player) || playerName(item.player, item.fallbackName)}`}
-          className={item.className}
-          skin={item.skin}
-          player={item.player}
-          fallbackName={item.fallbackName}
-          isTurnPlayer={samePlayer(item.player, activePlayer)}
-          match={match}
-        />
-      ))}
-
-
-      <button className="gameplay-leave" type="button" onClick={submitLeaveMatch} disabled={!currentMatchId || isBusy || isFinished}>
-        <img className="gameplay-leave__skin" src="/assets/liars-dice/gameplay/leave-button-red.png" alt="" draggable="false" />
-        <span className="gameplay-leave__title">{tx('LEAVE')}</span>
-        <span className="gameplay-leave__subtitle">{tx('Forfeit match')}</span>
-      </button>
-
-      {canUseChat ? (
-        <button
-          className={`gameplay-chat-button ${chatOpen ? 'is-open' : ''}`}
-          type="button"
-          onClick={() => setChatOpen((open) => !open)}
-          aria-expanded={chatOpen}
-          aria-controls="gameplay-chat-drawer"
-        >
-          <img
-            className="gameplay-chat-button__skin"
-            src="/assets/liars-dice/gameplay/chat-button-red.png"
-            alt=""
-            draggable="false"
+      <GameplayPlayersLayer
+        panelItems={panelItems}
+        renderPlayerPanel={(item) => (
+          <PlayerPanel
+            key={`${item.slot}-${playerId(item.player) || playerName(item.player, item.fallbackName)}`}
+            className={item.className}
+            skin={item.skin}
+            player={item.player}
+            fallbackName={item.fallbackName}
+            isTurnPlayer={samePlayer(item.player, activePlayer)}
+            match={match}
           />
-          <span className="gameplay-chat-button__title">{tx('CHAT')}</span>
-          <span className="gameplay-chat-button__count">{chatMessages.length}</span>
-        </button>
-      ) : null}
+        )}
+      />
 
-      {canUseVoice ? (
-        <button
-          className={`gameplay-voice-button ${voiceState.connected ? 'is-connected' : ''} ${voiceState.muted ? 'is-muted' : ''} ${voiceState.connected && !voiceState.muted ? 'is-live' : ''} ${voiceState.connecting ? 'is-connecting' : ''}`}
-          type="button"
-          onClick={toggleVoiceChat}
-          disabled={voiceState.connecting}
-          aria-pressed={voiceState.connected && !voiceState.muted}
-          title={voiceState.connected ? tx(voiceState.muted ? 'Mic muted' : 'Mic live') : tx('Join voice chat')}
-        >
-          <img
-            className="gameplay-voice-button__skin"
-            src="/assets/liars-dice/gameplay/chat-button-red.png"
-            alt=""
-            draggable="false"
-          />
-          <span className="gameplay-voice-button__icon" aria-hidden="true">🎙</span>
-          <span className="gameplay-voice-button__title">
-            {voiceState.connecting ? tx('CONNECTING') : tx(voiceState.connected ? (voiceState.muted ? 'MUTED' : 'LIVE') : 'VOICE')}
-          </span>
-        </button>
-      ) : null}
 
-      {canUseVoice && voiceState.error ? (
-        <div className="gameplay-voice-status gameplay-voice-status--error">{voiceState.error}</div>
-      ) : null}
-
-      <div className={`gameplay-music-control ${musicPanelOpen ? 'is-open' : ''}`}>
-        <button
-          className="gameplay-music-button"
-          type="button"
-          onClick={toggleMusicPanel}
-          aria-expanded={musicPanelOpen}
-          aria-controls="gameplay-music-volume-panel"
-          title={tx('Music volume')}
-        >
-          <img
-            className="gameplay-music-button__skin"
-            src="/assets/liars-dice/gameplay/chat-button-red.png"
-            alt=""
-            draggable="false"
-          />
-          <span className="gameplay-music-button__icon" aria-hidden="true">🔊</span>
-          <span className="gameplay-music-button__title">{tx('SOUND')}</span>
-        </button>
-
-        {musicPanelOpen ? (
-          <div id="gameplay-music-volume-panel" className="gameplay-music-panel" role="group" aria-label={tx('Music volume')}>
-            <div className="gameplay-music-panel__label">{tx('MUSIC')}</div>
-            <div className="gameplay-music-panel__row">
-              <input
-                className="gameplay-music-panel__slider"
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={musicVolume}
-                onChange={handleMusicVolumeChange}
-                aria-label={tx('Music volume')}
-              />
-              <button
-                className={`gameplay-music-panel__mute ${musicMuted ? 'is-muted' : ''}`}
-                type="button"
-                onClick={toggleMusicMuted}
-                aria-pressed={musicMuted}
-                aria-label={tx(musicMuted ? 'Unmute music' : 'Mute music')}
-              >
-                {tx(musicMuted ? 'UNMUTE' : 'MUTE')}
-              </button>
-            </div>
-            <div className="gameplay-music-panel__value">{musicMuted ? tx('Muted') : `${musicVolume}%`}</div>
-          </div>
-        ) : null}
-      </div>
+      <GameplayUtilityControls
+        tx={tx}
+        currentMatchId={currentMatchId}
+        isBusy={isBusy}
+        isFinished={isFinished}
+        onLeave={submitLeaveMatch}
+        canUseChat={canUseChat}
+        chatOpen={chatOpen}
+        chatCount={chatMessages.length}
+        onToggleChat={() => setChatOpen((open) => !open)}
+        canUseVoice={canUseVoice}
+        voiceState={voiceState}
+        onToggleVoice={toggleVoiceChat}
+        musicPanelOpen={musicPanelOpen}
+        onToggleMusicPanel={toggleMusicPanel}
+        musicVolume={musicVolume}
+        musicMuted={musicMuted}
+        onMusicVolumeChange={handleMusicVolumeChange}
+        onToggleMusicMuted={toggleMusicMuted}
+      />
 
       <div className="gameplay-current-bid">
         <img className="gameplay-current-bid__skin" src={`${asset}4.png`} alt="" draggable="false" />
@@ -2148,61 +2074,36 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       </div>
 
 
-      {canUseChat && chatOpen ? (
-        <aside id="gameplay-chat-drawer" className="gameplay-chat-drawer" aria-label={tx('Match Chat')}>
-          <div className="gameplay-chat-drawer__header">
-            <div>
-              <div className="gameplay-chat-drawer__title">{tx('MATCH CHAT')}</div>
-              <div className="gameplay-chat-drawer__subtitle">{tx('Normal mode only')} · {tx('Voice')}: {tx(voiceState.connected ? (voiceState.muted ? 'Muted' : 'Live') : 'Off')}</div>
-            </div>
-            <button className="gameplay-chat-drawer__close" type="button" onClick={() => setChatOpen(false)} aria-label={tx('Close chat')}>×</button>
-          </div>
+      <GameplayChatDrawer
+        visible={canUseChat && chatOpen}
+        tx={tx}
+        voiceState={voiceState}
+        chatListRef={chatListRef}
+        chatStatus={chatStatus}
+        messages={chatMessages}
+        renderMessage={(message) => (
+          <ChatMessage
+            key={message.id || message.messageId || `${message.createdAt}-${chatMessageText(message)}`}
+            message={message}
+            user={user}
+            viewerPlayer={viewerPlayer}
+          />
+        )}
+        onClose={() => setChatOpen(false)}
+        onSubmit={submitChatMessage}
+        draft={chatDraft}
+        onDraftChange={(event) => setChatDraft(event.target.value.slice(0, 200))}
+      />
 
-          <div className="gameplay-chat-drawer__messages" ref={chatListRef}>
-            {chatStatus.loading ? (
-              <div className="gameplay-chat-drawer__empty">{tx('Loading chat...')}</div>
-            ) : chatMessages.length ? (
-              chatMessages.map((message) => (
-                <ChatMessage key={message.id || message.messageId || `${message.createdAt}-${chatMessageText(message)}`} message={message} user={user} viewerPlayer={viewerPlayer} />
-              ))
-            ) : (
-              <div className="gameplay-chat-drawer__empty">{tx('No messages yet')}</div>
-            )}
-          </div>
-
-          {chatStatus.error ? <div className="gameplay-chat-drawer__error">{chatStatus.error}</div> : null}
-
-          <form className="gameplay-chat-drawer__form" onSubmit={submitChatMessage}>
-            <input
-              className="gameplay-chat-drawer__input"
-              type="text"
-              value={chatDraft}
-              maxLength={200}
-              placeholder={tx('Type a message')}
-              onChange={(event) => setChatDraft(event.target.value.slice(0, 200))}
-              disabled={chatStatus.sending}
-            />
-            <button className="gameplay-chat-drawer__send" type="submit" disabled={!chatDraft.trim() || chatStatus.sending}>
-              {chatStatus.sending ? tx('SENDING...') : tx('SEND')}
-            </button>
-          </form>
-        </aside>
-      ) : null}
-
-      {!currentMatchId ? (
-        <div className="gameplay-status gameplay-status--warning">{tx('No active match. Start matchmaking first.')}</div>
-      ) : null}
-      {backendStatus?.error ? (
-        <div className="gameplay-status gameplay-status--error">{backendStatus.error}</div>
-      ) : null}
-      {isBusy ? (
-        <div className="gameplay-status gameplay-status--loading">{tx('Updating match...')}</div>
-      ) : null}
-      {viewerEliminated && !isFinished ? (
-        <div className="gameplay-status gameplay-status--warning">
-          {tx('You are eliminated. Stack is below minimum bid')} ({formatAmount(minRequiredCoinBet)})
-        </div>
-      ) : null}
+      <GameplayStatusLayer
+        tx={tx}
+        currentMatchId={currentMatchId}
+        backendError={backendStatus?.error}
+        isBusy={isBusy}
+        viewerEliminated={viewerEliminated}
+        isFinished={isFinished}
+        minimumBidLabel={formatAmount(minRequiredCoinBet)}
+      />
     </section>
   );
 }
