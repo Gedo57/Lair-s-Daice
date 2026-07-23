@@ -144,9 +144,12 @@ function withMockJokerControls(match = {}) {
       canDeclareFei: capabilities.canDeclareFei,
       feiRequiredToReopenJoker: capabilities.feiRequiredToReopenJoker,
       feiQuantityStep: OFFICIAL_FEI_QUANTITY_STEP,
+      feiRequiredQuantity: capabilities.feiRequiredQuantity,
       feiMinQuantity: capabilities.feiMinQuantity,
-      feiFace: capabilities.feiFace,
-      feiSameFaceRequired: true,
+      feiFace: null,
+      feiAllowedFaces: capabilities.feiAllowedFaces,
+      feiSameFaceRequired: false,
+      feiExactQuantityRequired: true,
       jokerMode: currentMode,
       currentJokerMode: currentMode,
       jokerWildActive: currentMode !== 'zai',
@@ -160,6 +163,9 @@ function withMockJokerControls(match = {}) {
       zaiEnabled: true,
       feiEnabled: true,
       feiQuantityStep: OFFICIAL_FEI_QUANTITY_STEP,
+      feiSameFaceRequired: false,
+      feiAnyFaceAllowed: true,
+      feiExactQuantityRequired: true,
       jokerMode: currentMode,
     },
   };
@@ -652,7 +658,7 @@ function applyMockBid(match = {}, action = {}) {
   }
 
   const previousZaiActive = currentMode === 'zai';
-  const faceOneTriggersZai = face === 1;
+  const faceOneTriggersZai = !requestedFei && face === 1;
   const mode = requestedFei
     ? 'fei'
     : (requestedZai || faceOneTriggersZai || previousZaiActive ? 'zai' : 'normal');

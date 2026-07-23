@@ -6,6 +6,7 @@
  */
 
 export const OFFICIAL_FEI_QUANTITY_STEP = 2;
+export const OFFICIAL_DICE_FACES = Object.freeze([1, 2, 3, 4, 5, 6]);
 export const OFFICIAL_BID_FACE_ORDER = Object.freeze([2, 3, 4, 5, 6, 1]);
 
 function asNumber(value, fallback = 0) {
@@ -149,39 +150,37 @@ export function validateOfficialFeiSelection({
   feiActive = false,
   totalDice = 0,
   feiEnabled = true,
-  quantityStep = OFFICIAL_FEI_QUANTITY_STEP,
 } = {}) {
   const nextQuantity = Math.trunc(asNumber(quantity, 0));
   const nextFace = Math.trunc(asNumber(face, 0));
   const safeTotalDice = Math.max(0, Math.trunc(asNumber(totalDice, 0)));
-  const step = Math.max(OFFICIAL_FEI_QUANTITY_STEP, Math.trunc(asNumber(quantityStep, OFFICIAL_FEI_QUANTITY_STEP)));
+  const requiredQuantity = Math.trunc(asNumber(currentBid?.quantity, 0)) + OFFICIAL_FEI_QUANTITY_STEP;
+  const details = {
+    requiredQuantity,
+    // Legacy alias retained for older UI consumers.
+    minimumQuantity: requiredQuantity,
+    allowedFaces: OFFICIAL_DICE_FACES,
+  };
 
   if (feiEnabled === false) return invalid('FEI_DISABLED');
   if (!currentBid || !isOfficialZaiState({ currentBid, currentMode, zaiActive, feiActive })) {
     return invalid('FEI_REQUIRES_ZAI');
   }
-
-  const requiredFace = Math.trunc(asNumber(currentBid.face, 0));
-  const minimumQuantity = Math.trunc(asNumber(currentBid.quantity, 0)) + step;
-
-  if (safeTotalDice > 0 && minimumQuantity > safeTotalDice) {
-    return invalid('FEI_UNAVAILABLE_MAX_DICE', { requiredFace, minimumQuantity });
+  if (nextFace < 1 || nextFace > 6) return invalid('INVALID_FACE', details);
+  if (safeTotalDice > 0 && requiredQuantity > safeTotalDice) {
+    return invalid('FEI_UNAVAILABLE_MAX_DICE', details);
   }
-  if (nextFace !== requiredFace) {
-    return invalid('FEI_FACE_MISMATCH', { requiredFace, minimumQuantity });
-  }
-  if (nextQuantity < minimumQuantity) {
-    return invalid('FEI_QUANTITY_TOO_LOW', { requiredFace, minimumQuantity });
+  if (nextQuantity !== requiredQuantity) {
+    return invalid('FEI_QUANTITY_MISMATCH', details);
   }
   if (safeTotalDice > 0 && nextQuantity > safeTotalDice) {
-    return invalid('EXCEEDS_TOTAL_DICE', { requiredFace, minimumQuantity });
+    return invalid('EXCEEDS_TOTAL_DICE', details);
   }
 
   return {
     valid: true,
     code: 'VALID_FEI',
-    requiredFace,
-    minimumQuantity,
+    ...details,
   };
 }
 
@@ -236,10 +235,9 @@ export function getOfficialJokerCapabilities({
 } = {}) {
   const zaiStateActive = isOfficialZaiState({ currentBid, currentMode, zaiActive, feiActive });
   const safeTotalDice = Math.max(0, Math.trunc(asNumber(totalDice, 0)));
-  const feiMinQuantity = currentBid
+  const feiRequiredQuantity = currentBid
     ? Math.trunc(asNumber(currentBid.quantity, 0)) + OFFICIAL_FEI_QUANTITY_STEP
     : null;
-  const feiFace = currentBid ? Math.trunc(asNumber(currentBid.face, 0)) : null;
   const zaiAvailable = Boolean(
     zaiEnabled !== false
       && faceOneTriggeredZaiThisRound !== true
@@ -249,8 +247,8 @@ export function getOfficialJokerCapabilities({
   const feiAvailable = Boolean(
     feiEnabled !== false
       && feiRequiredToReopenJoker
-      && feiMinQuantity !== null
-      && feiMinQuantity <= safeTotalDice,
+      && feiRequiredQuantity !== null
+      && feiRequiredQuantity <= safeTotalDice,
   );
 
   return {
@@ -264,9 +262,13 @@ export function getOfficialJokerCapabilities({
     feiRequiredToReopenJoker,
     feiAvailable,
     canDeclareFei: feiAvailable,
-    feiMinQuantity,
-    feiFace,
+    feiRequiredQuantity,
+    // Legacy name retained; FEI now requires this exact quantity, not a minimum.
+    feiMinQuantity: feiRequiredQuantity,
+    feiFace: null,
+    feiAllowedFaces: OFFICIAL_DICE_FACES,
     feiQuantityStep: OFFICIAL_FEI_QUANTITY_STEP,
-    feiSameFaceRequired: true,
+    feiSameFaceRequired: false,
+    feiExactQuantityRequired: true,
   };
 }

@@ -1289,17 +1289,18 @@ function specialActionSubtitle({
   tx,
 }) {
   if (actionMode === 'fei') {
-    const minimumQuantity = validation.minimumQuantity
+    const requiredQuantity = validation.requiredQuantity
+      ?? validation.minimumQuantity
       ?? (currentBid ? toNumber(currentBid.quantity, 0) + OFFICIAL_FEI_QUANTITY_STEP : null);
-    const requiredFace = validation.requiredFace ?? toNumber(currentBid?.face, 0);
 
-    if (minimumQuantity && minimumQuantity > totalDice) {
+    if (requiredQuantity && requiredQuantity > totalDice) {
       return tx('FEI unavailable — maximum dice reached');
     }
     if (!canSubmit && hasServerActionRules) return tx('FEI is not available for this bid');
     if (validation.valid) return `${selection.quantity} x ${selection.face} · ${tx('Joker ON')}`;
-    if (validation.code === 'FEI_FACE_MISMATCH') return `${tx('FEI must keep face')} ${requiredFace}`;
-    if (validation.code === 'FEI_QUANTITY_TOO_LOW') return `${tx('FEI minimum')} ${minimumQuantity} x ${requiredFace}`;
+    if (validation.code === 'FEI_QUANTITY_MISMATCH') {
+      return `${tx('FEI requires exactly +2 dice')}: ${requiredQuantity} x ${selection.face}`;
+    }
     if (validation.code === 'FEI_REQUIRES_ZAI') return tx('FEI requires ZAI');
     return tx('FEI is not available for this bid');
   }
@@ -1871,7 +1872,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const directZaiBid = getDirectZaiBid({ match, currentBid, selectedQuantity, selectedFace });
   const specialActionMode = getOfficialSpecialActionMode({ currentBid, currentMode: currentBidJokerMode });
   const isFeiActionMode = specialActionMode === 'fei';
-  const feiMinimumQuantity = currentBid ? toNumber(currentBid.quantity, 0) + getFeiQuantityStep(match) : null;
   const feiSelectionValidation = validateOfficialFeiSelection({
     currentBid,
     quantity: directZaiBid.quantity,
