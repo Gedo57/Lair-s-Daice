@@ -154,9 +154,12 @@ const PRELOAD_SCREEN_LABELS = {
   tutorial: 'tutorial',
 };
 
-const TUTORIAL_ASSETS = ['landscape', 'portrait'].flatMap((orientation) =>
-  Array.from({ length: 10 }, (_, index) => `/assets/tutorial/${orientation}/${index + 1}.png`),
-);
+const TUTORIAL_ASSETS = [
+  ...['landscape', 'portrait'].flatMap((orientation) =>
+    Array.from({ length: 10 }, (_, index) => `/assets/tutorial/${orientation}/${index + 1}.png`),
+  ),
+  '/assets/tutorial/skip.png',
+];
 
 const BOOT_PRELOAD_PHASE = 'starterShell';
 const PLAY_FLOW_PRELOAD_PHASE = 'playFlow';

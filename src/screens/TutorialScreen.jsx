@@ -3,22 +3,23 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 const TOTAL_PAGES = 10;
 const LANDSCAPE_SIZE = { width: 1672, height: 941 };
 const PORTRAIT_SIZE = { width: 941, height: 1672 };
+const SKIP_IMAGE_SRC = '/assets/tutorial/skip.png';
 
 // Pixel rectangles measured against the supplied tutorial artwork. They are
 // converted to percentages so the transparent control stays over the button
 // when the fixed game canvas is scaled by the application shell.
 const HOTSPOTS = {
   landscape: [
-    [1200, 730, 420, 165],
-    [1345, 775, 315, 125],
-    [1270, 640, 335, 120],
-    [1335, 785, 305, 120],
-    [1225, 710, 390, 140],
-    [1245, 790, 370, 130],
-    [1260, 740, 390, 135],
-    [1320, 735, 345, 125],
-    [1235, 745, 400, 140],
-    [1195, 675, 350, 130],
+    [1275, 802, 320, 108],
+    [1388, 820, 268, 90],
+    [1338, 812, 302, 102],
+    [1330, 852, 280, 88],
+    [1358, 844, 285, 90],
+    [1248, 835, 328, 96],
+    [1348, 820, 310, 98],
+    [1382, 820, 248, 86],
+    [1412, 845, 245, 82],
+    [1242, 754, 300, 100],
   ],
   portrait: [
     [500, 1380, 400, 180],
@@ -56,6 +57,10 @@ export default function TutorialScreen({ navigation, orientation = 'landscape' }
   const imageSrc = tutorialImage(activeOrientation, pageIndex);
   const isFinalPage = pageIndex === TOTAL_PAGES - 1;
 
+  const skipTutorial = useCallback(() => {
+    navigation?.goMainMenu?.();
+  }, [navigation]);
+
   const hotspotStyle = useMemo(
     () => toPercentRect(HOTSPOTS[activeOrientation][pageIndex], activeSize),
     [activeOrientation, activeSize, pageIndex],
@@ -63,11 +68,11 @@ export default function TutorialScreen({ navigation, orientation = 'landscape' }
 
   const advance = useCallback(() => {
     if (isFinalPage) {
-      navigation?.goMainMenu?.();
+      skipTutorial();
       return;
     }
     setPageIndex((current) => Math.min(TOTAL_PAGES - 1, current + 1));
-  }, [isFinalPage, navigation]);
+  }, [isFinalPage, skipTutorial]);
 
   useEffect(() => {
     setImageFailed(false);
@@ -75,6 +80,7 @@ export default function TutorialScreen({ navigation, orientation = 'landscape' }
     const paths = new Set([
       tutorialImage(activeOrientation, pageIndex),
       tutorialImage(activeOrientation === 'portrait' ? 'landscape' : 'portrait', pageIndex),
+      SKIP_IMAGE_SRC,
     ]);
 
     if (pageIndex < TOTAL_PAGES - 1) {
@@ -90,6 +96,12 @@ export default function TutorialScreen({ navigation, orientation = 'landscape' }
 
   useEffect(() => {
     const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        skipTutorial();
+        return;
+      }
+
       if (event.key === 'ArrowRight' || event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         advance();
@@ -98,7 +110,7 @@ export default function TutorialScreen({ navigation, orientation = 'landscape' }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [advance]);
+  }, [advance, skipTutorial]);
 
   return (
     <section
@@ -121,13 +133,24 @@ export default function TutorialScreen({ navigation, orientation = 'landscape' }
       )}
 
       {!imageFailed && (
-        <button
-          className="tutorial-screen__hotspot"
-          type="button"
-          style={hotspotStyle}
-          onClick={advance}
-          aria-label={isFinalPage ? 'Start game' : `Next tutorial page, ${pageIndex + 2} of ${TOTAL_PAGES}`}
-        />
+        <>
+          <button
+            className={`tutorial-screen__skip-button tutorial-screen__skip-button--${activeOrientation}`}
+            type="button"
+            onClick={skipTutorial}
+            aria-label="Skip tutorial"
+          >
+            <img className="tutorial-screen__skip-image" src={SKIP_IMAGE_SRC} alt="" draggable="false" />
+          </button>
+
+          <button
+            className="tutorial-screen__hotspot"
+            type="button"
+            style={hotspotStyle}
+            onClick={advance}
+            aria-label={isFinalPage ? 'Start game' : `Next tutorial page, ${pageIndex + 2} of ${TOTAL_PAGES}`}
+          />
+        </>
       )}
     </section>
   );

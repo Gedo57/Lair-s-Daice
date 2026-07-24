@@ -75,3 +75,45 @@
   font-size: 18px;
   overflow-wrap: anywhere;
 }
+
+
+.tutorial-screen__skip-button {
+  position: absolute;
+  z-index: 7;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tutorial-screen__skip-button--landscape {
+  top: 24px;
+  right: 28px;
+  width: 210px;
+}
+
+.tutorial-screen__skip-button--portrait {
+  top: 30px;
+  right: 26px;
+  width: 195px;
+}
+
+.tutorial-screen__skip-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.tutorial-screen__skip-button:focus-visible {
+  border-radius: 18px;
+  outline: 4px solid rgba(255, 237, 166, .9);
+  outline-offset: 2px;
+}
