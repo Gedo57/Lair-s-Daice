@@ -5,6 +5,9 @@ import { startVoiceChatSession } from '../services/voiceChatService.js';
 import { resolveGameDataBackground, toCssBackgroundImageValue } from '../utils/gameplayBackgrounds.js';
 import { GameplayChatDrawer, GameplayPlayersLayer, GameplayStatusLayer, GameplayUtilityControls } from '../components/gameplay/GameplaySections.jsx';
 import OpeningCoinFlipOverlay from '../components/gameplay/OpeningCoinFlipOverlay.jsx';
+import SlamAnimationOverlay, { SLAM_ACTION_SUBMIT_MS, SLAM_ANIMATION_DURATION_MS } from '../components/gameplay/SlamAnimationOverlay.jsx';
+import CallLiarAnimationOverlay, { CALL_LIAR_ACTION_SUBMIT_MS, CALL_LIAR_ANIMATION_DURATION_MS } from '../components/gameplay/CallLiarAnimationOverlay.jsx';
+import ZaiAnimationOverlay, { ZAI_ACTION_SUBMIT_MS, ZAI_ANIMATION_DURATION_MS } from '../components/gameplay/ZaiAnimationOverlay.jsx';
 import {
   OFFICIAL_FEI_QUANTITY_STEP,
   getOfficialDefaultBid,
@@ -1402,12 +1405,24 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const lastOwnDiceRef = useRef([]);
   const gameplayScreenRef = useRef(null);
   const bidDiceTargetRef = useRef(null);
+  const [slamAnimating, setSlamAnimating] = useState(false);
+  const [slamAnimationRun, setSlamAnimationRun] = useState(0);
+  const slamTimersRef = useRef([]);
+  const slamActionSentRef = useRef(false);
+  const [callLiarAnimating, setCallLiarAnimating] = useState(false);
+  const [callLiarAnimationRun, setCallLiarAnimationRun] = useState(0);
+  const callLiarTimersRef = useRef([]);
+  const callLiarActionSentRef = useRef(false);
+  const [zaiAnimating, setZaiAnimating] = useState(false);
+  const [zaiAnimationRun, setZaiAnimationRun] = useState(0);
+  const zaiTimersRef = useRef([]);
+  const zaiActionSentRef = useRef(false);
   const turnIntroKey = isOpeningCoinFlipActive ? '' : getTurnIntroKey(match, activePlayer);
   const turnIntroResetKey = getTurnIntroResetKey(match);
   const isTurnIntroPlaying = TURN_INTRO_ACTIVE_PHASES.has(turnIntroPhase);
   const isFinished = match?.status === 'finished';
   const isBusy = Boolean(backendStatus?.loading && String(backendStatus.lastAction || '').startsWith('match.'));
-  const canAct = Boolean(currentMatchId && match && !isFinished && !isOpeningCoinFlipActive && myTurn && !viewerEliminated && !isBusy && !isTurnIntroPlaying);
+  const canAct = Boolean(currentMatchId && match && !isFinished && !isOpeningCoinFlipActive && myTurn && !viewerEliminated && !isBusy && !isTurnIntroPlaying && !slamAnimating && !callLiarAnimating && !zaiAnimating);
   const availableActions = normalizedActionList(match?.availableActions);
   const disabledActions = normalizedActionList(match?.disabledActions);
   const hasServerActionRules = availableActions.length > 0 || disabledActions.length > 0;
@@ -1723,7 +1738,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const submitBid = () => {
     if (!canSubmitBid || isTurnIntroPlaying) return;
     const jokerPayload = buildBidJokerPayload({ currentBid, selectedQuantity, selectedFace, zaiEnabled, feiEnabled, match });
-    backendActions?.submitGameAction?.({
+    const actionPayload = {
       matchId: currentMatchId,
       type: 'bid',
       bid: {
@@ -1737,7 +1752,16 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       ...jokerPayload,
       coinBet: selectedCoinBet,
       betAmount: selectedCoinBet,
-    });
+    };
+
+    // Face 1 activates ZAI automatically. Play the same ZAI cinematic before
+    // submitting that bid so every local transition into Joker OFF is visible.
+    if (jokerPayload.zai && !jokerPayload.fei) {
+      startZaiAnimation(() => backendActions?.submitGameAction?.(actionPayload));
+      return;
+    }
+
+    backendActions?.submitGameAction?.(actionPayload);
   };
 
   const submitZaiBid = () => {
@@ -1747,7 +1771,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
     if (specialActionMode === 'zai') {
       if (!canSubmitZai || !zaiSelectionValidation.valid) return;
-      backendActions?.submitGameAction?.({
+      const actionPayload = {
         matchId: currentMatchId,
         type: 'zai',
         bid: {
@@ -1767,7 +1791,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         jokerMode: 'zai',
         coinBet: selectedCoinBet,
         betAmount: selectedCoinBet,
-      });
+      };
+      startZaiAnimation(() => backendActions?.submitGameAction?.(actionPayload));
       return;
     }
 
@@ -1795,9 +1820,116 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     });
   };
 
-  const submitSimpleAction = (type) => {
-    if (!canAct || isTurnIntroPlaying) return;
-    backendActions?.submitGameAction?.({ matchId: currentMatchId, type });
+  const clearSlamTimers = () => {
+    if (typeof window !== 'undefined') {
+      slamTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    }
+    slamTimersRef.current = [];
+  };
+
+  const clearCallLiarTimers = () => {
+    if (typeof window !== 'undefined') {
+      callLiarTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    }
+    callLiarTimersRef.current = [];
+  };
+
+  const clearZaiTimers = () => {
+    if (typeof window !== 'undefined') {
+      zaiTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    }
+    zaiTimersRef.current = [];
+  };
+
+  useEffect(() => {
+    return () => {
+      clearSlamTimers();
+      clearCallLiarTimers();
+      clearZaiTimers();
+    };
+    // Timers are owned by this component instance only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    clearSlamTimers();
+    clearCallLiarTimers();
+    clearZaiTimers();
+    setSlamAnimating(false);
+    setCallLiarAnimating(false);
+    setZaiAnimating(false);
+    slamActionSentRef.current = false;
+    callLiarActionSentRef.current = false;
+    zaiActionSentRef.current = false;
+    // Reset an in-flight cinematic if the match itself changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMatchId]);
+
+  const startZaiAnimation = (submitAction) => {
+    if (zaiAnimating || slamAnimating || callLiarAnimating || isTurnIntroPlaying || typeof window === 'undefined') return false;
+
+    clearZaiTimers();
+    zaiActionSentRef.current = false;
+    setZaiAnimationRun((run) => run + 1);
+    setZaiAnimating(true);
+
+    const actionTimer = window.setTimeout(() => {
+      if (zaiActionSentRef.current) return;
+      zaiActionSentRef.current = true;
+      submitAction?.();
+    }, ZAI_ACTION_SUBMIT_MS);
+
+    const finishTimer = window.setTimeout(() => {
+      setZaiAnimating(false);
+      zaiTimersRef.current = [];
+    }, ZAI_ANIMATION_DURATION_MS);
+
+    zaiTimersRef.current = [actionTimer, finishTimer];
+    return true;
+  };
+
+  const submitCallLiarAction = () => {
+    if (!canCallLiar || callLiarAnimating || slamAnimating || zaiAnimating || isTurnIntroPlaying || typeof window === 'undefined') return;
+
+    clearCallLiarTimers();
+    callLiarActionSentRef.current = false;
+    setCallLiarAnimationRun((run) => run + 1);
+    setCallLiarAnimating(true);
+
+    const actionTimer = window.setTimeout(() => {
+      if (callLiarActionSentRef.current) return;
+      callLiarActionSentRef.current = true;
+      backendActions?.submitGameAction?.({ matchId: currentMatchId, type: 'call_liar' });
+    }, CALL_LIAR_ACTION_SUBMIT_MS);
+
+    const finishTimer = window.setTimeout(() => {
+      setCallLiarAnimating(false);
+      callLiarTimersRef.current = [];
+    }, CALL_LIAR_ANIMATION_DURATION_MS);
+
+    callLiarTimersRef.current = [actionTimer, finishTimer];
+  };
+
+  const submitSlamAction = () => {
+    if (!canCallPek || slamAnimating || callLiarAnimating || zaiAnimating || isTurnIntroPlaying || typeof window === 'undefined') return;
+
+    clearSlamTimers();
+    slamActionSentRef.current = false;
+    setSlamAnimationRun((run) => run + 1);
+    setSlamAnimating(true);
+
+    const actionTimer = window.setTimeout(() => {
+      if (slamActionSentRef.current) return;
+      slamActionSentRef.current = true;
+      backendActions?.submitGameAction?.({ matchId: currentMatchId, type: 'call_pek' });
+    }, SLAM_ACTION_SUBMIT_MS);
+
+    const finishTimer = window.setTimeout(() => {
+      setSlamAnimating(false);
+      slamTimersRef.current = [];
+    }, SLAM_ANIMATION_DURATION_MS);
+
+    slamTimersRef.current = [actionTimer, finishTimer];
   };
 
   const submitReroll = () => {
@@ -2252,16 +2384,16 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
         <div className="gameplay-bid-selector__actionRow" role="group" aria-label={tx('Bid actions')}>
           <ActionButton className="gameplay-action--raise gameplay-action--compact" skin="B!.png" title="CONFIRM BID" subtitle={bidSubmitSubtitle} onClick={submitBid} disabled={bidDisabled} tx={tx} />
-          <ActionButton className="gameplay-action--call gameplay-action--compact" skin="B2.png" title="CALL LIAR" subtitle={`Risk ${formatAmount(pekSettings.perGameAmount || currentCoinBet)}`} onClick={() => submitSimpleAction('call_liar')} disabled={challengeDisabled} tx={tx} />
+          <ActionButton className="gameplay-action--call gameplay-action--compact" skin="B2.png" title="CALL LIAR" subtitle={`Risk ${formatAmount(pekSettings.perGameAmount || currentCoinBet)}`} onClick={submitCallLiarAction} disabled={challengeDisabled || callLiarAnimating} tx={tx} />
           {pekSettings.pekEnabled ? (
-            <ActionButton className="gameplay-action--slam gameplay-action--compact" skin="B3.png" title="SLAM" subtitle={pekStackBlockReason || `Risk ${formatAmount(pekSettings.finalPekAmount)}`} onClick={() => submitSimpleAction('call_pek')} disabled={pekDisabled} tx={tx} />
+            <ActionButton className="gameplay-action--slam gameplay-action--compact" skin="B3.png" title="SLAM" subtitle={pekStackBlockReason || `Risk ${formatAmount(pekSettings.finalPekAmount)}`} onClick={submitSlamAction} disabled={pekDisabled || slamAnimating} tx={tx} />
           ) : null}
           <button
             type="button"
             className="gameplay-action gameplay-action--zai gameplay-action--compact"
             onClick={submitZaiBid}
             aria-pressed={false}
-            disabled={zaiDisabled}
+            disabled={zaiDisabled || zaiAnimating}
           >
             <img className="gameplay-action__skin" src={`${asset}B3.png`} alt="" draggable="false" />
             <span className="gameplay-action__title">{tx(isFeiActionMode ? 'FEI' : 'ZAI')}</span>
@@ -2270,6 +2402,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
         </div>
       </div>
 
+
+      <SlamAnimationOverlay active={slamAnimating} runId={slamAnimationRun} />
+      <CallLiarAnimationOverlay active={callLiarAnimating} runId={callLiarAnimationRun} />
+      <ZaiAnimationOverlay active={zaiAnimating} runId={zaiAnimationRun} />
 
       <GameplayChatDrawer
         visible={canUseChat && chatOpen}

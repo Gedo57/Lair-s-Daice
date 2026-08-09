@@ -18,6 +18,9 @@ import './styles/gameplay/gameplay.portrait.css';
 import './styles/gameplay/gameplay.states.css';
 import './styles/gameplay/gameplay.controls.css';
 import './styles/gameplay/opening-coin-flip.css';
+import './styles/gameplay/slam-animation.css';
+import './styles/gameplay/call-liar-animation.css';
+import './styles/gameplay/zai-animation.css';
 import './styles/base/language.css';
 import './styles/screens/tutorial.css';
 
