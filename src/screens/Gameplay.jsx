@@ -1645,6 +1645,9 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const faceDialRef = useRef(null);
   const quantitySliderRef = useRef(null);
   const quantitySliderDraggingRef = useRef(false);
+  // Used only for the cinematic: a normal Raise Bid must not look like the
+  // player explicitly activated ZAI just because a default face happened to be 1.
+  const faceSelectionTouchedRef = useRef(false);
 
   useEffect(() => {
     if (!currentMatchId && match) return undefined;
@@ -1666,6 +1669,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   useEffect(() => {
     setSelectedQuantity(Math.max(1, Math.min(quantityValues.length, defaultBid.quantity || 1)));
     setSelectedFace(Math.max(1, Math.min(6, defaultBid.face || 1)));
+    faceSelectionTouchedRef.current = false;
     setZaiEnabled(false);
     setFeiEnabled(false);
     setDiceFacePickerOpen(false);
@@ -1759,9 +1763,16 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       betAmount: selectedCoinBet,
     };
 
-    // Face 1 activates ZAI automatically. Play the same ZAI cinematic before
-    // submitting that bid so every local transition into Joker OFF is visible.
-    if (jokerPayload.zai && !jokerPayload.fei) {
+    // Face 1 still activates ZAI by rule, but the ZAI cinematic is reserved for
+    // an intentional Face-1 choice (or the dedicated ZAI action below). A plain
+    // Raise Bid must never trigger the special animation from an auto-selected
+    // default value.
+    const intentionalFaceOneZai = Boolean(
+      jokerPayload.zaiTriggeredByFaceOne
+      && Number(selectedFace) === 1
+      && (!currentBid || faceSelectionTouchedRef.current)
+    );
+    if (intentionalFaceOneZai && !jokerPayload.fei) {
       startZaiAnimation(() => backendActions?.submitGameAction?.(actionPayload));
       return;
     }
@@ -2402,6 +2413,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
                       type="button"
                       className={`gameplay-bid-selector__faceBtn gameplay-bid-selector__faceBtn--slot-${index}`}
                       onClick={() => {
+                        faceSelectionTouchedRef.current = true;
                         setSelectedFace(value);
                         if (!currentBid) {
                           const openingMinimum = getOpeningMinimumQuantity(match, tablePlayerCount, value);
