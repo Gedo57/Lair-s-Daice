@@ -1759,13 +1759,10 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       betAmount: selectedCoinBet,
     };
 
-    // Face 1 activates ZAI automatically. Play the same ZAI cinematic before
-    // submitting that bid so every local transition into Joker OFF is visible.
-    if (jokerPayload.zai && !jokerPayload.fei) {
-      startZaiAnimation(() => backendActions?.submitGameAction?.(actionPayload));
-      return;
-    }
-
+    // Confirm Bid must never trigger a special-action cinematic.
+    // The bid can still activate/inherit ZAI in its rules payload (for example
+    // when Face 1 is selected), but only the dedicated ZAI button owns the
+    // ZAI animation. Submit normal bids immediately.
     backendActions?.submitGameAction?.(actionPayload);
   };
 
