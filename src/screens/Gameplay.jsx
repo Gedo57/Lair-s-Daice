@@ -1078,6 +1078,14 @@ function describeLastAction(match, tx) {
 
 function getMatchRoundResult(match, data) {
   if (match?.roundResult) return match.roundResult;
+
+  const transitionPending = match?.roundTransition?.status === 'pending'
+    || match?.roundPhase === 'round_result';
+
+  // roundResult/lastRoundResult can remain cached in the app store after the
+  // server has already started the next round. Only reuse those snapshots
+  // while the server explicitly says the round-result transition is active.
+  if (!transitionPending) return null;
   if (data?.roundResult) return data.roundResult;
   if (match?.lastRoundResult) return match.lastRoundResult;
   return null;
@@ -1656,6 +1664,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   }, [roundResultKey, Boolean(roundResult), isFinished]);
 
   useEffect(() => {
+    const transitionPending = match?.roundTransition?.status === 'pending'
+      || match?.roundPhase === 'round_result';
+    if (!transitionPending) setRoundResultVisible(false);
+  }, [match?.roundTransition?.status, match?.roundPhase, match?.roundNumber]);
+
+  useEffect(() => {
     if (!match || match.status !== 'active') return undefined;
     const interval = window.setInterval(() => setClockTick(Date.now()), 250);
     return () => window.clearInterval(interval);
@@ -1840,8 +1854,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       requestSynchronizedSpecialAnimation({
         type: 'zai',
         actionPayload,
-        actionDelayMs: ZAI_ACTION_SUBMIT_MS,
-        fallbackStart: () => startZaiAnimation(() => backendActions?.submitGameAction?.(actionPayload)),
       });
       return;
     }
@@ -1871,8 +1883,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     requestSynchronizedSpecialAnimation({
       type: 'fei',
       actionPayload,
-      actionDelayMs: FEI_ACTION_SUBMIT_MS,
-      fallbackStart: () => startFeiAnimation(() => backendActions?.submitGameAction?.(actionPayload)),
     });
   };
 
@@ -2049,26 +2059,17 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     return true;
   };
 
-  const requestSynchronizedSpecialAnimation = ({ type, actionPayload, actionDelayMs, fallbackStart }) => {
+  const requestSynchronizedSpecialAnimation = ({ type, actionPayload }) => {
     if (!currentMatchId || typeof window === 'undefined') return false;
+    if (typeof backendActions?.requestSpecialAnimation !== 'function') return false;
 
-    if (typeof backendActions?.requestSpecialAnimation !== 'function') {
-      fallbackStart?.();
-      return true;
-    }
-
-    Promise.resolve(backendActions.requestSpecialAnimation({ matchId: currentMatchId, type }))
-      .then((result) => {
-        if (!result?.success) {
-          fallbackStart?.();
-          return;
-        }
-
-        window.setTimeout(() => {
-          backendActions?.submitGameAction?.(actionPayload);
-        }, Math.max(0, Number(actionDelayMs) || 0));
-      })
-      .catch(() => fallbackStart?.());
+    // The backend validates, broadcasts and executes the special action at the
+    // cinematic submit point. The client must not submit the same action again.
+    Promise.resolve(backendActions.requestSpecialAnimation({
+      matchId: currentMatchId,
+      type,
+      actionPayload,
+    })).catch(() => null);
 
     return true;
   };
@@ -2080,8 +2081,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     requestSynchronizedSpecialAnimation({
       type: 'call_liar',
       actionPayload,
-      actionDelayMs: CALL_LIAR_ACTION_SUBMIT_MS,
-      fallbackStart: () => startCallLiarAnimation(() => backendActions?.submitGameAction?.(actionPayload)),
     });
   };
 
@@ -2092,8 +2091,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
     requestSynchronizedSpecialAnimation({
       type: 'slam',
       actionPayload,
-      actionDelayMs: SLAM_ACTION_SUBMIT_MS,
-      fallbackStart: () => startSlamAnimation(() => backendActions?.submitGameAction?.(actionPayload)),
     });
   };
 
