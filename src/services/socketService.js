@@ -137,6 +137,7 @@ function bindGameplayListeners(handlers = {}) {
     ['server:game_state', handlers.onGameState],
     ['server:game_started', handlers.onGameStarted],
     ['server:round_result', handlers.onRoundResult],
+    ['server:special_animation', handlers.onSpecialAnimation],
     ['server:game_finished', handlers.onGameFinished],
     ['chat:message', handlers.onChatMessage],
     ['chat:history', handlers.onChatHistory],
@@ -287,6 +288,10 @@ export function joinSocketMatch(payload = {}, handlers = {}) {
 
 export function sendSocketMatchAction(payload = {}) {
   return emitWithAck('client:match_action', payload);
+}
+
+export function requestSocketSpecialAnimation(payload = {}) {
+  return emitWithAck('client:special_animation', payload);
 }
 
 export function sendSocketChatMessage(payload = {}) {

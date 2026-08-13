@@ -511,3 +511,44 @@ html[data-device='mobile'][data-orientation='portrait']
   .gameplay-screen { transition: none; }
 }
 
+
+
+/* Patch 1: round-end reveal buffer + synchronized next-round countdown. */
+.gameplay-round-result__actions {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gameplay-round-result__actions .gameplay-round-result__ok {
+  margin-top: 0;
+}
+
+.gameplay-round-result__countdown {
+  min-width: 150px;
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: .02em;
+  color: #ffe49c;
+}
+
+.gameplay-round-result__ok:disabled,
+.gameplay-round-result__ok[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: .58;
+  filter: saturate(.65);
+  transform: none;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__actions {
+  gap: 8px;
+}
+
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-round-result__countdown {
+  min-width: 0;
+  font-size: 11px;
+}

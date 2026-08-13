@@ -24,6 +24,7 @@ import {
   joinSocketMatch,
   leaveSocketMatch,
   loadSocketChatHistory,
+  requestSocketSpecialAnimation,
   sendSocketChatMessage,
   sendSocketMatchAction,
   startSocketMatchmaking,
@@ -2223,6 +2224,12 @@ export default function App() {
     onGameStarted: (socketPayload) => applySocketGameplayPayload(socketPayload, 'match.socket.started'),
     onGameState: (socketPayload) => applySocketGameplayPayload(socketPayload, 'match.socket.state'),
     onRoundResult: (socketPayload) => applySocketGameplayPayload(socketPayload, 'match.socket.round_result'),
+    onSpecialAnimation: (socketPayload) => {
+      setGameData((current) => ({
+        ...current,
+        specialAnimationEvent: socketPayload || null,
+      }));
+    },
     onGameFinished: (socketPayload) => applySocketGameplayPayload(socketPayload, 'match.socket.finished'),
     onChatMessage: (socketPayload) => applyChatPayload(socketPayload),
     onChatHistory: (socketPayload) => applyChatPayload(socketPayload, { replace: true }),
@@ -2564,6 +2571,19 @@ export default function App() {
     },
     loadMatchResult: (matchId, query) => runBackendAction('match.result.load', () => backendBridge.getMatchResult(matchId || gameData.currentMatchId, query)),
     finalizeMatchResult: (payload = {}) => runBackendAction('match.result.finalize', () => backendBridge.submitMatchResult({ ...payload, matchId: payload.matchId || gameData.currentMatchId })),
+    requestSpecialAnimation: async (animation = {}) => {
+      const payload = {
+        ...animation,
+        matchId: animation.matchId || gameData.currentMatchId || gameData.match?.id || gameData.match?.matchId,
+      };
+
+      try {
+        return await requestSocketSpecialAnimation(payload);
+      } catch (error) {
+        setBackendStatus({ loading: false, error: getErrorMessage(error), lastAction: 'match.special_animation' });
+        return null;
+      }
+    },
     submitGameAction: async (action = {}) => {
       const payload = { ...action, matchId: action.matchId || gameData.currentMatchId };
       setBackendStatus({ loading: true, error: null, lastAction: 'match.action.socket' });
