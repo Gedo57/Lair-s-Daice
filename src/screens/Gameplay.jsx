@@ -788,19 +788,21 @@ function getRoundTransitionTiming(match, roundResult, tick = Date.now()) {
     return { active: false, revealLocked: false, countdownSeconds: null };
   }
 
-  const revealEndsAtValue = roundResult?.revealEndsAt || transition.revealEndsAt || null;
   const nextRoundStartsAtValue = roundResult?.nextRoundStartsAt || transition.nextRoundStartsAt || null;
-  const revealEndsAt = revealEndsAtValue ? new Date(revealEndsAtValue).getTime() : NaN;
   const nextRoundStartsAt = nextRoundStartsAtValue ? new Date(nextRoundStartsAtValue).getTime() : NaN;
-  const revealLocked = Number.isFinite(revealEndsAt) ? tick < revealEndsAt : false;
-  const countdownSeconds = !revealLocked && Number.isFinite(nextRoundStartsAt)
-    ? Math.max(0, Math.ceil((nextRoundStartsAt - tick) / 1000))
-    : null;
+  if (!Number.isFinite(nextRoundStartsAt)) {
+    return { active: false, revealLocked: false, countdownSeconds: null };
+  }
+
+  const remainingMs = nextRoundStartsAt - tick;
+  if (remainingMs <= 0) {
+    return { active: false, revealLocked: false, countdownSeconds: null };
+  }
 
   return {
     active: true,
-    revealLocked,
-    countdownSeconds,
+    revealLocked: false,
+    countdownSeconds: Math.max(1, Math.ceil(remainingMs / 1000)),
   };
 }
 
@@ -1506,16 +1508,26 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const serverAllowsReroll = availableActions.includes('reroll') || (!hasServerActionRules && rerollState.canReroll);
   const serverDisablesReroll = disabledActions.includes('reroll');
   const canReroll = canAct && serverAllowsReroll && !serverDisablesReroll;
-  const roundResult = getMatchRoundResult(match, data);
-  const roundResultKey = getRoundResultKey(roundResult);
+  const liveRoundResult = getMatchRoundResult(match, data);
+  const liveRoundResultKey = getRoundResultKey(liveRoundResult);
+  const [roundResultSnapshot, setRoundResultSnapshot] = useState(null);
+  const roundResult = liveRoundResult || roundResultSnapshot;
   const revealedRows = revealedDiceRows(roundResult);
   const [roundResultVisible, setRoundResultVisible] = useState(false);
   const showRoundResult = Boolean(match && roundResult && roundResultVisible && !isFinished);
   const [clockTick, setClockTick] = useState(() => Date.now());
   const liveTurnSeconds = isOpeningCoinFlipActive ? 0 : getLiveTurnSeconds(match, clockTick);
   const roundTransitionTiming = getRoundTransitionTiming(match, roundResult, clockTick);
-  const roundRevealLocked = roundTransitionTiming.active && roundTransitionTiming.revealLocked;
   const roundCountdownSeconds = roundTransitionTiming.countdownSeconds;
+  // Patch 2: cinematics and the round-result reveal must stay full color for
+  // every viewer, even when that viewer is currently in opponent-turn state.
+  const forceFullColorEvent = Boolean(
+    showRoundResult
+    || slamAnimating
+    || callLiarAnimating
+    || zaiAnimating
+    || feiAnimating
+  );
   const chatMessages = Array.isArray(data?.chatMessages) ? data.chatMessages : [];
   const chatStatus = data?.chatStatus || {};
   const [chatOpen, setChatOpen] = useState(false);
@@ -1539,6 +1551,17 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   useEffect(() => {
     preloadGameSfx();
   }, []);
+
+  useEffect(() => {
+    const shell = document.querySelector('.app-shell--gameplay');
+    if (!shell) return undefined;
+
+    shell.classList.toggle('is-full-color-event-shell', forceFullColorEvent);
+
+    return () => {
+      shell.classList.remove('is-full-color-event-shell');
+    };
+  }, [forceFullColorEvent]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -1655,19 +1678,19 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   }, [turnIntroResetKey]);
 
   useEffect(() => {
-    if (!roundResult || isFinished) {
+    if (!match || isFinished) {
       setRoundResultVisible(false);
+      setRoundResultSnapshot(null);
       return;
     }
 
-    setRoundResultVisible(true);
-  }, [roundResultKey, Boolean(roundResult), isFinished]);
+    if (!liveRoundResult) return;
 
-  useEffect(() => {
-    const transitionPending = match?.roundTransition?.status === 'pending'
-      || match?.roundPhase === 'round_result';
-    if (!transitionPending) setRoundResultVisible(false);
-  }, [match?.roundTransition?.status, match?.roundPhase, match?.roundNumber]);
+    // Keep a local copy after the server starts the next round. The result
+    // window must remain open until this player explicitly presses OK.
+    setRoundResultSnapshot(liveRoundResult);
+    setRoundResultVisible(true);
+  }, [liveRoundResultKey, Boolean(liveRoundResult), isFinished, match?.id]);
 
   useEffect(() => {
     if (!match || match.status !== 'active') return undefined;
@@ -2325,7 +2348,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   return (
     <section
       ref={gameplayScreenRef}
-      className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${activePlayer ? 'has-active-player' : ''} ${myTurn ? 'is-my-turn' : 'is-opponent-turn'} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''} ${isOpeningCoinFlipActive ? 'is-opening-coin-flip' : ''}`}
+      className={`screen gameplay-screen gameplay-screen--players-${panelItems.length} ${botsMatch ? 'gameplay-screen--bots' : 'gameplay-screen--normal'} ${activePlayer ? 'has-active-player' : ''} ${myTurn ? 'is-my-turn' : 'is-opponent-turn'} ${forceFullColorEvent ? 'is-full-color-event' : ''} ${isTurnIntroPlaying ? 'is-turn-intro-playing' : ''} ${isOpeningCoinFlipActive ? 'is-opening-coin-flip' : ''}`}
       style={{
         '--gameplay-background-image': toCssBackgroundImageValue(backgroundContract.backgroundUrl),
         '--gameplay-portrait-background-image': toCssBackgroundImageValue(backgroundContract.gameplayPortraitBackgroundUrl || backgroundContract.portraitUrl || backgroundContract.backgroundUrl),
@@ -2436,7 +2459,7 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
             </div>
           ) : null}
           <div className="gameplay-round-result__actions">
-            {roundTransitionTiming.active && !roundRevealLocked && roundCountdownSeconds !== null ? (
+            {roundTransitionTiming.active && roundCountdownSeconds !== null ? (
               <span className="gameplay-round-result__countdown" role="status" aria-live="polite">
                 {tx('New round starts in')} {roundCountdownSeconds}s
               </span>
@@ -2445,8 +2468,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
               type="button"
               className="gameplay-round-result__ok"
               onClick={() => setRoundResultVisible(false)}
-              disabled={roundRevealLocked}
-              aria-disabled={roundRevealLocked}
             >
               {tx('OK')}
             </button>

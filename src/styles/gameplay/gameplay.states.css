@@ -552,3 +552,23 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
   min-width: 0;
   font-size: 11px;
 }
+
+/* Patch 2: special-action animations and round results are always full color.
+   Opponent-turn grayscale remains active during normal gameplay only. */
+.gameplay-screen.is-full-color-event,
+.app-shell--gameplay.is-full-color-event-shell .gameplay-screen,
+html[data-device='mobile'][data-orientation='portrait']
+  .app-shell--gameplay.is-full-color-event-shell .game-frame .gameplay-screen {
+  -webkit-filter: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Portrait has a separate blurred outer backdrop. Keep that backdrop colored
+   while the synchronized cinematic/result overlay is visible as well. */
+html[data-device='mobile'][data-orientation='portrait']
+  .app-shell--gameplay.is-full-color-event-shell::before {
+  -webkit-filter: blur(var(--portrait-gameplay-outer-blur, 24px)) brightness(.78) saturate(1.08) !important;
+  filter: blur(var(--portrait-gameplay-outer-blur, 24px)) brightness(.78) saturate(1.08) !important;
+}
+
