@@ -178,23 +178,23 @@ function getPlayerDiceCount(player, fallback = 0) {
 function getTurnDicePlayer(match, activePlayer, viewerPlayer, user, myTurn) {
   const viewerDice = getPlayerDiceValues(viewerPlayer);
   const matchViewerDice = getMatchViewerDiceValues(match);
-  const isViewerTurn = Boolean(myTurn || samePlayer(activePlayer, viewerPlayer) || samePlayer(activePlayer, user));
-  const dice = isViewerTurn
-    ? (viewerDice.length ? viewerDice : matchViewerDice)
-    : [];
-  const count = isViewerTurn
-    ? getPlayerDiceCount(viewerPlayer, dice.length || 5)
-    : getPlayerDiceCount(activePlayer, 5);
+  const dice = viewerDice.length ? viewerDice : matchViewerDice;
+  const owner = viewerPlayer || user || activePlayer || {};
+  const count = Math.max(
+    getPlayerDiceCount(viewerPlayer, 0),
+    dice.length,
+  );
 
+  // The round-intro cup always flies into the local "Your Dice" row. It must
+  // therefore reveal the viewer's own newly rolled dice, regardless of which
+  // player won the right to take the first turn. Using activePlayer here made
+  // opponent-started rounds render HiddenDie placeholders (question marks).
   return {
-    ...(activePlayer || viewerPlayer || user || {}),
-    ...(isViewerTurn && viewerPlayer ? {
-      diceCount: getPlayerDiceCount(viewerPlayer, count),
-      lives: viewerPlayer.lives ?? viewerPlayer.diceCount ?? count,
-    } : {}),
+    ...owner,
     dice,
-    diceCount: count || (isViewerTurn ? 5 : getPlayerDiceCount(activePlayer, 5)),
-    diceHidden: !isViewerTurn,
+    diceCount: count || 5,
+    lives: (viewerPlayer?.lives ?? viewerPlayer?.diceCount ?? count) || 5,
+    diceHidden: dice.length === 0,
   };
 }
 
@@ -1466,7 +1466,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   const feiActionSentRef = useRef(false);
   const specialAnimationEvent = data?.specialAnimationEvent || null;
   const consumedSpecialAnimationEventRef = useRef('');
-  const turnIntroKey = isOpeningCoinFlipActive ? '' : getTurnIntroKey(match, activePlayer);
+  const turnIntroDiceReady = getPlayerDiceValues(turnDicePlayer).length > 0;
+  const turnIntroKey = isOpeningCoinFlipActive || !turnIntroDiceReady ? '' : getTurnIntroKey(match, activePlayer);
   const turnIntroResetKey = getTurnIntroResetKey(match);
   const isTurnIntroPlaying = TURN_INTRO_ACTIVE_PHASES.has(turnIntroPhase);
   const isFinished = match?.status === 'finished';
