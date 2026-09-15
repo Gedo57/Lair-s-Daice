@@ -137,6 +137,10 @@ export const backendBridge = {
 
   getPlayNowTable: () => withFreshGameData(() => tablesApi.getPlayNowTable()),
 
+  // Lightweight authoritative clock for synchronized table music. Do not wrap
+  // this in withFreshGameData: it refreshes on an interval during gameplay.
+  getMusicSync: () => tablesApi.getMusicSync(),
+
   getTable: (table) => {
     const tableId = getEntityId(table, ['tableId', 'tierId', 'id', 'key']);
     return withFreshGameData(() => tablesApi.getTable(tableId));

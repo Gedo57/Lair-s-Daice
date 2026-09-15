@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
     list: '/api/tables',
     default: '/api/tables/default',
     playNow: '/api/tables/play-now',
+    musicSync: '/api/tables/music-sync',
     details: (tableId) => `/api/tables/${encodePath(tableId)}`,
   },
   economy: {

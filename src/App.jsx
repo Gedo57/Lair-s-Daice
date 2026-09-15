@@ -1912,8 +1912,76 @@ export default function App() {
 
   useEffect(() => {
     if (!starterAssetsReady) return undefined;
-    syncTableMusic(activeTableMusicTrack);
-    return () => stopTableMusic();
+
+    if (!activeTableMusicTrack) {
+      stopTableMusic();
+      return undefined;
+    }
+
+    let disposed = false;
+    let resyncTimer = null;
+    let visibilityHandler = null;
+    let focusHandler = null;
+    let syncRequestSequence = 0;
+
+    const scheduleResync = (delayMs = 30000) => {
+      if (disposed || typeof window === 'undefined') return;
+      if (resyncTimer !== null) window.clearTimeout(resyncTimer);
+      resyncTimer = window.setTimeout(refreshMusicClock, Math.max(5000, Number(delayMs) || 30000));
+    };
+
+    async function refreshMusicClock() {
+      if (disposed) return;
+
+      const requestSequence = ++syncRequestSequence;
+      const clientRequestStartedAtMs = Date.now();
+      try {
+        const payload = await backendBridge.getMusicSync();
+        const clientReceivedAtMs = Date.now();
+        if (disposed || requestSequence !== syncRequestSequence) return;
+
+        syncTableMusic(activeTableMusicTrack, {
+          ...payload,
+          clientRequestStartedAtMs,
+          clientReceivedAtMs,
+        });
+        scheduleResync(payload?.resyncIntervalMs);
+      } catch (_) {
+        // Keep music usable during a temporary backend outage. Once the next
+        // clock refresh succeeds the player corrects itself to the shared time.
+        if (disposed || requestSequence !== syncRequestSequence) return;
+        syncTableMusic(activeTableMusicTrack, {
+          clientRequestStartedAtMs,
+          clientReceivedAtMs: Date.now(),
+        });
+        scheduleResync(15000);
+      }
+    }
+
+    // Start immediately from the deterministic shared epoch using the local
+    // clock. The backend response below then corrects any device-clock skew.
+    syncTableMusic(activeTableMusicTrack, { clientReceivedAtMs: Date.now() });
+    refreshMusicClock();
+
+    if (typeof document !== 'undefined') {
+      visibilityHandler = () => {
+        if (document.visibilityState === 'visible') refreshMusicClock();
+      };
+      document.addEventListener('visibilitychange', visibilityHandler);
+    }
+
+    if (typeof window !== 'undefined') {
+      focusHandler = () => refreshMusicClock();
+      window.addEventListener('focus', focusHandler);
+    }
+
+    return () => {
+      disposed = true;
+      if (resyncTimer !== null && typeof window !== 'undefined') window.clearTimeout(resyncTimer);
+      if (visibilityHandler && typeof document !== 'undefined') document.removeEventListener('visibilitychange', visibilityHandler);
+      if (focusHandler && typeof window !== 'undefined') window.removeEventListener('focus', focusHandler);
+      stopTableMusic();
+    };
   }, [starterAssetsReady, activeTableMusicTrack?.id, activeTableMusicTrack?.audioSrc]);
 
   const appStyle = useMemo(() => {

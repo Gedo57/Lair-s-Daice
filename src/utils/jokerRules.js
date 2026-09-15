@@ -223,6 +223,28 @@ export function getOfficialDefaultBid({ currentBid = null, totalDice = 1, curren
   };
 }
 
+// When ZAI is available, its most important legal raise is the exact current
+// dice claim with Joker OFF. Keep that claim as the initial control selection
+// so a player can answer e.g. 5x2 with 5x2 ZAI in one tap. Normal Confirm Bid
+// still requires a strictly higher claim, and the player can manually raise
+// quantity/face before pressing ZAI if they want a higher ZAI call.
+export function getOfficialTurnDefaultBid({
+  currentBid = null,
+  totalDice = 1,
+  currentMode = 'normal',
+  preferSameClaimZai = false,
+} = {}) {
+  if (currentBid && preferSameClaimZai && getOfficialSpecialActionMode({ currentBid, currentMode }) === 'zai') {
+    return {
+      quantity: Math.max(1, Math.trunc(asNumber(currentBid.quantity, 1))),
+      face: Math.min(6, Math.max(1, Math.trunc(asNumber(currentBid.face, 1)))),
+      source: 'same_claim_zai_default',
+    };
+  }
+
+  return getOfficialDefaultBid({ currentBid, totalDice, currentMode });
+}
+
 export function getOfficialJokerCapabilities({
   currentBid = null,
   currentMode = 'normal',

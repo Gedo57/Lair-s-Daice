@@ -1,7 +1,12 @@
 const DEFAULT_VOLUME = 0.35;
 const VOLUME_STORAGE_KEY = 'liarsDice.tableMusic.volume';
-const MUTE_STORAGE_KEY = 'liarsDice.tableMusic.muted';
-const LAST_CUE_STORAGE_PREFIX = 'liarsDice.tableMusic.lastCue';
+
+// Patch 3 — Global table-music synchronization
+// The backend provides one shared timeline anchor plus the authoritative server
+// clock. Every client derives its playback position from that same timeline.
+const FALLBACK_TIMELINE_ANCHOR_MS = Date.UTC(2026, 0, 1, 0, 0, 0);
+const DEFAULT_DRIFT_TOLERANCE_MS = 900;
+const INTERNAL_DRIFT_CHECK_MS = 5000;
 
 let audioElement = null;
 let currentTrackId = null;
@@ -11,6 +16,10 @@ let pendingMetadataHandler = null;
 let playbackRequestId = 0;
 let currentVolume = readStoredVolume();
 let currentMuted = readStoredMuted();
+let timelineAnchorMs = FALLBACK_TIMELINE_ANCHOR_MS;
+let serverClockOffsetMs = 0;
+let driftToleranceMs = DEFAULT_DRIFT_TOLERANCE_MS;
+let driftTimer = null;
 
 function canUseAudio() {
   return typeof window !== 'undefined' && typeof Audio !== 'undefined';
@@ -38,7 +47,7 @@ function readStoredMuted() {
   if (typeof window === 'undefined') return false;
 
   try {
-    const storedValue = window.localStorage?.getItem?.(MUTE_STORAGE_KEY);
+    const storedValue = window.localStorage?.getItem?.('liarsDice.tableMusic.muted');
     return storedValue === '1' || storedValue === 'true';
   } catch (_) {
     return false;
@@ -59,33 +68,9 @@ function writeStoredMuted(muted) {
   if (typeof window === 'undefined') return;
 
   try {
-    window.localStorage?.setItem?.(MUTE_STORAGE_KEY, muted ? '1' : '0');
+    window.localStorage?.setItem?.('liarsDice.tableMusic.muted', muted ? '1' : '0');
   } catch (_) {
     // Storage can be unavailable in private browsing or embedded webviews.
-  }
-}
-
-function getLastCueStorageKey(trackId) {
-  return `${LAST_CUE_STORAGE_PREFIX}.${trackId}`;
-}
-
-function readLastCueId(trackId) {
-  if (typeof window === 'undefined' || !trackId) return null;
-
-  try {
-    return window.localStorage?.getItem?.(getLastCueStorageKey(trackId)) || null;
-  } catch (_) {
-    return null;
-  }
-}
-
-function writeLastCueId(trackId, cueId) {
-  if (typeof window === 'undefined' || !trackId || !cueId) return;
-
-  try {
-    window.localStorage?.setItem?.(getLastCueStorageKey(trackId), cueId);
-  } catch (_) {
-    // Failure to remember the previous cue should not stop music playback.
   }
 }
 
@@ -105,64 +90,9 @@ function playAudio(audio) {
   if (playPromise?.catch) {
     playPromise.catch(() => {
       // Browsers can block autoplay until the player interacts with the page.
+      // resumeTableMusic() re-applies the synchronized position on interaction.
     });
   }
-}
-
-function normalizeCuePoints(track) {
-  const rawCuePoints = Array.isArray(track?.cuePoints) ? track.cuePoints : [];
-
-  const normalized = rawCuePoints
-    .map((cue, index) => {
-      if (typeof cue === 'number') {
-        return {
-          id: `${track?.id || 'track'}-${index + 1}`,
-          start: cue,
-        };
-      }
-
-      if (!cue || typeof cue !== 'object') return null;
-
-      return {
-        id: String(cue.id || `${track?.id || 'track'}-${index + 1}`),
-        start: Number(cue.start),
-      };
-    })
-    .filter((cue) => cue && Number.isFinite(cue.start) && cue.start >= 0)
-    .sort((left, right) => left.start - right.start);
-
-  return normalized.length > 0
-    ? normalized
-    : [{ id: `${track?.id || 'track'}-start`, start: 0 }];
-}
-
-function randomIndex(max) {
-  if (max <= 1) return 0;
-
-  try {
-    if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
-      const randomValue = new Uint32Array(1);
-      window.crypto.getRandomValues(randomValue);
-      return randomValue[0] % max;
-    }
-  } catch (_) {
-    // Fall through to Math.random when Web Crypto is unavailable.
-  }
-
-  return Math.floor(Math.random() * max);
-}
-
-function selectRandomCuePoint(track) {
-  const cuePoints = normalizeCuePoints(track);
-  const previousCueId = readLastCueId(track?.id);
-  const selectableCuePoints = cuePoints.length > 1
-    ? cuePoints.filter((cue) => cue.id !== previousCueId)
-    : cuePoints;
-  const pool = selectableCuePoints.length > 0 ? selectableCuePoints : cuePoints;
-  const selectedCue = pool[randomIndex(pool.length)];
-
-  writeLastCueId(track?.id, selectedCue.id);
-  return selectedCue;
 }
 
 function removePendingMetadataHandler() {
@@ -171,45 +101,92 @@ function removePendingMetadataHandler() {
   pendingMetadataHandler = null;
 }
 
-function seekAndPlayFromCue(audio, cuePoint, requestId) {
-  if (
-    !audio
-    || requestId !== playbackRequestId
-    || audio !== audioElement
-    || !currentAudioSrc
-  ) {
-    return;
+function clearDriftTimer() {
+  if (driftTimer !== null && typeof window !== 'undefined') {
+    window.clearInterval(driftTimer);
   }
-
-  const duration = Number(audio.duration);
-  const requestedStart = Number(cuePoint?.start) || 0;
-  const maximumStart = Number.isFinite(duration)
-    ? Math.max(0, duration - 0.25)
-    : requestedStart;
-  const safeStart = Math.min(Math.max(0, requestedStart), maximumStart);
-
-  try {
-    audio.currentTime = safeStart;
-  } catch (_) {
-    try {
-      audio.currentTime = 0;
-    } catch (_) {
-      // Ignore browsers that reject seeking before media is ready.
-    }
-  }
-
-  playAudio(audio);
+  driftTimer = null;
 }
 
-function restartTrackFromBeginning() {
-  if (!audioElement || !currentAudioSrc) return;
+function estimatedServerNowMs() {
+  return Date.now() + serverClockOffsetMs;
+}
+
+function targetPlaybackSeconds(duration, atServerTimeMs = estimatedServerNowMs()) {
+  const safeDuration = Number(duration);
+  if (!Number.isFinite(safeDuration) || safeDuration <= 0) return 0;
+
+  const elapsedSeconds = Math.max(0, (Number(atServerTimeMs) - timelineAnchorMs) / 1000);
+  return ((elapsedSeconds % safeDuration) + safeDuration) % safeDuration;
+}
+
+function circularDistanceSeconds(left, right, duration) {
+  const safeDuration = Number(duration);
+  if (!Number.isFinite(safeDuration) || safeDuration <= 0) return Math.abs(left - right);
+
+  const direct = Math.abs(left - right);
+  return Math.min(direct, Math.abs(safeDuration - direct));
+}
+
+function seekToSynchronizedPosition(audio, { force = false } = {}) {
+  if (!audio || audio !== audioElement || !currentAudioSrc) return false;
+
+  const duration = Number(audio.duration);
+  if (!Number.isFinite(duration) || duration <= 0) return false;
+
+  const target = targetPlaybackSeconds(duration);
+  const current = Number(audio.currentTime) || 0;
+  const driftSeconds = circularDistanceSeconds(current, target, duration);
+  const toleranceSeconds = Math.max(0, driftToleranceMs) / 1000;
+
+  if (!force && driftSeconds <= toleranceSeconds) return false;
 
   try {
-    audioElement.currentTime = 0;
+    audio.currentTime = Math.min(Math.max(0, target), Math.max(0, duration - 0.05));
+    return true;
   } catch (_) {
-    // Some browsers can throw while media metadata is not ready yet.
+    return false;
+  }
+}
+
+function startDriftTimer() {
+  clearDriftTimer();
+  if (typeof window === 'undefined') return;
+
+  driftTimer = window.setInterval(() => {
+    if (!audioElement || !currentAudioSrc) return;
+    seekToSynchronizedPosition(audioElement);
+  }, INTERNAL_DRIFT_CHECK_MS);
+}
+
+function applySyncPayload(sync = {}) {
+  const serverTimeMs = Number(sync?.serverTimeMs);
+  const anchorMs = Number(sync?.timelineAnchorMs);
+  const requestStartedAtMs = Number(sync?.clientRequestStartedAtMs);
+  const receivedAtMs = Number(sync?.clientReceivedAtMs);
+  const tolerance = Number(sync?.driftToleranceMs);
+
+  if (Number.isFinite(anchorMs) && anchorMs > 0) {
+    timelineAnchorMs = anchorMs;
   }
 
+  if (Number.isFinite(tolerance) && tolerance >= 0) {
+    driftToleranceMs = tolerance;
+  }
+
+  if (Number.isFinite(serverTimeMs)) {
+    // Estimate the server/client clock offset using the midpoint of the request.
+    // This removes most of the round-trip latency from the synchronization math.
+    const midpoint = Number.isFinite(requestStartedAtMs) && Number.isFinite(receivedAtMs)
+      ? (requestStartedAtMs + receivedAtMs) / 2
+      : (Number.isFinite(receivedAtMs) ? receivedAtMs : Date.now());
+    serverClockOffsetMs = serverTimeMs - midpoint;
+  }
+}
+
+function restartTrackOnSharedTimeline() {
+  if (!audioElement || !currentAudioSrc) return;
+  seekToSynchronizedPosition(audioElement, { force: true });
   playAudio(audioElement);
 }
 
@@ -223,13 +200,12 @@ function getAudioElement() {
     audioElement.muted = currentMuted;
   }
 
-  // After the random starting song, the combined playlist continues normally.
-  // At the end of the MP3 it loops back to the beginning of the full playlist.
   audioElement.loop = true;
 
   // Safety fallback for browsers/devices that fail to honor HTMLAudioElement.loop.
+  // Restarting uses the shared timeline, not local time 0.
   if (!hasLoopFallbackListener) {
-    audioElement.addEventListener('ended', restartTrackFromBeginning);
+    audioElement.addEventListener('ended', restartTrackOnSharedTimeline);
     hasLoopFallbackListener = true;
   }
 
@@ -239,6 +215,7 @@ function getAudioElement() {
 export function stopTableMusic() {
   playbackRequestId += 1;
   removePendingMetadataHandler();
+  clearDriftTimer();
 
   if (audioElement) {
     audioElement.pause();
@@ -250,7 +227,7 @@ export function stopTableMusic() {
   currentAudioSrc = null;
 }
 
-export function syncTableMusic(track) {
+export function syncTableMusic(track, sync = {}) {
   const nextTrackId = track?.id || null;
   const nextAudioSrc = track?.audioSrc || '';
 
@@ -259,16 +236,20 @@ export function syncTableMusic(track) {
     return;
   }
 
-  if (currentTrackId === nextTrackId && currentAudioSrc === nextAudioSrc) {
-    return;
-  }
+  applySyncPayload(sync);
 
   const audio = getAudioElement();
   if (!audio) return;
 
+  // A periodic backend refresh can update the server clock without reloading the MP3.
+  if (currentTrackId === nextTrackId && currentAudioSrc === nextAudioSrc) {
+    seekToSynchronizedPosition(audio);
+    startDriftTimer();
+    return;
+  }
+
   playbackRequestId += 1;
   const requestId = playbackRequestId;
-  const selectedCue = selectRandomCuePoint(track);
 
   removePendingMetadataHandler();
   currentTrackId = nextTrackId;
@@ -280,9 +261,24 @@ export function syncTableMusic(track) {
   audio.volume = getEffectiveVolume();
   audio.muted = currentMuted;
 
+  const seekAndPlay = () => {
+    if (
+      requestId !== playbackRequestId
+      || audio !== audioElement
+      || currentTrackId !== nextTrackId
+      || currentAudioSrc !== nextAudioSrc
+    ) {
+      return;
+    }
+
+    seekToSynchronizedPosition(audio, { force: true });
+    startDriftTimer();
+    playAudio(audio);
+  };
+
   pendingMetadataHandler = () => {
     pendingMetadataHandler = null;
-    seekAndPlayFromCue(audio, selectedCue, requestId);
+    seekAndPlay();
   };
 
   audio.addEventListener('loadedmetadata', pendingMetadataHandler, { once: true });
@@ -291,7 +287,7 @@ export function syncTableMusic(track) {
   // Cached media can already have metadata immediately after assigning src.
   if (audio.readyState >= 1) {
     removePendingMetadataHandler();
-    seekAndPlayFromCue(audio, selectedCue, requestId);
+    seekAndPlay();
   }
 }
 
@@ -331,5 +327,7 @@ export function toggleTableMusicMuted() {
 
 export function resumeTableMusic() {
   if (!audioElement || !currentAudioSrc) return;
+  // If autoplay was blocked, do not resume from the stale buffered position.
+  seekToSynchronizedPosition(audioElement, { force: true });
   playAudio(audioElement);
 }

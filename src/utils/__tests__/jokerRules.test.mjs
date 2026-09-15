@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   OFFICIAL_FEI_QUANTITY_STEP,
   getOfficialJokerCapabilities,
+  getOfficialTurnDefaultBid,
   shouldOfficialCountOnesAsWild,
   validateOfficialFeiSelection,
   validateOfficialZaiSelection,
@@ -26,6 +27,25 @@ test('client accepts same-claim and higher-claim ZAI', () => {
   assert.equal(validateOfficialZaiSelection({ currentBid: normalCurrent, quantity: 4, face: 5, totalDice: 10 }).valid, true);
   assert.equal(validateOfficialZaiSelection({ currentBid: normalCurrent, quantity: 4, face: 6, totalDice: 10 }).valid, true);
   assert.equal(validateOfficialZaiSelection({ currentBid: normalCurrent, quantity: 5, face: 2, totalDice: 10 }).valid, true);
+});
+
+test('5x2 can be answered directly with the same 5x2 ZAI claim', () => {
+  const normalCurrent = { quantity: 5, face: 2, jokerMode: 'normal' };
+  const defaultSelection = getOfficialTurnDefaultBid({
+    currentBid: normalCurrent,
+    totalDice: 10,
+    currentMode: 'normal',
+    preferSameClaimZai: true,
+  });
+
+  assert.deepEqual(defaultSelection, { quantity: 5, face: 2, source: 'same_claim_zai_default' });
+  const validation = validateOfficialZaiSelection({
+    currentBid: normalCurrent,
+    quantity: defaultSelection.quantity,
+    face: defaultSelection.face,
+    totalDice: 10,
+  });
+  assert.equal(validation.valid, true);
 });
 
 test('client FEI allows any face from 1-6 and requires exactly +2 dice', () => {

@@ -12,8 +12,8 @@ import ZaiAnimationOverlay, { ZAI_ACTION_SUBMIT_MS, ZAI_ANIMATION_DURATION_MS } 
 import FeiAnimationOverlay, { FEI_ACTION_SUBMIT_MS, FEI_ANIMATION_DURATION_MS } from '../components/gameplay/FeiAnimationOverlay.jsx';
 import {
   OFFICIAL_FEI_QUANTITY_STEP,
-  getOfficialDefaultBid,
   getOfficialSpecialActionMode,
+  getOfficialTurnDefaultBid,
   officialBidFaceRank,
   validateOfficialFeiSelection,
   validateOfficialZaiSelection,
@@ -1294,8 +1294,8 @@ function revealedDiceRows(roundResult) {
   return Array.isArray(roundResult?.revealedDice) ? roundResult.revealedDice.filter(Boolean) : [];
 }
 
-function nextDefaultBid(currentBid, totalDice, currentMode = 'normal') {
-  return getOfficialDefaultBid({ currentBid, totalDice, currentMode });
+function nextDefaultBid(currentBid, totalDice, currentMode = 'normal', preferSameClaimZai = false) {
+  return getOfficialTurnDefaultBid({ currentBid, totalDice, currentMode, preferSameClaimZai });
 }
 
 function isValidBid(currentBid, quantity, face, options = {}) {
@@ -1700,8 +1700,8 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   }, [match?.id, match?.status, match?.turnDeadlineAt]);
 
   const defaultBid = useMemo(
-    () => nextDefaultBid(currentBid, totalDice || 7, currentBidJokerMode),
-    [currentBid, totalDice, currentBidJokerMode],
+    () => nextDefaultBid(currentBid, totalDice || 7, currentBidJokerMode, canSubmitZai),
+    [currentBid, totalDice, currentBidJokerMode, canSubmitZai],
   );
   const quantityValues = useMemo(() => getQuantityValues(totalDice), [totalDice]);
   const dynamicCoinBetOptions = useMemo(() => getCoinBetOptions(match), [

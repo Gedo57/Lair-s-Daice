@@ -17,6 +17,7 @@ export const getTables = ({ includePrivate = true } = {}) => apiRequest(
 
 export const getDefaultTable = () => apiRequest(API_ENDPOINTS.tables.default);
 export const getPlayNowTable = () => apiRequest(API_ENDPOINTS.tables.playNow);
+export const getMusicSync = () => apiRequest(API_ENDPOINTS.tables.musicSync);
 export const getTable = (tableId) => {
   if (!tableId) throw new Error('tableId is required');
   return apiRequest(API_ENDPOINTS.tables.details(tableId));

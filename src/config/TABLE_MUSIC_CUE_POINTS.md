@@ -1,8 +1,19 @@
 # Combined playlist cue points
 
 The three MP3 files contain multiple songs in one continuous file. `tableMusic.js`
-stores the detected start time of each song. `tableMusicPlayer.js` selects one cue
-at random whenever a table playlist starts and excludes the cue used last time.
+stores the detected start time of each song.
+
+## Patch 3 synchronization behavior
+
+`tableMusicPlayer.js` no longer chooses a random cue when gameplay opens. The
+backend exposes `/api/tables/music-sync` with an authoritative server timestamp
+and a stable shared timeline anchor. The frontend calculates:
+
+`playbackPosition = (serverNow - timelineAnchor) % mp3Duration`
+
+Players using the same table music track therefore hear the same song and
+approximately the same playback position even if one joins later, refreshes, or
+reconnects. The cue points below are retained as playlist metadata/reference.
 
 ## Beginner — 7 songs
 
