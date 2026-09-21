@@ -107,228 +107,344 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ga
 }
 
 /* =========================================================
-   PATCH 1 — ACTIVE TURN CONTROL PANEL POP-UP
-   Client feedback:
-   - When it is the local player's turn, make the full bid/control
-     panel noticeably larger and bring it farther into the play area.
-   - Increase the important touch targets/text in portrait.
-   - Opponent turn keeps the existing compact layout.
-   The Gameplay screen already toggles .is-my-turn-shell, so this
-   patch is CSS-only and does not change gameplay rules/state.
+   PATCH 2 — CLIENT REQUEST: LARGE CONTROLS ONLY ON MY TURN
+
+   The Gameplay component already toggles is-my-turn-shell from the
+   live match turn. No bid / challenge handlers or server rules change.
+   Keep the baseline compact panel during all opponent turns. The
+   expanded panel uses an actual 2 x 2 action grid, not a scaled strip.
    ========================================================= */
 
-/* Smooth the compact <-> active-turn transition. */
+/* Animate between the unchanged compact layout and the active layout. */
 html[data-device='desktop'] .app-shell--gameplay .gameplay-bid-selector--casino-v2,
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-bid-selector--casino-v2,
 html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-bid-selector--casino-v2,
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 {
-  transition:
-    transform 220ms cubic-bezier(.2, .82, .25, 1),
-    left 220ms cubic-bezier(.2, .82, .25, 1),
-    top 220ms cubic-bezier(.2, .82, .25, 1),
-    bottom 220ms cubic-bezier(.2, .82, .25, 1),
-    width 220ms cubic-bezier(.2, .82, .25, 1),
-    height 220ms cubic-bezier(.2, .82, .25, 1),
+  transition: transform 220ms cubic-bezier(.2,.82,.25,1),
+    left 220ms cubic-bezier(.2,.82,.25,1),
+    top 220ms cubic-bezier(.2,.82,.25,1),
+    bottom 220ms cubic-bezier(.2,.82,.25,1),
+    width 220ms cubic-bezier(.2,.82,.25,1),
+    height 220ms cubic-bezier(.2,.82,.25,1),
     filter 220ms ease !important;
-  will-change: transform, left, top, bottom, width, height;
 }
 
-/* Desktop + landscape: the normal panel is intentionally scaled to .78
-   by the existing landscape patch. Restore it to full design size only
-   on the local player's turn and lift it slightly into the play field. */
+/* Active desktop and landscape panel: keep the right-side Current Bid
+   unobscured; its canvas x-range starts at approximately 864px. */
 html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2,
 html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2,
 html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 {
-  left: 50% !important;
+  left: 42% !important;
   right: auto !important;
   top: auto !important;
-  bottom: 24px !important;
-  width: 554px !important;
-  height: 306px !important;
+  bottom: 12px !important;
+  width: 630px !important;
+  height: 404px !important;
   transform: translateX(-50%) scale(1) !important;
   transform-origin: bottom center !important;
   z-index: 180 !important;
-  filter: drop-shadow(0 16px 28px rgba(0, 0, 0, .52)) !important;
+  filter: drop-shadow(0 18px 28px rgba(0,0,0,.56)) !important;
 }
 
-/* Give the active-turn action strip a little more physical presence in
-   landscape without changing any action logic. */
-html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow,
-html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow {
-  left: 16px !important;
-  right: 16px !important;
-  bottom: 10px !important;
-  height: 68px !important;
-  gap: 6px !important;
-}
-
-html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action,
-html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action {
-  height: 68px !important;
-}
-
-html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action__title,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action__title,
-html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action__title {
-  top: 17px !important;
-  font-size: 13px !important;
-}
-
-html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action--raise .gameplay-action__title,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action--raise .gameplay-action__title,
-html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action--raise .gameplay-action__title {
-  font-size: 12px !important;
-}
-
-html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action__subtitle,
-html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action__subtitle,
-html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action__subtitle {
-  top: 42px !important;
-  font-size: 9px !important;
-}
-
-/* Portrait: use the available lower-middle area instead of merely scaling
-   the existing 650x330 panel. This keeps it inside the 720px canvas while
-   making controls visibly larger and easier to tap. */
+/* Active portrait: fit all enlarged controls inside the fixed
+   720 x 1280 canvas. Starts well below Current Bid and the timer. */
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 {
   left: 20px !important;
   right: auto !important;
-  top: 720px !important;
+  top: 685px !important;
   bottom: auto !important;
   width: 680px !important;
-  height: 390px !important;
+  height: 535px !important;
   transform: none !important;
-  transform-origin: center center !important;
+  transform-origin: center bottom !important;
   z-index: 180 !important;
-  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .54)) !important;
+  filter: drop-shadow(0 18px 28px rgba(0,0,0,.56)) !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityCaption {
-  top: 24px !important;
-  font-size: 20px !important;
+/* Strengthen the panel artwork only while the player is choosing a bid.
+   Opponents retain the translucent compact-panel treatment. */
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__skin {
+  opacity: .91 !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sectionTitle {
-  font-size: 15px !important;
+/* Common action grid: each action occupies its own large tap target.
+   On tables without SLAM the third (ZAI/FEI) action spans both columns. */
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow {
+  position: absolute !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+  justify-items: stretch !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  gap: 10px !important;
+  left: 22px !important;
+  right: 22px !important;
+  bottom: 16px !important;
+  height: 146px !important;
+  z-index: 30 !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityBlock {
-  left: 34px !important;
-  top: 78px !important;
-  width: 342px !important;
-  height: 126px !important;
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  flex: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+  z-index: 31 !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValue {
-  top: 28px !important;
-  height: 34px !important;
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action:last-child:nth-child(3) {
+  grid-column: 1 / -1 !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueNumber {
-  font-size: 36px !important;
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action__skin {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueMax {
-  font-size: 14px !important;
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action__title,
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--raise .gameplay-action__title,
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--call .gameplay-action__title,
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--slam .gameplay-action__title {
+  left: 12px !important;
+  right: 12px !important;
+  top: 16px !important;
+  width: auto !important;
+  font-size: 17px !important;
+  line-height: 1.05 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityTrack {
-  top: 70px !important;
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action__subtitle {
+  left: 12px !important;
+  right: 12px !important;
+  top: 43px !important;
+  width: auto !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+}
+
+/* Desktop and landscape: separate QUANTITY and FACE into two columns,
+   and give YOUR DICE a dedicated full-width row above the action grid. */
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityCaption,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityCaption,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityCaption {
+  top: 22px !important;
+  font-size: 19px !important;
+}
+
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sectionTitle,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sectionTitle,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sectionTitle {
+  font-size: 16px !important;
+}
+
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityBlock,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityBlock,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityBlock {
+  left: 25px !important;
+  top: 65px !important;
+  width: 340px !important;
+  height: 103px !important;
+}
+
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueNumber,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueNumber,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueNumber {
+  font-size: 37px !important;
+}
+
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueMax,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueMax,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueMax {
+  font-size: 16px !important;
+}
+
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityTrack,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityTrack,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityTrack {
+  top: 64px !important;
+  height: 42px !important;
+}
+
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStep,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStep,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStep {
+  width: 44px !important;
   height: 44px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityRow,
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStepper {
-  gap: 12px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStep {
-  width: 40px !important;
-  height: 40px !important;
-  flex: 0 0 40px !important;
+  flex: 0 0 44px !important;
   font-size: 30px !important;
-  border-width: 3px !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderRail {
-  width: 220px !important;
-  height: 7px !important;
-  flex: 0 0 220px !important;
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderRail,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderRail,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderRail {
+  width: 194px !important;
+  flex: 0 0 194px !important;
+  height: 8px !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderKnob {
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderKnob,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderKnob,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderKnob {
   width: 30px !important;
   height: 30px !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice {
-  left: 34px !important;
-  top: 218px !important;
-  width: 390px !important;
-  height: 74px !important;
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice {
+  left: 25px !important;
+  top: 171px !important;
+  width: 370px !important;
+  height: 66px !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow {
-  top: 25px !important;
-  height: 48px !important;
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow {
+  top: 21px !important;
+  height: 47px !important;
   gap: 10px !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDie,
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-hidden-die.gameplay-bid-selector__ownDie {
-  width: 46px !important;
-  height: 46px !important;
-  flex-basis: 46px !important;
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDie,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDie,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDie,
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-hidden-die.gameplay-bid-selector__ownDie,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-hidden-die.gameplay-bid-selector__ownDie,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-hidden-die.gameplay-bid-selector__ownDie {
+  width: 47px !important;
+  height: 47px !important;
+  flex: 0 0 47px !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDial {
-  right: 30px !important;
-  top: 78px !important;
-  width: 220px !important;
-  height: 172px !important;
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDial,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDial,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDial {
+  right: 20px !important;
+  top: 66px !important;
+  width: 215px !important;
+  height: 165px !important;
 }
 
-/* Scale the complete dice-face picker as one unit so its center die and
-   radial hit targets grow together without breaking the slot geometry. */
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDialStage {
-  transform: scale(1.16) !important;
+/* Enlarge the complete radial picker including its hit targets while
+   preserving the established five-slot geometry and click behavior. */
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDialStage,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDialStage,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDialStage {
+  transform: scale(1.23) !important;
   transform-origin: center center !important;
 }
 
+/* In portrait the panel is taller and uses larger tap targets. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityCaption {
+  top: 27px !important;
+  font-size: 22px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sectionTitle {
+  font-size: 19px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityBlock {
+  left: 30px !important;
+  top: 85px !important;
+  width: 350px !important;
+  height: 136px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValue {
+  top: 30px !important;
+  height: 43px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueNumber {
+  font-size: 43px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityValueMax {
+  font-size: 19px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityTrack {
+  top: 82px !important;
+  height: 50px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityRow,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStepper {
+  gap: 12px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__quantityStep {
+  width: 48px !important;
+  height: 48px !important;
+  flex: 0 0 48px !important;
+  font-size: 35px !important;
+  border-width: 3px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderRail {
+  width: 215px !important;
+  height: 9px !important;
+  flex: 0 0 215px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sliderKnob {
+  width: 32px !important;
+  height: 32px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice {
+  left: 30px !important;
+  top: 229px !important;
+  width: 385px !important;
+  height: 81px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow {
+  top: 26px !important;
+  height: 54px !important;
+  gap: 10px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDie,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-hidden-die.gameplay-bid-selector__ownDie {
+  width: 53px !important;
+  height: 53px !important;
+  flex: 0 0 53px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDial {
+  right: 20px !important;
+  top: 82px !important;
+  width: 230px !important;
+  height: 188px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__faceDialStage {
+  transform: scale(1.34) !important;
+  transform-origin: center center !important;
+}
 html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow {
   left: 24px !important;
   right: 24px !important;
-  bottom: 16px !important;
-  height: 76px !important;
-  gap: 8px !important;
-  z-index: 190 !important;
+  bottom: 18px !important;
+  height: 184px !important;
+  gap: 10px !important;
 }
-
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action {
-  height: 76px !important;
-  min-height: 76px !important;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action__title,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--raise .gameplay-action__title,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--call .gameplay-action__title,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--slam .gameplay-action__title {
+  top: 22px !important;
+  font-size: 21px !important;
 }
-
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action__title,
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action--call .gameplay-action__title,
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action--slam .gameplay-action__title {
-  top: 19px !important;
-  font-size: 15px !important;
-}
-
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action--raise .gameplay-action__title {
-  top: 19px !important;
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action__subtitle {
+  top: 53px !important;
   font-size: 13px !important;
 }
 
-html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-action__subtitle {
-  top: 48px !important;
-  font-size: 10px !important;
-}
-
-/* Make the pop effect instantaneous for users who request reduced motion. */
 @media (prefers-reduced-motion: reduce) {
   html[data-device='desktop'] .app-shell--gameplay .gameplay-bid-selector--casino-v2,
   html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay .gameplay-bid-selector--casino-v2,
@@ -336,4 +452,130 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-
   html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .gameplay-bid-selector--casino-v2 {
     transition: none !important;
   }
+}
+
+/* =========================================================
+   PATCH 3 — ACTIVE-TURN READABILITY / SPACING ONLY
+   The button artwork already contains the icons: keep the images and
+   reserve their left-hand zone rather than centering text over them.
+   Deliberately DO NOT adjust the total-dice banner, the player's name,
+   the panel dimensions/position, or any opponent-turn styling.
+   ========================================================= */
+
+/* All four buttons, including the 3-action full-width fallback, use a
+   proportional text lane so the baked-in artwork icons stay unobscured. */
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action__title,
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--raise .gameplay-action__title,
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--call .gameplay-action__title,
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--slam .gameplay-action__title {
+  left: 34% !important;
+  right: 5% !important;
+  top: 11px !important;
+  width: auto !important;
+  font-size: 18px !important;
+  line-height: 1.12 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  pointer-events: none !important;
+}
+
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action__subtitle {
+  left: 34% !important;
+  right: 5% !important;
+  top: 36px !important;
+  width: auto !important;
+  max-height: 32px !important;
+  font-size: 13px !important;
+  line-height: 1.13 !important;
+  font-weight: 900 !important;
+  color: #fff6de !important;
+  text-align: center !important;
+  white-space: normal !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  pointer-events: none !important;
+}
+
+/* Consistent typography in the three content sections without altering
+   the caption/banner above the panel. */
+html[data-device] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sectionTitle {
+  line-height: 1.12 !important;
+  letter-spacing: .025em !important;
+}
+
+/* Give the dice label its own line in desktop and landscape, while
+   retaining the existing dice size and the 2 x 2 button grid. */
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice {
+  top: 166px !important;
+}
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow {
+  top: 25px !important;
+}
+
+/* Portrait keeps the approved 680 x 535 panel and button sizes. Move only
+   the dice content a few pixels down to clear its caption. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow {
+  top: 29px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action__title,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--raise .gameplay-action__title,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--call .gameplay-action__title,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action--slam .gameplay-action__title {
+  top: 18px !important;
+  font-size: 21px !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__actionRow .gameplay-action__subtitle {
+  top: 49px !important;
+  max-height: 34px !important;
+  font-size: 15px !important;
+  line-height: 1.12 !important;
+}
+
+/* PATCH 4 — CENTER ONLY YOUR DICE DURING THE LOCAL PLAYER'S TURN.
+   The dice row was already centered inside its narrow, left-aligned section;
+   center the section across the approved panel instead. Keep its vertical
+   placement, dice dimensions/gaps, action buttons and header unchanged. */
+html[data-device='desktop'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice,
+html[data-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice,
+html[data-physical-device='mobile'][data-orientation='landscape'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice,
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice {
+  left: 0 !important;
+  width: 100% !important;
+}
+
+
+/* PATCH 5 — PORTRAIT ACTIVE TURN: center the ENTIRE Your Dice group
+   against the bid panel, not merely the dice row within its old left-side
+   slot. Do not change the panel/header, vertical offset or dice dimensions. */
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice,
+html[data-physical-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDice {
+  left: 50% !important;
+  width: 100% !important;
+  transform: translateX(-50%) !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sectionTitle--ownDice,
+html[data-physical-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__sectionTitle--ownDice {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow,
+html[data-physical-device='mobile'][data-orientation='portrait'] .app-shell--gameplay.is-my-turn-shell .gameplay-bid-selector--casino-v2 .gameplay-bid-selector__ownDiceRow {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  justify-content: center !important;
 }
