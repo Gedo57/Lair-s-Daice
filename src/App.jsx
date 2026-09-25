@@ -460,9 +460,15 @@ function formatCurrency(value) {
 }
 
 function normalizeWallet(wallet = {}) {
+  const provider = String(wallet.provider || wallet.walletProvider || '').toLowerCase();
+  const external = Boolean(wallet.external || wallet.externalWallet || provider === 'sidesix');
   return {
-    coins: formatCurrency(wallet.coins ?? wallet.coinBalance) || '0',
+    coins: external ? 'SIDESIX' : (formatCurrency(wallet.coins ?? wallet.coinBalance) || '0'),
     gems: formatCurrency(wallet.gems ?? wallet.diamonds ?? wallet.gemBalance) || '0',
+    provider: external ? 'sidesix' : (provider || 'local'),
+    external,
+    balanceAvailable: external ? false : wallet.balanceAvailable !== false,
+    currency: wallet.currency || (external ? 'MYR' : null),
   };
 }
 
@@ -2445,8 +2451,12 @@ export default function App() {
       const selectedTable = resolveSelectedTableForMatchmaking(payload, gameData);
       const requiredCoins = resolveEntryFee(selectedTable);
       const availableCoins = numericWalletAmount(gameData.wallet?.coins);
+      const usesExternalWallet = Boolean(
+        gameData.wallet?.external
+        || String(gameData.wallet?.provider || '').toLowerCase() === 'sidesix'
+      );
 
-      if (requiredCoins > 0 && availableCoins < requiredCoins) {
+      if (!usesExternalWallet && requiredCoins > 0 && availableCoins < requiredCoins) {
         clearSocketMatchmakingState();
         setBackendStatus({
           loading: false,

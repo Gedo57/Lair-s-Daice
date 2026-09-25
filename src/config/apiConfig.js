@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
   auth: {
     register: '/api/auth/register',
     login: '/api/auth/login',
+    sidesix: '/api/auth/sidesix',
     guest: '/api/auth/guest',
     refresh: '/api/auth/refresh',
     logout: '/api/auth/logout',

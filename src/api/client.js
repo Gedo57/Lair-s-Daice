@@ -4,6 +4,7 @@ export const TOKEN_STORAGE_KEY = 'ld_access_token';
 
 const AUTH_ENDPOINTS_WITHOUT_REFRESH_RETRY = new Set([
   API_ENDPOINTS.auth.login,
+  API_ENDPOINTS.auth.sidesix,
   API_ENDPOINTS.auth.register,
   API_ENDPOINTS.auth.guest,
   API_ENDPOINTS.auth.refresh,
