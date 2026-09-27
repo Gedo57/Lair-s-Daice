@@ -28,6 +28,32 @@ import './styles/screens/tutorial.css';
 const SIDE_SIX_LAUNCH_KEYS = ['userId', 'userName', 'ts', 'nonce', 'sig', 'avatarUrl', 'locale', 'returnUrl'];
 const SIDE_SIX_RETURN_URL_KEY = 'ld_sidesix_return_url';
 
+
+function platformLaunchFromFragment() {
+  const raw = String(window.location.hash || '').replace(/^#/, '');
+  if (!raw.includes('platform_launch_token=')) return null;
+  const params = new URLSearchParams(raw);
+  const launchToken = params.get('platform_launch_token') || '';
+  if (!launchToken) return null;
+  const launch = {
+    launchToken,
+    exchangeId: window.crypto?.randomUUID?.() || `liars-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  };
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
+  return launch;
+}
+
+async function exchangePlatformLaunchIfPresent() {
+  const launch = platformLaunchFromFragment();
+  if (!launch) return false;
+  const { loginWithPlatformLaunch } = await import('./api/authApi.js');
+  await loginWithPlatformLaunch(launch);
+  const url = new URL(window.location.href);
+  url.pathname = '/main-menu';
+  window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+  return true;
+}
+
 function sideSixLaunchFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const required = ['userId', 'userName', 'ts', 'nonce', 'sig'];
@@ -71,7 +97,8 @@ async function bootstrap() {
     const isDirectTutorialRoute = cleanPath.toLowerCase() === '/tutorial';
 
     if (!isDirectTutorialRoute) {
-      await exchangeSideSixLaunchIfPresent();
+      const platformLaunched = await exchangePlatformLaunchIfPresent();
+      if (!platformLaunched) await exchangeSideSixLaunchIfPresent();
       cleanPath = window.location.pathname.replace(/\/+$/, '') || '/';
     }
     const rootModule = cleanPath.toLowerCase() === '/tutorial'

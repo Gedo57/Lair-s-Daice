@@ -6,6 +6,16 @@ function storeTokenFromPayload(payload) {
   return payload;
 }
 
+
+export async function loginWithPlatformLaunch(launch) {
+  const payload = await apiRequest(API_ENDPOINTS.auth.platform, {
+    method: 'POST',
+    body: launch,
+    authRetry: false,
+  });
+  return storeTokenFromPayload(payload);
+}
+
 export async function loginWithSideSixLaunch(launch) {
   const payload = await apiRequest(API_ENDPOINTS.auth.sidesix, {
     method: 'POST',
