@@ -1,4 +1,5 @@
 import { API_BASE_URL, API_ENDPOINTS, API_TIMEOUT_MS } from '../config/apiConfig.js';
+import { waitForBackendReady } from './backendWake.js';
 
 export const TOKEN_STORAGE_KEY = 'ld_access_token';
 
@@ -144,6 +145,13 @@ function shouldAttemptRefresh(endpoint, options = {}) {
 }
 
 export async function apiRequest(endpoint, options = {}) {
+  const isHealthRequest = endpoint === API_ENDPOINTS.health.api || endpoint === API_ENDPOINTS.health.server;
+  if (!isHealthRequest) {
+    // Only the idempotent health probe is retried. The requested API operation runs once
+    // after the Render service is confirmed awake, protecting one-time launch tokens.
+    await waitForBackendReady(`${API_BASE_URL}${API_ENDPOINTS.health.api}`);
+  }
+
   const { response, payload } = await executeRequest(endpoint, options);
 
   if (response.ok) return payload;
