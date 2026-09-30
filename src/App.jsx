@@ -1679,6 +1679,10 @@ export default function App() {
   const layout = useFixedViewport();
   const i18n = useLanguage();
   const ScreenComponent = SCREENS[screen] || StarterScreen;
+  // Mobile Safari/WebKit has a much tighter WebContent memory budget than
+  // desktop browsers. Keep mobile preloading screen-scoped instead of decoding
+  // the whole play flow and secondary screens up front.
+  const useLowMemoryPreload = layout.deviceMode === 'mobile';
 
   useEffect(() => {
     let active = true;
@@ -1719,8 +1723,10 @@ export default function App() {
       total: starterAssets.length,
     });
 
+    const bootConcurrency = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches ? 3 : 6;
+
     preloadAssets(starterAssets, {
-      concurrency: 6,
+      concurrency: bootConcurrency,
       timeoutMs: 12000,
       onProgress: ({ loaded, total, percent }) => {
         if (!active) return;
@@ -1754,17 +1760,25 @@ export default function App() {
   }, [i18n.language]);
 
   useEffect(() => {
-    if (!starterAssetsReady) return;
-    if (screen !== 'mainmenu' && screen !== 'roomselect') return;
-    if (preloadedPhases.has(BACKGROUND_PRELOAD_PHASE)) return;
+    if (!starterAssetsReady) return undefined;
+    if (screen !== 'mainmenu' && screen !== 'roomselect') return undefined;
+
+    // Do not background-preload all secondary screens on phones/tablets. On
+    // iPhone/iPad this was able to overlap gameplay navigation and keep dozens
+    // of decoded images alive at once, which can make Safari reload the page.
+    if (useLowMemoryPreload) return undefined;
+    if (preloadedPhases.has(BACKGROUND_PRELOAD_PHASE)) return undefined;
 
     const backgroundAssets = getAssetsForPhase(BACKGROUND_PRELOAD_PHASE);
     if (!backgroundAssets.length) {
       preloadedPhases.add(BACKGROUND_PRELOAD_PHASE);
-      return;
+      return undefined;
     }
 
+    let completed = false;
+    let disposed = false;
     preloadedPhases.add(BACKGROUND_PRELOAD_PHASE);
+
     const task = preloadAssetsInBackground(backgroundAssets, {
       concurrency: 2,
       timeoutMs: 10000,
@@ -1773,11 +1787,19 @@ export default function App() {
     });
 
     task.promise.then(() => {
+      if (disposed) return;
+      completed = true;
       ['login', 'createroom', 'joinroom', 'roomlobby', 'profile', 'dailyreward', 'tournamentpass', 'specialevent', 'help'].forEach((screenName) => {
         preloadedCriticalScreens.add(screenName);
       });
     });
-  }, [screen, starterAssetsReady]);
+
+    return () => {
+      disposed = true;
+      task.cancel();
+      if (!completed) preloadedPhases.delete(BACKGROUND_PRELOAD_PHASE);
+    };
+  }, [screen, starterAssetsReady, useLowMemoryPreload]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -2065,7 +2087,7 @@ export default function App() {
 
     try {
       await preloadAssets(assets, {
-        concurrency: options.concurrency ?? 8,
+        concurrency: options.concurrency ?? (useLowMemoryPreload ? 3 : 8),
         timeoutMs: options.timeoutMs ?? 15000,
         onProgress: ({ loaded, total, percent }) => {
           if (navId !== assetNavigationIdRef.current) return;
@@ -2098,10 +2120,15 @@ export default function App() {
       preloadedCriticalScreens.add(preloadKey);
     }
 
-    if (phaseName === PLAY_FLOW_PRELOAD_PHASE || safeScreen === 'mainmenu') {
+    if (phaseName === PLAY_FLOW_PRELOAD_PHASE) {
       ['mainmenu', 'roomselect', 'matchmaking', 'gameplay', 'win'].forEach((screenName) => {
         preloadedCriticalScreens.add(screenName);
       });
+    } else if (safeScreen === 'mainmenu') {
+      // mainmenu's manifest intentionally includes room-select assets, but not
+      // matchmaking/gameplay/win. Do not falsely mark those heavy screens as
+      // preloaded or they will be forced to decode while gameplay is live.
+      preloadedCriticalScreens.add('roomselect');
     }
 
     setAssetLoadingState({
@@ -2119,42 +2146,62 @@ export default function App() {
   const navigation = {
     goStarter: () => navigateToScreen('starter'),
     goLogin: () => preloadAndNavigate('login', { destinationLabel: 'login screen', minVisibleMs: 250 }),
-    goLoading: () => preloadAndNavigate('mainmenu', {
-      destinationLabel: 'game assets',
-      phaseName: PLAY_FLOW_PRELOAD_PHASE,
-      preloadKey: PLAY_FLOW_PRELOAD_PHASE,
-      minVisibleMs: 650,
-      concurrency: 8,
-    }),
-    goGuestLoading: () => preloadAndNavigate('tutorial', {
-      destinationLabel: 'game assets',
-      phaseName: PLAY_FLOW_PRELOAD_PHASE,
-      preloadKey: PLAY_FLOW_PRELOAD_PHASE,
-      assets: [...new Set([...getAssetsForPhase(PLAY_FLOW_PRELOAD_PHASE), ...TUTORIAL_ASSETS])],
-      minVisibleMs: 650,
-      concurrency: 8,
-      forceLoading: true,
-    }),
+    goLoading: () => useLowMemoryPreload
+      ? preloadAndNavigate('mainmenu', {
+        destinationLabel: 'game assets',
+        minVisibleMs: 350,
+        concurrency: 3,
+      })
+      : preloadAndNavigate('mainmenu', {
+        destinationLabel: 'game assets',
+        phaseName: PLAY_FLOW_PRELOAD_PHASE,
+        preloadKey: PLAY_FLOW_PRELOAD_PHASE,
+        minVisibleMs: 650,
+        concurrency: 8,
+      }),
+    goGuestLoading: () => useLowMemoryPreload
+      ? preloadAndNavigate('tutorial', {
+        destinationLabel: 'tutorial',
+        assets: TUTORIAL_ASSETS,
+        minVisibleMs: 350,
+        concurrency: 2,
+        forceLoading: true,
+      })
+      : preloadAndNavigate('tutorial', {
+        destinationLabel: 'game assets',
+        phaseName: PLAY_FLOW_PRELOAD_PHASE,
+        preloadKey: PLAY_FLOW_PRELOAD_PHASE,
+        assets: [...new Set([...getAssetsForPhase(PLAY_FLOW_PRELOAD_PHASE), ...TUTORIAL_ASSETS])],
+        minVisibleMs: 650,
+        concurrency: 8,
+        forceLoading: true,
+      }),
     goTutorial: () => navigateToScreen('tutorial'),
-    goMainMenu: () => preloadAndNavigate('mainmenu', {
-      destinationLabel: 'game assets',
-      phaseName: PLAY_FLOW_PRELOAD_PHASE,
-      preloadKey: PLAY_FLOW_PRELOAD_PHASE,
-      minVisibleMs: 650,
-      concurrency: 8,
-    }),
+    goMainMenu: () => useLowMemoryPreload
+      ? preloadAndNavigate('mainmenu', {
+        destinationLabel: 'game assets',
+        minVisibleMs: 350,
+        concurrency: 3,
+      })
+      : preloadAndNavigate('mainmenu', {
+        destinationLabel: 'game assets',
+        phaseName: PLAY_FLOW_PRELOAD_PHASE,
+        preloadKey: PLAY_FLOW_PRELOAD_PHASE,
+        minVisibleMs: 650,
+        concurrency: 8,
+      }),
     goRoomSelect: () => preloadAndNavigate('roomselect', { destinationLabel: 'room select' }),
-    goCreateRoom: () => preloadAndNavigate('createroom', { destinationLabel: 'create room', minVisibleMs: 180, concurrency: 4 }),
-    goJoinRoom: () => preloadAndNavigate('joinroom', { destinationLabel: 'join room', minVisibleMs: 180, concurrency: 4 }),
-    goRoomLobby: () => preloadAndNavigate('roomlobby', { destinationLabel: 'room lobby', minVisibleMs: 180, concurrency: 4 }),
-    goMatchmaking: () => preloadAndNavigate('matchmaking', { destinationLabel: 'matchmaking', minVisibleMs: 180, concurrency: 4 }),
-    goGameplay: () => preloadAndNavigate('gameplay', { destinationLabel: 'gameplay', minVisibleMs: 180, concurrency: 4 }),
-    goWin: () => preloadAndNavigate('win', { destinationLabel: 'result screen', minVisibleMs: 180, concurrency: 4 }),
-    goHelp: () => preloadAndNavigate('help', { destinationLabel: 'help screen', minVisibleMs: 180, concurrency: 4 }),
-    goProfile: () => preloadAndNavigate('profile', { destinationLabel: 'profile', minVisibleMs: 180, concurrency: 4 }),
-    goSpecialEvent: () => preloadAndNavigate('specialevent', { destinationLabel: 'special event', minVisibleMs: 180, concurrency: 4 }),
-    goDailyReward: () => preloadAndNavigate('dailyreward', { destinationLabel: 'daily rewards', minVisibleMs: 180, concurrency: 4 }),
-    goTournamentPass: () => preloadAndNavigate('tournamentpass', { destinationLabel: 'tournament pass', minVisibleMs: 180, concurrency: 4 }),
+    goCreateRoom: () => preloadAndNavigate('createroom', { destinationLabel: 'create room', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goJoinRoom: () => preloadAndNavigate('joinroom', { destinationLabel: 'join room', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goRoomLobby: () => preloadAndNavigate('roomlobby', { destinationLabel: 'room lobby', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goMatchmaking: () => preloadAndNavigate('matchmaking', { destinationLabel: 'matchmaking', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goGameplay: () => preloadAndNavigate('gameplay', { destinationLabel: 'gameplay', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goWin: () => preloadAndNavigate('win', { destinationLabel: 'result screen', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goHelp: () => preloadAndNavigate('help', { destinationLabel: 'help screen', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goProfile: () => preloadAndNavigate('profile', { destinationLabel: 'profile', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goSpecialEvent: () => preloadAndNavigate('specialevent', { destinationLabel: 'special event', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goDailyReward: () => preloadAndNavigate('dailyreward', { destinationLabel: 'daily rewards', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goTournamentPass: () => preloadAndNavigate('tournamentpass', { destinationLabel: 'tournament pass', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
   };
 
   useEffect(() => {

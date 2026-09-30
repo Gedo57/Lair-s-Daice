@@ -1695,7 +1695,14 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
   useEffect(() => {
     if (!match || match.status !== 'active') return undefined;
-    const interval = window.setInterval(() => setClockTick(Date.now()), 250);
+
+    // The timer only renders whole-second countdown values. Updating the full
+    // gameplay tree four times per second is unnecessary on phones/tablets and
+    // adds avoidable CPU/GPU pressure in iOS Safari. Keep desktop responsiveness
+    // unchanged while halving mobile render churn.
+    const isResourceConstrainedDevice = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
+    const tickIntervalMs = isResourceConstrainedDevice ? 500 : 250;
+    const interval = window.setInterval(() => setClockTick(Date.now()), tickIntervalMs);
     return () => window.clearInterval(interval);
   }, [match?.id, match?.status, match?.turnDeadlineAt]);
 
