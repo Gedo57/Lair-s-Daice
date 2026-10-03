@@ -2236,6 +2236,32 @@ export default function App() {
     }
   };
 
+  const runSessionAuthAction = async (actionName, callback, fallbackNavigation) => {
+    // A login/register/guest action can replace the authenticated user while this
+    // SPA instance stays alive. Tear down the identity-bound Socket.IO connection
+    // and remove all match/queue state from the previous user before accepting the
+    // new auth payload. This prevents a previous guest from being merged into the
+    // next guest's match on the same browser session.
+    setBackendStatus({ loading: true, error: null, lastAction: actionName });
+    disconnectGameSocket();
+    setGameData(initialGameData);
+
+    try {
+      const result = callback ? await callback() : null;
+
+      // Keep the new session authoritative: start from a clean model, then apply
+      // only payloads loaded under the newly-issued access token.
+      setGameData(initialGameData);
+      applyBackendPayloads(result);
+      setBackendStatus({ loading: false, error: null, lastAction: actionName });
+      if (fallbackNavigation) fallbackNavigation(result);
+      return result;
+    } catch (error) {
+      setBackendStatus({ loading: false, error: error.message || 'Backend request failed', lastAction: actionName });
+      return null;
+    }
+  };
+
   const getErrorMessage = (error) => {
     const code = getBackendErrorCode(error);
     const details = error?.details || error?.data?.details || error?.payload?.details || null;
@@ -2371,9 +2397,9 @@ export default function App() {
   );
 
   const backendActions = {
-    login: (credentials) => runBackendAction('auth.login', () => backendBridge.login(credentials), navigation.goLoading),
-    register: (payload) => runBackendAction('auth.register', () => backendBridge.register(payload), navigation.goLoading),
-    loginAsGuest: () => runBackendAction('auth.guest', () => backendBridge.loginAsGuest(), navigation.goGuestLoading),
+    login: (credentials) => runSessionAuthAction('auth.login', () => backendBridge.login(credentials), navigation.goLoading),
+    register: (payload) => runSessionAuthAction('auth.register', () => backendBridge.register(payload), navigation.goLoading),
+    loginAsGuest: () => runSessionAuthAction('auth.guest', () => backendBridge.loginAsGuest(), navigation.goGuestLoading),
     updateProfile: (payload) => runBackendAction('profile.update', async () => {
       const result = await backendBridge.updateProfile(payload);
       const nextAvatar = payload?.avatar || payload?.avatarId;

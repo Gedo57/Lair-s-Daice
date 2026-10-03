@@ -295,12 +295,103 @@ function buildSummary(match = {}, result = {}, tx) {
   ].map((item) => ({ ...item, label: tx(item.label), value: tx(String(item.value)) }));
 }
 
+function firstReplayValue(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== '');
+}
+
 function buildReplayTable(data = {}, match = {}) {
   const source = match.selectedTable || match.table || data.selectedTable || data.playNowTable || data.defaultTable || {};
+  const sourcePricing = source?.pricing && typeof source.pricing === 'object' ? source.pricing : {};
+  const matchPricing = match?.pricing && typeof match.pricing === 'object' ? match.pricing : {};
   const tableId = match.tableId || match.selectedTableId || source.tableId || source.selectedTableId || source.id || source.key || source.tableKey || 'beginner';
   const selectedTableId = match.selectedTableId || match.tableId || source.selectedTableId || source.tableId || source.id || tableId;
   const tableKey = match.tableKey || source.tableKey || source.key || tableId;
-  const maxPlayers = match.requiredPlayers || match.maxPlayers || source.requiredPlayers || source.maxPlayers || source.selectedPlayers;
+  const maxPlayers = firstReplayValue(
+    match.requiredPlayers,
+    match.maxPlayers,
+    match.selectedPlayers,
+    match.playersCount,
+    source.requiredPlayers,
+    source.maxPlayers,
+    source.selectedPlayers,
+    source.playersCount,
+  );
+
+  // A replay must use the authoritative stake/rules from the match that just
+  // finished. Falling back to the private-table catalog here turns a 50-coin
+  // bot match into the catalog default 5-coin match.
+  const buyInAmount = firstReplayValue(
+    match.buyInAmount,
+    match.entryFee,
+    matchPricing.buyInAmount,
+    matchPricing.entryFee,
+    source.buyInAmount,
+    source.entryFee,
+    sourcePricing.buyInAmount,
+    sourcePricing.entryFee,
+  );
+  const startingStack = firstReplayValue(match.startingStack, matchPricing.startingStack, source.startingStack, sourcePricing.startingStack, buyInAmount);
+  const selectedPerGame = firstReplayValue(
+    match.selectedPerGame,
+    match.selectedPerGameAmount,
+    match.perGameAmount,
+    match.roundStake,
+    match.defaultCoinBet,
+    match.defaultBidCoins,
+    matchPricing.selectedPerGame,
+    matchPricing.selectedPerGameAmount,
+    matchPricing.perGameAmount,
+    matchPricing.roundStake,
+    matchPricing.defaultCoinBet,
+    matchPricing.defaultBidCoins,
+    source.selectedPerGame,
+    source.perGameAmount,
+    source.defaultCoinBet,
+    sourcePricing.selectedPerGame,
+    sourcePricing.perGameAmount,
+    sourcePricing.defaultCoinBet,
+  );
+  const minCoinBet = firstReplayValue(match.minCoinBet, match.minBidCoins, matchPricing.minCoinBet, matchPricing.minBidCoins, source.minCoinBet, sourcePricing.minCoinBet, selectedPerGame);
+  const maxCoinBet = firstReplayValue(match.maxCoinBet, match.maxBidCoins, matchPricing.maxCoinBet, matchPricing.maxBidCoins, source.maxCoinBet, sourcePricing.maxCoinBet, selectedPerGame);
+  const defaultCoinBet = firstReplayValue(match.defaultCoinBet, match.defaultBidCoins, matchPricing.defaultCoinBet, matchPricing.defaultBidCoins, source.defaultCoinBet, sourcePricing.defaultCoinBet, selectedPerGame);
+  const coinBetOptions = match.coinBetOptions || matchPricing.coinBetOptions || source.coinBetOptions || sourcePricing.coinBetOptions;
+  const perGameMode = firstReplayValue(match.perGameMode, matchPricing.perGameMode, source.perGameMode, sourcePricing.perGameMode, 'static');
+  const perGameBase = firstReplayValue(match.perGameBase, matchPricing.perGameBase, source.perGameBase, sourcePricing.perGameBase, selectedPerGame);
+  const perGameOptions = match.perGameOptions || matchPricing.perGameOptions || source.perGameOptions || sourcePricing.perGameOptions || coinBetOptions;
+  const pekPercentage = firstReplayValue(match.pekPercentage, match.slamPercentage, matchPricing.pekPercentage, matchPricing.slamPercentage, source.pekPercentage, sourcePricing.pekPercentage);
+  const finalPekAmount = firstReplayValue(match.finalPekAmount, match.finalSlamAmount, matchPricing.finalPekAmount, matchPricing.finalSlamAmount, source.finalPekAmount, sourcePricing.finalPekAmount);
+  const turnTimer = firstReplayValue(match.turnTimer, match.gameRules?.turnTimer, source.turnTimer, source.selectedTimer);
+
+  const sourceMode = firstReplayValue(match.roomMode, match.gameMode, match.playMode, source.roomMode, source.gameMode, source.playMode);
+  const botsEnabled = Boolean(
+    match.botsEnabled
+    || source.botsEnabled
+    || ['bot', 'bots', 'pve', 'ai', 'cpu', 'computer', 'solo', 'singleplayer', 'single-player', 'vs-bot', 'vs-bots'].includes(String(sourceMode || '').trim().toLowerCase()),
+  );
+  const roomMode = botsEnabled ? 'bots' : (sourceMode || 'normal');
+
+  const pricing = {
+    ...sourcePricing,
+    ...matchPricing,
+    ...(buyInAmount !== undefined ? { buyInAmount, buyInCoins: buyInAmount, entryFee: buyInAmount } : {}),
+    ...(startingStack !== undefined ? { startingStack } : {}),
+    ...(selectedPerGame !== undefined ? {
+      selectedPerGame,
+      selectedPerGameAmount: selectedPerGame,
+      perGameAmount: selectedPerGame,
+      perGameCoins: selectedPerGame,
+      roundStake: selectedPerGame,
+    } : {}),
+    ...(minCoinBet !== undefined ? { minCoinBet, minBidCoins: minCoinBet } : {}),
+    ...(maxCoinBet !== undefined ? { maxCoinBet, maxBidCoins: maxCoinBet } : {}),
+    ...(defaultCoinBet !== undefined ? { defaultCoinBet, defaultBidCoins: defaultCoinBet } : {}),
+    ...(coinBetOptions ? { coinBetOptions } : {}),
+    ...(perGameMode ? { perGameMode, coinBetMode: perGameMode } : {}),
+    ...(perGameBase !== undefined ? { perGameBase } : {}),
+    ...(perGameOptions ? { perGameOptions } : {}),
+    ...(pekPercentage !== undefined ? { pekEnabled: true, slamEnabled: true, pekPercentage, slamPercentage: pekPercentage } : {}),
+    ...(finalPekAmount !== undefined ? { finalPekAmount, finalSlamAmount: finalPekAmount } : {}),
+  };
 
   return {
     ...source,
@@ -315,7 +406,52 @@ function buildReplayTable(data = {}, match = {}) {
     tableTier: match.tableTier || match.selectedTableTier || source.tableTier || source.tier,
     selectedTableTier: match.selectedTableTier || match.tableTier || source.selectedTableTier || source.tableTier || source.tier,
     tableType: match.tableType || source.tableType || source.type,
-    ...(maxPlayers ? { maxPlayers, selectedPlayers: maxPlayers, requiredPlayers: maxPlayers } : {}),
+    pricing,
+    ...(buyInAmount !== undefined ? {
+      buyInAmount,
+      buyInCoins: buyInAmount,
+      customBuyIn: buyInAmount,
+      customStake: buyInAmount,
+      entryFee: buyInAmount,
+    } : {}),
+    ...(startingStack !== undefined ? { startingStack } : {}),
+    ...(selectedPerGame !== undefined ? {
+      selectedPerGame,
+      selectedPerGameAmount: selectedPerGame,
+      perGameAmount: selectedPerGame,
+      perGameCoins: selectedPerGame,
+      roundStake: selectedPerGame,
+    } : {}),
+    ...(minCoinBet !== undefined ? { minCoinBet, minBidCoins: minCoinBet } : {}),
+    ...(maxCoinBet !== undefined ? { maxCoinBet, maxBidCoins: maxCoinBet } : {}),
+    ...(defaultCoinBet !== undefined ? { defaultCoinBet, defaultBidCoins: defaultCoinBet } : {}),
+    ...(coinBetOptions ? { coinBetOptions } : {}),
+    ...(perGameMode ? { perGameMode, coinBetMode: perGameMode } : {}),
+    ...(perGameBase !== undefined ? { perGameBase } : {}),
+    ...(perGameOptions ? { perGameOptions } : {}),
+    ...(pekPercentage !== undefined ? { pekEnabled: true, slamEnabled: true, pekPercentage, slamPercentage: pekPercentage } : {}),
+    ...(finalPekAmount !== undefined ? { finalPekAmount, finalSlamAmount: finalPekAmount } : {}),
+    ...(turnTimer !== undefined ? { turnTimer, selectedTimer: turnTimer } : {}),
+    ...(maxPlayers ? { maxPlayers, selectedPlayers: maxPlayers, requiredPlayers: maxPlayers, playersCount: maxPlayers } : {}),
+    ...(botsEnabled ? {
+      roomMode: 'bots',
+      gameMode: 'bots',
+      playMode: 'bots',
+      selectedRoomMode: 'bots',
+      mode: 'bots',
+      selectedMode: 'bots',
+      roomType: 'pve',
+      botsEnabled: true,
+      playWithBots: true,
+      withBots: true,
+      isBotMatch: true,
+      isBotsMatch: true,
+      directStart: true,
+      startImmediately: true,
+      shouldEnterGame: true,
+      skipMatchmaking: true,
+      isPrivate: true,
+    } : { roomMode }),
   };
 }
 

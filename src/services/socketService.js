@@ -5,6 +5,7 @@ import { API_BASE_URL, API_TIMEOUT_MS } from '../config/apiConfig.js';
 const DEFAULT_ACK_TIMEOUT_MS = Math.max(8000, Number(API_TIMEOUT_MS || 15000));
 
 let gameSocket = null;
+let gameSocketAuthToken = null;
 let matchmakingCleanup = null;
 let gameplayCleanup = null;
 let activeMatchId = null;
@@ -73,12 +74,40 @@ function routeMatchmakingResponse(response = {}, handlers = {}) {
   handlers.onQueueUpdate?.(response || { success: true });
 }
 
+function destroySocketInstance({ clearSessionState = true } = {}) {
+  clearMatchmakingListeners();
+  clearGameplayListeners();
+
+  if (gameSocket) {
+    // Remove handlers before disconnecting so a deliberate identity/session switch
+    // cannot leak a stale disconnect/error callback into the next user's UI state.
+    gameSocket.removeAllListeners();
+    gameSocket.disconnect();
+    gameSocket = null;
+  }
+
+  gameSocketAuthToken = null;
+
+  if (clearSessionState) {
+    activeMatchId = null;
+    matchmakingGameStarted = false;
+  }
+}
+
 function getSocket() {
   const token = getAccessToken();
   if (!token) throw new Error('Missing access token');
 
+  // Socket.IO authenticates during the connection handshake. Updating
+  // socket.auth while an existing socket is already connected does NOT change
+  // socket.userId on the server. If the access token changed (guest switch,
+  // login switch, token refresh), destroy the old identity-bound connection and
+  // create a fresh authenticated socket before emitting anything else.
+  if (gameSocket && gameSocketAuthToken !== token) {
+    destroySocketInstance({ clearSessionState: true });
+  }
+
   if (gameSocket) {
-    gameSocket.auth = { ...(gameSocket.auth || {}), token };
     if (!gameSocket.connected) gameSocket.connect();
     return gameSocket;
   }
@@ -93,6 +122,7 @@ function getSocket() {
     reconnectionDelay: 800,
     timeout: DEFAULT_ACK_TIMEOUT_MS,
   });
+  gameSocketAuthToken = token;
 
   gameSocket.connect();
   return gameSocket;
@@ -322,14 +352,7 @@ export function clearSocketGameplayListeners() {
 }
 
 export function disconnectGameSocket() {
-  clearMatchmakingListeners();
-  clearGameplayListeners();
-  if (gameSocket) {
-    activeMatchId = null;
-    matchmakingGameStarted = false;
-    gameSocket.disconnect();
-    gameSocket = null;
-  }
+  destroySocketInstance({ clearSessionState: true });
 }
 
 export function isGameSocketConnected() {
