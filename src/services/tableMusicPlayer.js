@@ -22,6 +22,14 @@ let driftToleranceMs = DEFAULT_DRIFT_TOLERANCE_MS;
 let driftTimer = null;
 let gestureUnlockCleanup = null;
 
+// Safari/iOS does not reliably apply HTMLMediaElement.volume changes while
+// media is playing. Once the user touches the music volume control, route the
+// table music through a Web Audio GainNode and control loudness there instead.
+let audioContext = null;
+let mediaElementSource = null;
+let musicGainNode = null;
+let usingWebAudioGain = false;
+
 function canUseAudio() {
   return typeof window !== 'undefined' && typeof Audio !== 'undefined';
 }
@@ -79,14 +87,77 @@ function getEffectiveVolume() {
   return currentMuted ? 0 : currentVolume;
 }
 
-function applyAudioVolume() {
-  if (audioElement) {
-    audioElement.volume = getEffectiveVolume();
-    audioElement.muted = currentMuted;
+function getAudioContextConstructor() {
+  if (typeof window === 'undefined') return null;
+  return window.AudioContext || window.webkitAudioContext || null;
+}
+
+function resumeAudioContext() {
+  if (!audioContext || audioContext.state !== 'suspended') return;
+
+  try {
+    const resumePromise = audioContext.resume();
+    if (resumePromise?.catch) resumePromise.catch(() => {});
+  } catch (_) {
+    // Keep the HTMLAudioElement path available if Web Audio cannot resume.
   }
 }
 
+function ensureWebAudioVolumeControl({ resume = false } = {}) {
+  if (!audioElement) return false;
+  if (usingWebAudioGain && musicGainNode) {
+    if (resume) resumeAudioContext();
+    return true;
+  }
+
+  const AudioContextConstructor = getAudioContextConstructor();
+  if (!AudioContextConstructor) return false;
+
+  try {
+    if (!audioContext) audioContext = new AudioContextConstructor();
+    if (!mediaElementSource) {
+      mediaElementSource = audioContext.createMediaElementSource(audioElement);
+    }
+    if (!musicGainNode) {
+      musicGainNode = audioContext.createGain();
+      mediaElementSource.connect(musicGainNode);
+      musicGainNode.connect(audioContext.destination);
+    }
+
+    usingWebAudioGain = true;
+
+    // Web Audio owns loudness from this point onward. Keep the media element at
+    // unity gain so Safari cannot fight the slider by ignoring element.volume.
+    audioElement.volume = 1;
+    audioElement.muted = false;
+    musicGainNode.gain.value = getEffectiveVolume();
+
+    if (resume) resumeAudioContext();
+    return true;
+  } catch (_) {
+    usingWebAudioGain = false;
+    musicGainNode = null;
+    return false;
+  }
+}
+
+function applyAudioVolume() {
+  if (!audioElement) return;
+
+  if (usingWebAudioGain && musicGainNode) {
+    audioElement.volume = 1;
+    audioElement.muted = false;
+    musicGainNode.gain.value = getEffectiveVolume();
+    return;
+  }
+
+  audioElement.volume = getEffectiveVolume();
+  audioElement.muted = currentMuted;
+}
+
 function playAudio(audio) {
+  if (usingWebAudioGain) resumeAudioContext();
+
   const playPromise = audio.play();
   if (playPromise?.catch) {
     playPromise.catch(() => {
@@ -197,8 +268,7 @@ function getAudioElement() {
   if (!audioElement) {
     audioElement = new Audio();
     audioElement.preload = 'auto';
-    audioElement.volume = getEffectiveVolume();
-    audioElement.muted = currentMuted;
+    applyAudioVolume();
   }
 
   audioElement.loop = true;
@@ -263,8 +333,7 @@ export function syncTableMusic(track, sync = {}) {
   audio.pause();
   audio.src = nextAudioSrc;
   audio.loop = true;
-  audio.volume = getEffectiveVolume();
-  audio.muted = currentMuted;
+  applyAudioVolume();
 
   const seekAndPlay = () => {
     if (
@@ -303,6 +372,13 @@ export function getTableMusicVolume() {
 export function setTableMusicVolume(volume) {
   currentVolume = clampVolume(volume);
   writeStoredVolume(currentVolume);
+
+  // This is called directly by the range input, so it runs during a user
+  // gesture and is the safest point to initialize/resume Web Audio on iOS.
+  // Create the reusable media element here too if playback has not started yet,
+  // so the first slider interaction still unlocks the GainNode path.
+  if (!audioElement) getAudioElement();
+  ensureWebAudioVolumeControl({ resume: true });
   applyAudioVolume();
 
   // Volume and mute are intentionally independent controls. Moving the slider
@@ -317,6 +393,11 @@ export function getTableMusicMuted() {
 export function setTableMusicMuted(muted) {
   currentMuted = Boolean(muted);
   writeStoredMuted(currentMuted);
+
+  // The mute control is also a user gesture. Reuse the same gain path so mute
+  // and slider state cannot diverge on Safari/iOS.
+  if (!audioElement) getAudioElement();
+  ensureWebAudioVolumeControl({ resume: true });
   applyAudioVolume();
 
   return currentMuted;
@@ -328,6 +409,8 @@ export function toggleTableMusicMuted() {
 
 export function resumeTableMusic({ forceSync = true } = {}) {
   if (!audioElement || !currentAudioSrc) return false;
+
+  if (usingWebAudioGain) resumeAudioContext();
 
   // UI controls can call this safely: an already-playing track is never
   // restarted or force-seeked just because a menu was opened/closed.
@@ -348,6 +431,8 @@ export function installTableMusicGestureUnlock() {
   if (gestureUnlockCleanup) return gestureUnlockCleanup;
 
   const tryResumeFromGesture = () => {
+    if (usingWebAudioGain) resumeAudioContext();
+
     // Autoplay-restricted browsers (notably Safari/iOS) may reject the first
     // automatic play(). Any normal player interaction should unlock the music;
     // the SOUND/settings button is deliberately not special-cased.
