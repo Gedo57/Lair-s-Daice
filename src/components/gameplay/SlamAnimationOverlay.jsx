@@ -20,6 +20,10 @@ const layers = {
 };
 
 export default function SlamAnimationOverlay({ active = false, runId = 0 }) {
+  // Release inactive image nodes and their compositor layers after each run.
+  // Gameplay still owns the original synchronized action and finish timers.
+  if (!active) return null;
+
   return (
     <div
       className={`slam-animation-overlay ${active ? 'is-active' : ''}`}

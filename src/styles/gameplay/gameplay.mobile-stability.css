@@ -1,0 +1,58 @@
+/* Patch 1: bound cinematic lifetime and reduce mobile compositor pressure.
+   Imported last to override the consolidated portrait/opponent-turn rules.
+   Match rules, action timing, audio and desktop turn styling stay in their
+   original modules. Use the same mobile criteria as getDeviceMode(). */
+
+.gameplay-opponent-tint {
+  display: none;
+}
+
+@media (max-width: 1024px), (pointer: coarse) {
+  /* Avoid filtering the entire live, scaled gameplay subtree. Keep disabled
+     controls and the active-player indicators; tint the opponent's turn. */
+  html .app-shell.app-shell--gameplay .game-frame .gameplay-screen,
+  html[data-device][data-orientation]
+    .app-shell.app-shell--gameplay .game-frame .gameplay-screen {
+    -webkit-filter: none !important;
+    filter: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell--gameplay .gameplay-screen > .gameplay-opponent-tint {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 300;
+    background: rgba(18, 20, 24, .24);
+    pointer-events: none;
+  }
+
+  /* Remove the oversized, continuously blurred portrait backdrop. The table
+     image remains visible behind the fixed gameplay frame with a flat tint. */
+  html[data-device="mobile"][data-orientation="portrait"]
+    .app-shell.app-shell--gameplay::before {
+    inset: 0 !important;
+    transform: none !important;
+    -webkit-filter: none !important;
+    filter: none !important;
+    background-image:
+      linear-gradient(rgba(7, 19, 22, .24), rgba(7, 19, 22, .24)),
+      var(--gameplay-portrait-background-image, var(--gameplay-background-image)) !important;
+  }
+
+  .app-shell--gameplay .opening-coin-flip__backdrop {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Preserve every image, transform and duration; omit costly per-layer
+     shadow/color filters on mobile while the cinematic is active. */
+  .app-shell--gameplay .slam-layer,
+  .app-shell--gameplay .call-liar-layer,
+  .app-shell--gameplay .zai-layer,
+  .app-shell--gameplay .fei-layer {
+    -webkit-filter: none !important;
+    filter: none !important;
+  }
+}

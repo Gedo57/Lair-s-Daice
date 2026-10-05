@@ -73,7 +73,7 @@
   user-select: none;
   -webkit-user-drag: none;
   transform-origin: center center;
-  will-change: transform, opacity, filter;
+  will-change: auto;
 }
 
 /* Radial pressure/speed frame */
@@ -386,4 +386,9 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .ca
   right: -4%;
   top: 43%;
   width: 58%;
+}
+
+/* Only the currently mounted cinematic needs compositor hints. */
+.call-liar-animation-overlay.is-active .call-liar-layer {
+  will-change: transform, opacity;
 }

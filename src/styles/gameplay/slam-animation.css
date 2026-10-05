@@ -55,7 +55,7 @@
   user-select: none;
   -webkit-user-drag: none;
   transform-origin: center center;
-  will-change: transform, opacity, filter;
+  will-change: auto;
 }
 
 /* Table layers */
@@ -388,4 +388,9 @@ html[data-device='mobile'][data-orientation='portrait'] .app-shell--gameplay .sl
   .slam-animation-overlay.is-active .slam-layer--table-crack {
     animation-duration: 520ms;
   }
+}
+
+/* Only the currently mounted cinematic needs compositor hints. */
+.slam-animation-overlay.is-active .slam-layer {
+  will-change: transform, opacity;
 }

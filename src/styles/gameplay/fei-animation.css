@@ -48,7 +48,7 @@
   pointer-events: none;
   object-fit: contain;
   opacity: 0;
-  will-change: transform, opacity, filter;
+  will-change: auto;
 }
 
 .fei-layer--speed-lines {
@@ -327,4 +327,9 @@
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
   }
+}
+
+/* Only the currently mounted cinematic needs compositor hints. */
+.fei-animation-overlay.is-active .fei-layer {
+  will-change: transform, opacity;
 }

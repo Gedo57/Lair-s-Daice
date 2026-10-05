@@ -1,3 +1,5 @@
+import { GAMEPLAY_CINEMATIC_ASSETS } from '../config/assetsManifest.js';
+import { preloadAssetsInBackground } from '../services/assetPreloader.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveProfileAvatarSrc as resolveAvatarSrc } from '../utils/profileAvatars.js';
 import { getTableMusicMuted, getTableMusicVolume, resumeTableMusic, setTableMusicMuted, setTableMusicVolume } from '../services/tableMusicPlayer.js';
@@ -1551,6 +1553,14 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
   useEffect(() => {
     preloadGameSfx();
+    // Warm the browser cache progressively instead of keeping all 48 hidden
+    // cinematic image nodes mounted throughout the match. The existing loader
+    // retains compact status metadata only, never the decoded Image objects.
+    const warmup = preloadAssetsInBackground(GAMEPLAY_CINEMATIC_ASSETS, {
+      concurrency: 1,
+      delayMs: 0,
+    });
+    return () => warmup.cancel();
   }, []);
 
   useEffect(() => {
@@ -2367,6 +2377,9 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       data-turn-intro-count={tablePlayerCount}
       aria-label={tx('Gameplay')}
     >
+      {activePlayer && !myTurn && !forceFullColorEvent && !isOpeningCoinFlipActive ? (
+        <div className="gameplay-opponent-tint" aria-hidden="true" />
+      ) : null}
       <GameplayPlayersLayer
         panelItems={panelItems}
         renderPlayerPanel={(item) => (

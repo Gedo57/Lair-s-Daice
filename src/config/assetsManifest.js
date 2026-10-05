@@ -410,3 +410,15 @@ export function getAllManifestAssets() {
 }
 
 export default ASSET_GROUPS;
+
+// Warm one cinematic image at a time without retaining HTMLImageElements.
+// Paths match the existing public folders used by the four overlays.
+export const GAMEPLAY_CINEMATIC_ASSETS = [
+  ['slam', 13],
+  ['call-liar', 10],
+  ['zai', 13],
+  ['fei', 12],
+].flatMap(([folder, count]) => Array.from(
+  { length: count },
+  (_, index) => `${import.meta.env.BASE_URL}${folder}/layer${index + 1}.png`,
+));
