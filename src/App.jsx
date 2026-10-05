@@ -14,7 +14,7 @@ import {
   toCssBackgroundImageValue,
 } from './utils/gameplayBackgrounds.js';
 import { preloadAssets, preloadAssetsInBackground } from './services/assetPreloader.js';
-import { syncTableMusic, stopTableMusic } from './services/tableMusicPlayer.js';
+import { installTableMusicGestureUnlock, syncTableMusic, stopTableMusic } from './services/tableMusicPlayer.js';
 import { backendBridge } from './services/backendBridge.js';
 import {
   cancelSocketMatchmaking,
@@ -1932,6 +1932,8 @@ export default function App() {
       active = false;
     };
   }, []);
+
+  useEffect(() => installTableMusicGestureUnlock(), []);
 
   const activeBackgroundData = screen === 'mockgame' ? mockGameplayData : gameData;
   const activeTableMusicTrack = useMemo(() => resolveTableMusicTrack(screen, activeBackgroundData), [screen, activeBackgroundData]);

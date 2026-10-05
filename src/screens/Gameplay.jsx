@@ -2164,16 +2164,15 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   };
 
   const toggleMusicPanel = () => {
+    // SOUND only opens/closes the settings panel. It must never restart, seek,
+    // mute or otherwise touch the active music playback.
     setMusicPanelOpen((open) => !open);
-    resumeTableMusic();
   };
 
   const handleMusicVolumeChange = (event) => {
     const nextVolume = Math.min(100, Math.max(0, Number(event.target.value) || 0));
     setMusicVolume(nextVolume);
     setTableMusicVolume(nextVolume / 100);
-    setMusicMuted(false);
-    resumeTableMusic();
   };
 
   const toggleMusicMuted = () => {

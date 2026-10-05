@@ -20,6 +20,7 @@ let timelineAnchorMs = FALLBACK_TIMELINE_ANCHOR_MS;
 let serverClockOffsetMs = 0;
 let driftToleranceMs = DEFAULT_DRIFT_TOLERANCE_MS;
 let driftTimer = null;
+let gestureUnlockCleanup = null;
 
 function canUseAudio() {
   return typeof window !== 'undefined' && typeof Audio !== 'undefined';
@@ -245,6 +246,10 @@ export function syncTableMusic(track, sync = {}) {
   if (currentTrackId === nextTrackId && currentAudioSrc === nextAudioSrc) {
     seekToSynchronizedPosition(audio);
     startDriftTimer();
+
+    // Recover playback if the browser/OS paused the element while keeping the
+    // same track loaded. This does not seek when playback is already healthy.
+    if (audio.paused && !currentMuted) playAudio(audio);
     return;
   }
 
@@ -298,14 +303,10 @@ export function getTableMusicVolume() {
 export function setTableMusicVolume(volume) {
   currentVolume = clampVolume(volume);
   writeStoredVolume(currentVolume);
-
-  if (currentVolume > 0 && currentMuted) {
-    currentMuted = false;
-    writeStoredMuted(currentMuted);
-  }
-
   applyAudioVolume();
 
+  // Volume and mute are intentionally independent controls. Moving the slider
+  // must not silently change the user's explicit mute preference.
   return currentVolume;
 }
 
@@ -325,9 +326,49 @@ export function toggleTableMusicMuted() {
   return setTableMusicMuted(!currentMuted);
 }
 
-export function resumeTableMusic() {
-  if (!audioElement || !currentAudioSrc) return;
-  // If autoplay was blocked, do not resume from the stale buffered position.
-  seekToSynchronizedPosition(audioElement, { force: true });
+export function resumeTableMusic({ forceSync = true } = {}) {
+  if (!audioElement || !currentAudioSrc) return false;
+
+  // UI controls can call this safely: an already-playing track is never
+  // restarted or force-seeked just because a menu was opened/closed.
+  if (!audioElement.paused && !audioElement.ended) return true;
+
+  if (forceSync) {
+    // If autoplay was blocked, resume on the current shared timeline rather
+    // than from a stale buffered position.
+    seekToSynchronizedPosition(audioElement, { force: true });
+  }
+
   playAudio(audioElement);
+  return true;
+}
+
+export function installTableMusicGestureUnlock() {
+  if (typeof window === 'undefined') return () => {};
+  if (gestureUnlockCleanup) return gestureUnlockCleanup;
+
+  const tryResumeFromGesture = () => {
+    // Autoplay-restricted browsers (notably Safari/iOS) may reject the first
+    // automatic play(). Any normal player interaction should unlock the music;
+    // the SOUND/settings button is deliberately not special-cased.
+    if (!audioElement || !currentAudioSrc || currentMuted) return;
+    if (audioElement.paused || audioElement.ended) {
+      resumeTableMusic({ forceSync: true });
+    }
+  };
+
+  const pointerOptions = { capture: true, passive: true };
+  window.addEventListener('pointerdown', tryResumeFromGesture, pointerOptions);
+  window.addEventListener('touchend', tryResumeFromGesture, pointerOptions);
+  window.addEventListener('keydown', tryResumeFromGesture, true);
+
+  const cleanup = () => {
+    window.removeEventListener('pointerdown', tryResumeFromGesture, true);
+    window.removeEventListener('touchend', tryResumeFromGesture, true);
+    window.removeEventListener('keydown', tryResumeFromGesture, true);
+    if (gestureUnlockCleanup === cleanup) gestureUnlockCleanup = null;
+  };
+
+  gestureUnlockCleanup = cleanup;
+  return cleanup;
 }
