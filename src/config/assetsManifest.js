@@ -100,6 +100,38 @@ const gameplayBackgroundAssets = [
 const gameplayDiceAssets = files(ASSET_FOLDERS.gameplay, Array.from({ length: 6 }, (_, index) => `n${index + 1}.png`));
 const gameplayRedDiceAssets = files(ASSET_FOLDERS.gameplay, ['n11.png', 'n22.png', 'n33.png', 'n44.png', 'n55.png', 'n66.png']);
 
+// iPhone/iPad Safari has a relatively small WebContent memory budget. The
+// normal gameplay manifest is intentionally exhaustive for desktop, but
+// decoding every gameplay image before mounting the screen can create a large
+// transient memory spike on mobile. This compact set only warms the assets
+// required for the first rendered frame; the remaining images are requested by
+// the browser naturally as their UI becomes visible.
+const gameplayLowMemoryFirstFrameAssets = [
+  file(ASSET_FOLDERS.gameplay, 'cup.png'),
+  file(ASSET_FOLDERS.gameplay, 'PP22.png'),
+  file(ASSET_FOLDERS.gameplay, '4.png'),
+  file(ASSET_FOLDERS.gameplay, 'tt.png'),
+  file(ASSET_FOLDERS.gameplay, 'coin.png'),
+  ...files(ASSET_FOLDERS.gameplay, ['bb1.png', 'bb2.png', 'bb3.png']),
+  ...gameplayDiceAssets,
+];
+
+export function getLowMemoryGameplayAssets(background = {}, orientation = 'portrait') {
+  const landscapeBackground = background?.backgroundUrl
+    || background?.gameplayBackgroundUrl
+    || background?.url
+    || file(ASSET_FOLDERS.gameplay, 'BG.png');
+  const portraitBackground = background?.gameplayPortraitBackgroundUrl
+    || background?.portraitUrl
+    || background?.backgroundPortraitUrl
+    || landscapeBackground;
+
+  // Only warm the currently needed background variant. Loading all three table
+  // themes in both orientations was the largest avoidable decode burst.
+  const selectedBackground = orientation === 'portrait' ? portraitBackground : landscapeBackground;
+  return uniqueAssets([selectedBackground, ...gameplayLowMemoryFirstFrameAssets]);
+}
+
 export const ASSET_GROUPS = {
   starter: [
     file(ASSET_FOLDERS.portrait, 'starter-mainmenu-bg.png'),
@@ -410,15 +442,3 @@ export function getAllManifestAssets() {
 }
 
 export default ASSET_GROUPS;
-
-// Warm one cinematic image at a time without retaining HTMLImageElements.
-// Paths match the existing public folders used by the four overlays.
-export const GAMEPLAY_CINEMATIC_ASSETS = [
-  ['slam', 13],
-  ['call-liar', 10],
-  ['zai', 13],
-  ['fei', 12],
-].flatMap(([folder, count]) => Array.from(
-  { length: count },
-  (_, index) => `${import.meta.env.BASE_URL}${folder}/layer${index + 1}.png`,
-));

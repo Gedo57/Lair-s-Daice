@@ -3759,3 +3759,20 @@ html[data-device="mobile"][data-orientation="portrait"] .app-shell--gameplay .ga
   -webkit-backdrop-filter: none !important;
 }
 
+
+
+/* ===== PATCH 1 — iOS/WebKit gameplay memory/GPU stability =====
+   Physical phones/tablets keep the same outer background artwork, but avoid
+   rasterizing a viewport-sized 24px blur layer. The duplicate background
+   remains as the letterbox/fill layer, with lightweight brightness/opacity. */
+html[data-physical-device="mobile"][data-orientation="portrait"] .app-shell--gameplay {
+  --portrait-gameplay-outer-blur: 0px !important;
+  --portrait-gameplay-outer-scale: 1.025 !important;
+}
+
+html[data-physical-device="mobile"][data-orientation="portrait"] .app-shell--gameplay::before {
+  inset: -12px !important;
+  -webkit-filter: none !important;
+  filter: none !important;
+  opacity: .76 !important;
+}

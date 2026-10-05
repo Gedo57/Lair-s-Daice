@@ -351,6 +351,12 @@ export function clearSocketGameplayListeners() {
   clearGameplayListeners();
 }
 
+export function releaseSocketMatchSession() {
+  activeMatchId = null;
+  matchmakingGameStarted = false;
+  clearGameplayListeners();
+}
+
 export function disconnectGameSocket() {
   destroySocketInstance({ clearSessionState: true });
 }

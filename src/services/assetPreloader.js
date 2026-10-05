@@ -60,6 +60,46 @@ function compactResult(result = {}) {
   };
 }
 
+function preloadWithFetch(src, timeoutMs) {
+  if (typeof fetch !== 'function') {
+    return Promise.resolve({ src, ok: false, skipped: true, reason: 'fetch-api-unavailable' });
+  }
+
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  let timeoutId = null;
+
+  if (controller && typeof window !== 'undefined') {
+    timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+  }
+
+  return fetch(src, {
+    method: 'GET',
+    cache: 'force-cache',
+    credentials: 'same-origin',
+    signal: controller?.signal,
+  })
+    .then(async (response) => {
+      const ok = Boolean(response?.ok || response?.type === 'opaque');
+      // Consume the compressed response body so the request actually finishes
+      // and can populate the HTTP cache. This is far cheaper than decoding the
+      // image into a full RGBA bitmap before gameplay mounts.
+      if (ok && response?.body) await response.arrayBuffer();
+      return {
+        src,
+        ok,
+        reason: ok ? 'fetched' : `http-${response?.status || 0}`,
+      };
+    })
+    .catch((error) => ({
+      src,
+      ok: false,
+      reason: error?.name === 'AbortError' ? 'timeout' : 'fetch-error',
+    }))
+    .finally(() => {
+      if (timeoutId && typeof window !== 'undefined') window.clearTimeout(timeoutId);
+    });
+}
+
 function preloadWithImage(src, timeoutMs, options = {}) {
   if (typeof Image === 'undefined') {
     return Promise.resolve({ src, ok: false, skipped: true, reason: 'image-api-unavailable' });
@@ -126,7 +166,8 @@ export function preloadAsset(src, options = {}) {
   if (cached && typeof cached.ok === 'boolean') return Promise.resolve(compactResult(cached));
 
   const timeoutMs = Number.isFinite(Number(options.timeoutMs)) ? Number(options.timeoutMs) : DEFAULT_TIMEOUT_MS;
-  const promise = preloadWithImage(safeSrc, timeoutMs, options).then((result) => {
+  const loader = options.decode === false ? preloadWithFetch : preloadWithImage;
+  const promise = loader(safeSrc, timeoutMs, options).then((result) => {
     const settled = { ...compactResult(result), loadedAt: Date.now() };
 
     // Only compact metadata is retained. In particular, never retain the Image
@@ -161,6 +202,7 @@ export async function preloadAssets(list = [], options = {}) {
   const timeoutMs = typeof options === 'function' ? DEFAULT_TIMEOUT_MS : options.timeoutMs;
   const concurrency = typeof options === 'function' ? DEFAULT_CONCURRENCY : options.concurrency;
   const priority = typeof options === 'function' ? 'auto' : options.priority;
+  const decode = typeof options === 'function' ? true : options.decode !== false;
 
   if (!total) {
     onProgress?.(makeProgress(0, 0));
@@ -172,7 +214,7 @@ export async function preloadAssets(list = [], options = {}) {
   onProgress?.({ loaded: 0, total, percent: 0, src: '', ok: true });
 
   await runPool(assets, async (src, index) => {
-    const result = await preloadAsset(src, { timeoutMs, priority });
+    const result = await preloadAsset(src, { timeoutMs, priority, decode });
     results[index] = result;
     loaded += 1;
     onProgress?.(makeProgress(loaded, total, src, result.ok));

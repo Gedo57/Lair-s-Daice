@@ -572,3 +572,30 @@ html[data-device='mobile'][data-orientation='portrait']
   filter: blur(var(--portrait-gameplay-outer-blur, 24px)) brightness(.78) saturate(1.08) !important;
 }
 
+
+
+/* ===== PATCH 1 — low-cost opponent-turn state on phones/tablets =====
+   Filtering the entire fixed 720x1280 gameplay canvas forces Safari to keep a
+   large offscreen compositing surface alive every turn. On physical mobile
+   hardware use the existing inset overlay instead; desktop keeps the original
+   grayscale treatment. */
+html[data-physical-device='mobile'] .app-shell--gameplay.is-opponent-turn-shell .gameplay-screen,
+html[data-physical-device='mobile'] .gameplay-screen.is-opponent-turn {
+  -webkit-filter: none !important;
+  filter: none !important;
+  box-shadow: inset 0 0 0 9999px rgba(18, 20, 24, .34) !important;
+}
+
+html[data-physical-device='mobile'][data-orientation='portrait']
+  .app-shell--gameplay.is-opponent-turn-shell::before {
+  -webkit-filter: none !important;
+  filter: none !important;
+  opacity: .56 !important;
+}
+
+html[data-physical-device='mobile'][data-orientation='portrait']
+  .app-shell--gameplay.is-my-turn-shell::before {
+  -webkit-filter: none !important;
+  filter: none !important;
+  opacity: .76 !important;
+}

@@ -3,7 +3,7 @@ import { useFixedViewport } from './hooks.js';
 import { useLanguage } from './i18n/useLanguage.js';
 import { initialGameData } from './data/initialGameData.js';
 import { createMockBackendActions, mockGameData } from './data/mockGameData.js';
-import { getAssetsForPhase, getAssetsForScreen } from './config/assetsManifest.js';
+import { getAssetsForPhase, getAssetsForScreen, getLowMemoryGameplayAssets } from './config/assetsManifest.js';
 import { resolveCreateRoomMusicKeyFromSettings, resolveTableMusicTrack } from './config/tableMusic.js';
 import {
   resolveCreateRoomBackgroundContract,
@@ -19,6 +19,7 @@ import { backendBridge } from './services/backendBridge.js';
 import {
   cancelSocketMatchmaking,
   clearSocketGameplayListeners,
+  releaseSocketMatchSession,
   disconnectGameSocket,
   isGameSocketConnected,
   joinSocketMatch,
@@ -2091,6 +2092,11 @@ export default function App() {
       await preloadAssets(assets, {
         concurrency: options.concurrency ?? (useLowMemoryPreload ? 3 : 8),
         timeoutMs: options.timeoutMs ?? 15000,
+        // On iPhone/iPad gameplay navigation, warm the HTTP cache without
+        // constructing/decoding an Image for every asset before the screen
+        // mounts. This removes the decode-memory spike that can terminate
+        // Safari's WebContent process.
+        decode: options.decode ?? true,
         onProgress: ({ loaded, total, percent }) => {
           if (navId !== assetNavigationIdRef.current) return;
           setAssetLoadingState({
@@ -2197,7 +2203,15 @@ export default function App() {
     goJoinRoom: () => preloadAndNavigate('joinroom', { destinationLabel: 'join room', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
     goRoomLobby: () => preloadAndNavigate('roomlobby', { destinationLabel: 'room lobby', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
     goMatchmaking: () => preloadAndNavigate('matchmaking', { destinationLabel: 'matchmaking', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
-    goGameplay: () => preloadAndNavigate('gameplay', { destinationLabel: 'gameplay', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
+    goGameplay: () => preloadAndNavigate('gameplay', useLowMemoryPreload
+      ? {
+        destinationLabel: 'gameplay',
+        minVisibleMs: 120,
+        concurrency: 2,
+        decode: false,
+        assets: getLowMemoryGameplayAssets(gameplayBackground, layout.orientation),
+      }
+      : { destinationLabel: 'gameplay', minVisibleMs: 180, concurrency: 4 }),
     goWin: () => preloadAndNavigate('win', { destinationLabel: 'result screen', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
     goHelp: () => preloadAndNavigate('help', { destinationLabel: 'help screen', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
     goProfile: () => preloadAndNavigate('profile', { destinationLabel: 'profile', minVisibleMs: 180, concurrency: useLowMemoryPreload ? 2 : 4 }),
@@ -2364,6 +2378,9 @@ export default function App() {
     setBackendStatus({ loading: false, error: null, lastAction: actionName });
 
     if (isFinishedMatchPayload(payload)) {
+      // Drop gameplay listeners + stale match identity before navigating away.
+      // This prevents a later Socket.IO reconnect from rejoining a finished match.
+      releaseSocketMatchSession();
       navigation.goWin();
     }
 

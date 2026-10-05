@@ -1,5 +1,3 @@
-import { GAMEPLAY_CINEMATIC_ASSETS } from '../config/assetsManifest.js';
-import { preloadAssetsInBackground } from '../services/assetPreloader.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveProfileAvatarSrc as resolveAvatarSrc } from '../utils/profileAvatars.js';
 import { getTableMusicMuted, getTableMusicVolume, resumeTableMusic, setTableMusicMuted, setTableMusicVolume } from '../services/tableMusicPlayer.js';
@@ -1553,14 +1551,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
 
   useEffect(() => {
     preloadGameSfx();
-    // Warm the browser cache progressively instead of keeping all 48 hidden
-    // cinematic image nodes mounted throughout the match. The existing loader
-    // retains compact status metadata only, never the decoded Image objects.
-    const warmup = preloadAssetsInBackground(GAMEPLAY_CINEMATIC_ASSETS, {
-      concurrency: 1,
-      delayMs: 0,
-    });
-    return () => warmup.cancel();
   }, []);
 
   useEffect(() => {
@@ -1581,22 +1571,33 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       syncTurnIntroDiceTarget(gameplayScreenRef.current, bidDiceTargetRef.current);
     };
 
+    let frameId = 0;
+    const scheduleTargetUpdate = () => {
+      if (frameId) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = 0;
+        updateTarget();
+      });
+    };
+
     updateTarget();
-    const frameId = window.requestAnimationFrame(updateTarget);
-    window.addEventListener('resize', updateTarget);
-    window.addEventListener('orientationchange', updateTarget);
+    scheduleTargetUpdate();
+    window.addEventListener('resize', scheduleTargetUpdate, { passive: true });
+    window.addEventListener('orientationchange', scheduleTargetUpdate, { passive: true });
 
     let resizeObserver = null;
     if (typeof window.ResizeObserver === 'function') {
-      resizeObserver = new window.ResizeObserver(updateTarget);
-      if (gameplayScreenRef.current) resizeObserver.observe(gameplayScreenRef.current);
+      resizeObserver = new window.ResizeObserver(scheduleTargetUpdate);
+      // The 720x1280 gameplay canvas is fixed-size. Observing it on iOS causes
+      // redundant callbacks while Safari adjusts its visual viewport/chrome.
+      // The dice-row target is the only element whose geometry matters here.
       if (bidDiceTargetRef.current) resizeObserver.observe(bidDiceTargetRef.current);
     }
 
     return () => {
-      window.cancelAnimationFrame(frameId);
-      window.removeEventListener('resize', updateTarget);
-      window.removeEventListener('orientationchange', updateTarget);
+      if (frameId) window.cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', scheduleTargetUpdate);
+      window.removeEventListener('orientationchange', scheduleTargetUpdate);
       resizeObserver?.disconnect();
     };
   }, []);
@@ -1706,12 +1707,12 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
   useEffect(() => {
     if (!match || match.status !== 'active') return undefined;
 
-    // The timer only renders whole-second countdown values. Updating the full
-    // gameplay tree four times per second is unnecessary on phones/tablets and
-    // adds avoidable CPU/GPU pressure in iOS Safari. Keep desktop responsiveness
-    // unchanged while halving mobile render churn.
+    // The UI displays whole seconds, so phones/tablets only need one clock
+    // render per second. This cuts full gameplay-tree reconciliation in half
+    // again versus the previous 500 ms mobile interval and reduces iOS Safari
+    // CPU/GPU churn without changing the visible countdown.
     const isResourceConstrainedDevice = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
-    const tickIntervalMs = isResourceConstrainedDevice ? 500 : 250;
+    const tickIntervalMs = isResourceConstrainedDevice ? 1000 : 250;
     const interval = window.setInterval(() => setClockTick(Date.now()), tickIntervalMs);
     return () => window.clearInterval(interval);
   }, [match?.id, match?.status, match?.turnDeadlineAt]);
@@ -2377,9 +2378,6 @@ export default function Gameplay({ navigation, data, backendActions, backendStat
       data-turn-intro-count={tablePlayerCount}
       aria-label={tx('Gameplay')}
     >
-      {activePlayer && !myTurn && !forceFullColorEvent && !isOpeningCoinFlipActive ? (
-        <div className="gameplay-opponent-tint" aria-hidden="true" />
-      ) : null}
       <GameplayPlayersLayer
         panelItems={panelItems}
         renderPlayerPanel={(item) => (
