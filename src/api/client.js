@@ -2,11 +2,13 @@ import { API_BASE_URL, API_ENDPOINTS, API_TIMEOUT_MS } from '../config/apiConfig
 import { waitForBackendReady } from './backendWake.js';
 
 export const TOKEN_STORAGE_KEY = 'ld_access_token';
+export const PROVIDER_SESSION_TOKEN_KEY = 'ld_provider_access_token';
 
 const AUTH_ENDPOINTS_WITHOUT_REFRESH_RETRY = new Set([
   API_ENDPOINTS.auth.login,
   API_ENDPOINTS.auth.sidesix,
   API_ENDPOINTS.auth.platform,
+  API_ENDPOINTS.auth.provider,
   API_ENDPOINTS.auth.register,
   API_ENDPOINTS.auth.guest,
   API_ENDPOINTS.auth.refresh,
@@ -20,22 +22,30 @@ function canUseStorage() {
 function readStoredToken() {
   if (!canUseStorage()) return null;
   try {
-    return window.localStorage.getItem(TOKEN_STORAGE_KEY);
+    return window.sessionStorage.getItem(PROVIDER_SESSION_TOKEN_KEY) || window.localStorage.getItem(TOKEN_STORAGE_KEY);
   } catch (_error) {
     return null;
   }
 }
 
 let accessToken = readStoredToken();
+let ephemeralSession = Boolean(typeof window !== 'undefined' && window.sessionStorage?.getItem(PROVIDER_SESSION_TOKEN_KEY));
 
-export function setAccessToken(token) {
+export function setAccessToken(token, { ephemeral = ephemeralSession } = {}) {
   accessToken = token || null;
+  ephemeralSession = Boolean(accessToken && ephemeral);
 
   if (!canUseStorage()) return;
 
   try {
-    if (accessToken) window.localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
-    else window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+    if (ephemeralSession) {
+      window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+      window.sessionStorage.setItem(PROVIDER_SESSION_TOKEN_KEY, accessToken);
+    } else {
+      window.sessionStorage.removeItem(PROVIDER_SESSION_TOKEN_KEY);
+      if (accessToken) window.localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
+      else window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
   } catch (_error) {
     // Storage can be unavailable in private browsing. The in-memory token still works.
   }

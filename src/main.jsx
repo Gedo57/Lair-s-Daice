@@ -29,6 +29,27 @@ const SIDE_SIX_LAUNCH_KEYS = ['userId', 'userName', 'ts', 'nonce', 'sig', 'avata
 const SIDE_SIX_RETURN_URL_KEY = 'ld_sidesix_return_url';
 
 
+function providerLaunchFromFragment() {
+  const raw = String(window.location.hash || '').replace(/^#/, '');
+  if (!raw.includes('provider_launch_token=')) return null;
+  const params = new URLSearchParams(raw);
+  const launchToken = params.get('provider_launch_token') || '';
+  if (!/^[A-Za-z0-9_-]{43}$/.test(launchToken)) throw new Error('Invalid Game Provider launch token');
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
+  return { launchToken, exchangeId: window.crypto?.randomUUID?.() || `liars-${Date.now()}-${Math.random().toString(16).slice(2)}` };
+}
+
+async function exchangeProviderLaunchIfPresent() {
+  const launch = providerLaunchFromFragment();
+  if (!launch) return false;
+  const [{ loginWithProviderLaunch }, { clearAccessToken }] = await Promise.all([import('./api/authApi.js'), import('./api/client.js')]);
+  // A new operator handoff must never inherit a previous local/demo JWT.
+  clearAccessToken();
+  await loginWithProviderLaunch(launch);
+  window.history.replaceState({}, '', '/main-menu');
+  return true;
+}
+
 function platformLaunchFromFragment() {
   const raw = String(window.location.hash || '').replace(/^#/, '');
   if (!raw.includes('platform_launch_token=')) return null;
@@ -97,8 +118,16 @@ async function bootstrap() {
     const isDirectTutorialRoute = cleanPath.toLowerCase() === '/tutorial';
 
     if (!isDirectTutorialRoute) {
-      const platformLaunched = await exchangePlatformLaunchIfPresent();
-      if (!platformLaunched) await exchangeSideSixLaunchIfPresent();
+      // Direct Vercel root visits are Demo: never inherit a previous Provider tab session.
+      if (cleanPath === '/' && !String(window.location.hash || '').includes('provider_launch_token=')) {
+        const { PROVIDER_SESSION_TOKEN_KEY, clearAccessToken } = await import('./api/client.js');
+        if (window.sessionStorage?.getItem(PROVIDER_SESSION_TOKEN_KEY)) clearAccessToken();
+      }
+      const providerLaunched = await exchangeProviderLaunchIfPresent();
+      if (!providerLaunched) {
+        const platformLaunched = await exchangePlatformLaunchIfPresent();
+        if (!platformLaunched) await exchangeSideSixLaunchIfPresent();
+      }
       cleanPath = window.location.pathname.replace(/\/+$/, '') || '/';
     }
     const rootModule = cleanPath.toLowerCase() === '/tutorial'

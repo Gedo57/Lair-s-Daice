@@ -2,7 +2,7 @@ import { API_ENDPOINTS } from '../config/apiConfig.js';
 import { apiRequest, setAccessToken } from './client.js';
 
 function storeTokenFromPayload(payload) {
-  if (payload?.accessToken) setAccessToken(payload.accessToken);
+  if (payload?.accessToken) setAccessToken(payload.accessToken, { ephemeral: false });
   return payload;
 }
 
@@ -14,6 +14,14 @@ export async function loginWithPlatformLaunch(launch) {
     authRetry: false,
   });
   return storeTokenFromPayload(payload);
+}
+
+export async function loginWithProviderLaunch(launch) {
+  const payload = await apiRequest(API_ENDPOINTS.auth.provider, {
+    method: 'POST', body: launch, authRetry: false,
+  });
+  if (payload?.accessToken) setAccessToken(payload.accessToken, { ephemeral: true });
+  return payload;
 }
 
 export async function loginWithSideSixLaunch(launch) {

@@ -462,8 +462,8 @@ function formatCurrency(value) {
 
 function normalizeWallet(wallet = {}) {
   const provider = String(wallet.provider || wallet.walletProvider || '').toLowerCase() || 'local';
-  const external = Boolean(wallet.external || wallet.externalWallet || provider === 'sidesix' || provider === 'platform');
-  const platformWallet = provider === 'platform';
+  const external = Boolean(wallet.external || wallet.externalWallet || provider === 'sidesix' || provider === 'platform' || provider === 'provider');
+  const platformWallet = provider === 'platform' || provider === 'provider';
   return {
     coins: provider === 'sidesix' ? 'SIDESIX' : (formatCurrency(wallet.coins ?? wallet.available ?? wallet.coinBalance) || '0'),
     gems: platformWallet ? '0' : (formatCurrency(wallet.gems ?? wallet.diamonds ?? wallet.gemBalance) || '0'),
