@@ -2,7 +2,7 @@ import { API_ENDPOINTS } from '../config/apiConfig.js';
 import { apiRequest, setAccessToken } from './client.js';
 
 function storeTokenFromPayload(payload) {
-  if (payload?.accessToken) setAccessToken(payload.accessToken);
+  if (payload?.accessToken) setAccessToken(payload.accessToken, { ephemeral: false });
   return payload;
 }
 
