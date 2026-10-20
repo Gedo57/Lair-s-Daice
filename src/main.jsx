@@ -118,6 +118,11 @@ async function bootstrap() {
     const isDirectTutorialRoute = cleanPath.toLowerCase() === '/tutorial';
 
     if (!isDirectTutorialRoute) {
+      // Direct Vercel root visits are Demo: never inherit a previous Provider tab session.
+      if (cleanPath === '/' && !String(window.location.hash || '').includes('provider_launch_token=')) {
+        const { PROVIDER_SESSION_TOKEN_KEY, clearAccessToken } = await import('./api/client.js');
+        if (window.sessionStorage?.getItem(PROVIDER_SESSION_TOKEN_KEY)) clearAccessToken();
+      }
       const providerLaunched = await exchangeProviderLaunchIfPresent();
       if (!providerLaunched) {
         const platformLaunched = await exchangePlatformLaunchIfPresent();
