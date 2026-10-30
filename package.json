@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 4173"
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "test:provider:qa": "node --test tests/patch110-provider-handoff.test.mjs",
+    "prebuild": "npm run test:provider:qa"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
