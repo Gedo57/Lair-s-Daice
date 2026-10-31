@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "test:provider:qa": "node --test tests/patch110-provider-handoff.test.mjs tests/initial-loading-entry.test.mjs",
-    "prebuild": "npm run test:provider:qa"
+    "prebuild": "npm run test:provider:qa && npm run test:help",
+    "test:help": "node --test tests/how-to-play.test.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
