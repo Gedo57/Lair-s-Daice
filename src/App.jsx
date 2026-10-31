@@ -34,7 +34,6 @@ import { hasAccessToken } from './api/client.js';
 import StarterScreen from './screens/StarterScreen.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
 import LoadingScreen from './screens/LoadingScreen.jsx';
-import AssetBootScreen from './screens/AssetBootScreen.jsx';
 import MainMenu from './screens/MainMenu.jsx';
 import RoomSelect from './screens/RoomSelect.jsx';
 import HelpScreen from './screens/HelpScreen.jsx';
@@ -2824,7 +2823,9 @@ export default function App() {
   };
 
   const isBootPreloading = !starterAssetsReady;
-  const RenderedScreenComponent = isBootPreloading ? AssetBootScreen : ScreenComponent;
+  // The actual themed loading screen must be visible from the first app render,
+  // including while the starter assets are loading (not a different boot placeholder).
+  const RenderedScreenComponent = isBootPreloading ? LoadingScreen : ScreenComponent;
   const renderedScreenName = isBootPreloading ? 'assetboot' : screen;
   const activeScreenClass = isBootPreloading
     ? 'assetboot'
