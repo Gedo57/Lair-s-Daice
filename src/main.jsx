@@ -1,5 +1,6 @@
 import React from 'react';
 import LoadingScreen from './screens/LoadingScreen.jsx';
+import { useFixedViewport } from './hooks.js';
 import {consumeProviderHandoff,isProviderHandoffFragment} from './services/providerLaunchHandoff.js';
 import { createRoot } from 'react-dom/client';
 import './styles/base/reset.css';
@@ -104,17 +105,37 @@ async function exchangeSideSixLaunchIfPresent() {
   return true;
 }
 
+function PreAuthLoading() {
+  const layout = useFixedViewport();
+  React.useEffect(() => {
+    document.documentElement.dataset.device = layout.mode;
+    document.documentElement.dataset.physicalDevice = layout.deviceMode;
+    document.documentElement.dataset.orientation = layout.orientation;
+  }, [layout.mode, layout.deviceMode, layout.orientation]);
+
+  return (
+    <main className={`app-shell app-shell--${layout.mode} app-shell--loading`}
+      style={{
+        '--design-width': `${layout.resolution.width}px`,
+        '--design-height': `${layout.resolution.height}px`,
+        '--ui-scale': layout.scale,
+      }}>
+      <div className="game-frame">
+        <LoadingScreen
+          navigation={{ goMainMenu: () => {} }}
+          data={{ assetLoading: { active: true, progress: 1, destinationLabel: 'game' } }}
+        />
+      </div>
+    </main>
+  );
+}
+
 async function bootstrap() {
   const root = createRoot(document.getElementById('root'));
   // Show the actual themed loading artwork while verifying the single-use
   // ticket against the backend. Never expose a blank screen during cold starts.
   // This pre-auth loader has no navigation and cannot skip failed validation.
-  root.render(
-    <LoadingScreen
-      navigation={{ goMainMenu: () => {} }}
-      data={{ assetLoading: { active: true, progress: 1, destinationLabel: 'game' } }}
-    />,
-  );
+  root.render(<PreAuthLoading />);
   try {
     let cleanPath = window.location.pathname.replace(/\/+$/, '') || '/';
     const isDirectTutorialRoute = cleanPath.toLowerCase() === '/tutorial';
