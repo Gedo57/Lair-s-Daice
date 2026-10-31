@@ -30,6 +30,7 @@ import './styles/base/language.css';
 import './styles/screens/tutorial.css';
 
 installHowToPlay({
+  audioSelectors: [".gameplay-music-control button",".gameplay-music-control [role=\"button\"]"],
   title: "Liar’s Dice",
   steps: [
   "Each player has five hidden dice and takes turns bidding a quantity and face.",
