@@ -1,3 +1,4 @@
+import { installHowToPlay } from './help/howToPlay.js';
 import React from 'react';
 import LoadingScreen from './screens/LoadingScreen.jsx';
 import { useFixedViewport } from './hooks.js';
@@ -27,6 +28,22 @@ import './styles/gameplay/zai-animation.css';
 import './styles/gameplay/fei-animation.css';
 import './styles/base/language.css';
 import './styles/screens/tutorial.css';
+
+installHowToPlay({
+  title: "Liar’s Dice",
+  steps: [
+  "Each player has five hidden dice and takes turns bidding a quantity and face.",
+  "Raise the bid or call Liar when you think it is wrong.",
+  "Use ZAI / FEI and Joker rules when those options are active.",
+  "Stay in the match by protecting your dice stack."
+],
+  tips: [
+  "Think about the dice you cannot see.",
+  "Use the original illustrated tutorial below for the full rules."
+],
+  slideCount: 10,
+  slidePath: (orientation, page) => `/assets/tutorial/${orientation}/${page}.png`
+});
 
 const SIDE_SIX_LAUNCH_KEYS = ['userId', 'userName', 'ts', 'nonce', 'sig', 'avatarUrl', 'locale', 'returnUrl'];
 const SIDE_SIX_RETURN_URL_KEY = 'ld_sidesix_return_url';
