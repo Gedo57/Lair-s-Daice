@@ -1,4 +1,5 @@
 import React from 'react';
+import LoadingScreen from './screens/LoadingScreen.jsx';
 import {consumeProviderHandoff,isProviderHandoffFragment} from './services/providerLaunchHandoff.js';
 import { createRoot } from 'react-dom/client';
 import './styles/base/reset.css';
@@ -37,7 +38,8 @@ async function exchangeProviderLaunchIfPresent() {
   clearAccessToken();
   const launch = consumeProviderHandoff(window);
   await loginWithProviderLaunch(launch);
-  window.history.replaceState({}, '', '/main-menu');
+  // A verified Provider launch must still show the game's original loading screen.
+  window.history.replaceState({}, '', '/loading');
   return true;
 }
 
@@ -61,7 +63,7 @@ async function exchangePlatformLaunchIfPresent() {
   const { loginWithPlatformLaunch } = await import('./api/authApi.js');
   await loginWithPlatformLaunch(launch);
   const url = new URL(window.location.href);
-  url.pathname = '/main-menu';
+  url.pathname = '/loading';
   window.history.replaceState({}, '', `${url.pathname}${url.search}`);
   return true;
 }
@@ -98,12 +100,21 @@ async function exchangeSideSixLaunchIfPresent() {
   } catch (_error) {
     // The signed launch is already verified server-side; storage is optional.
   }
-  sanitizeSideSixLaunchUrl('/main-menu');
+  sanitizeSideSixLaunchUrl('/loading');
   return true;
 }
 
 async function bootstrap() {
   const root = createRoot(document.getElementById('root'));
+  // Show the actual themed loading artwork while verifying the single-use
+  // ticket against the backend. Never expose a blank screen during cold starts.
+  // This pre-auth loader has no navigation and cannot skip failed validation.
+  root.render(
+    <LoadingScreen
+      navigation={{ goMainMenu: () => {} }}
+      data={{ assetLoading: { active: true, progress: 1, destinationLabel: 'game' } }}
+    />,
+  );
   try {
     let cleanPath = window.location.pathname.replace(/\/+$/, '') || '/';
     const isDirectTutorialRoute = cleanPath.toLowerCase() === '/tutorial';
