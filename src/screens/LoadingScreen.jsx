@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const loadingAsset = '/assets/liars-dice/loading/';
 const sparkles = Array.from({ length: 16 }, (_, index) => index + 1);
@@ -10,25 +10,28 @@ export default function LoadingScreen({ navigation, data, i18n }) {
   const isPreloadingAssets = Boolean(assetLoading.active);
   const destinationLabel = assetLoading.destinationLabel || 'assets';
   const [localProgress, setLocalProgress] = useState(1);
+  // App recreates its navigation object during wallet and asset updates.
+  // Keep the newest callback without restarting the progress animation.
+  const goMainMenuRef = useRef(navigation?.goMainMenu);
+  goMainMenuRef.current = navigation?.goMainMenu;
 
   useEffect(() => {
     if (isPreloadingAssets) return undefined;
-
     setLocalProgress(1);
     const id = window.setInterval(() => {
       setLocalProgress((value) => {
         const increment = value < 18 ? 1 : value < 45 ? 2 : value < 75 ? 3 : 4;
-        const next = Math.min(100, value + increment);
-        if (next >= 100) {
-          window.clearInterval(id);
-          window.setTimeout(navigation.goMainMenu, 450);
-        }
-        return next;
+        return Math.min(100, value + increment);
       });
     }, 95);
-
     return () => window.clearInterval(id);
-  }, [isPreloadingAssets, navigation]);
+  }, [isPreloadingAssets]);
+
+  useEffect(() => {
+    if (isPreloadingAssets || localProgress < 100) return undefined;
+    const id = window.setTimeout(() => goMainMenuRef.current?.(), 450);
+    return () => window.clearTimeout(id);
+  }, [isPreloadingAssets, localProgress]);
 
   const progress = isPreloadingAssets
     ? Math.max(1, Math.min(100, controlledProgress || 1))
