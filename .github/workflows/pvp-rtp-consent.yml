@@ -1,0 +1,35 @@
+name: PvP RTP fee disclosure and Vite build
+on:
+  push:
+    branches: [feature/pvp-rtp-consent-disclosure-20261116, main]
+    paths:
+      - 'src/App.jsx'
+      - 'src/screens/RoomLobby.jsx'
+      - 'src/utils/pvpPotConsent.js'
+      - 'src/api/roomsApi.js'
+      - 'src/api/matchmakingApi.js'
+      - 'src/services/backendBridge.js'
+      - 'tests/pvp-rtp-consent.test.mjs'
+      - '.github/workflows/pvp-rtp-consent.yml'
+  pull_request:
+    paths:
+      - 'src/App.jsx'
+      - 'src/screens/RoomLobby.jsx'
+      - 'src/utils/pvpPotConsent.js'
+      - 'src/api/roomsApi.js'
+      - 'src/api/matchmakingApi.js'
+      - 'src/services/backendBridge.js'
+      - 'tests/pvp-rtp-consent.test.mjs'
+      - '.github/workflows/pvp-rtp-consent.yml'
+permissions: {contents: read}
+jobs:
+  pvp-fee:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: node --test tests/pvp-rtp-consent.test.mjs
+      - run: npm run build
