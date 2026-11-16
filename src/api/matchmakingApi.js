@@ -46,7 +46,7 @@ function normalizeStartPayload(payload = {}) {
       shouldEnterGame: true,
     };
   }
-  return normalized;
+  return {...normalized,...(payload?.rtpConsent?{rtpConsent:payload.rtpConsent}:{})};
 }
 
 export const startMatchmaking = (payload = {}) => apiRequest(
