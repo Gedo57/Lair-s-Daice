@@ -16,6 +16,7 @@ import {
 import { preloadAssets, preloadAssetsInBackground } from './services/assetPreloader.js';
 import { installTableMusicGestureUnlock, syncTableMusic, stopTableMusic } from './services/tableMusicPlayer.js';
 import { backendBridge } from './services/backendBridge.js';
+import {acceptPvpTerms,consentMessage} from './utils/pvpPotConsent.js';
 import {
   cancelSocketMatchmaking,
   clearSocketGameplayListeners,
@@ -2414,6 +2415,14 @@ export default function App() {
     runBackendAction(`${actionName}.rest_fallback`, callback, fallbackNavigation)
   );
 
+  async function reviewPvpFee({humanOnly=true,buyIn=null,playerCount=null}={}){
+    const user=gameData.user||{};
+    const provider=user.walletProvider==='provider'||String(gameData.wallet?.provider||'').toLowerCase()==='provider';
+    if(!provider||!humanOnly)return null;
+    const quote=await backendBridge.getPvpTerms();
+    return acceptPvpTerms(quote,{buyIn,playerCount},message=>window.confirm(message));
+  }
+
   const backendActions = {
     login: (credentials) => runSessionAuthAction('auth.login', () => backendBridge.login(credentials), navigation.goLoading),
     register: (payload) => runSessionAuthAction('auth.register', () => backendBridge.register(payload), navigation.goLoading),
@@ -2453,7 +2462,11 @@ export default function App() {
         return null;
       }
     },
-    joinRoom: (room) => runBackendAction('rooms.join', () => backendBridge.joinRoom(room), navigation.goRoomLobby),
+    joinRoom: (room) => runBackendAction('rooms.join', async () => {
+      const r=typeof room==='string'?{roomCode:room}:room||{};
+      const rtpConsent=await reviewPvpFee({humanOnly:!isBotsModeSettings(r),buyIn:r.buyInAmount??r.entryFee??null,playerCount:r.maxPlayers??null});
+      return backendBridge.joinRoom({...r,rtpConsent});
+    },navigation.goRoomLobby),
     createRoom: (settings = {}) => {
       const roomSettings = withPrivateRoomMusicMetadata(settings);
       const isBotsMode = isBotsModeSettings(roomSettings);
@@ -2465,7 +2478,13 @@ export default function App() {
 
       return runBackendAction(
         isBotsMode ? 'bots.start' : 'rooms.create',
-        () => (isBotsMode ? backendBridge.startBotsMatch(roomSettings) : backendBridge.createRoom(roomSettings)),
+        async () => {
+          if(isBotsMode)return backendBridge.startBotsMatch(roomSettings);
+          const rtpConsent=await reviewPvpFee({humanOnly:true,
+            buyIn:roomSettings.buyInAmount??roomSettings.entryFee??null,
+            playerCount:roomSettings.maxPlayers??roomSettings.selectedPlayers??null});
+          return backendBridge.createRoom({...roomSettings,rtpConsent});
+        },
         (result) => {
           const patch = extractGameDataPatch(result || {});
           if (isBotsDirectStartResult(result || {}, patch, settings) || (isBotsMode && (patch.match || patch.currentMatchId || isGameStartedPayload(result || {})))) {
@@ -2541,6 +2560,11 @@ export default function App() {
     },
     startMatchmaking: async (payload = {}) => {
       const selectedTable = resolveSelectedTableForMatchmaking(payload, gameData);
+      const isBotsMode=isBotsModeSettings(selectedTable);
+      let rtpConsent=null;
+      try{rtpConsent=await reviewPvpFee({humanOnly:!isBotsMode,
+        buyIn:resolveEntryFee(selectedTable),playerCount:selectedTable.maxPlayers??selectedTable.selectedPlayers??null});}
+      catch(error){setBackendStatus({loading:false,error:error.message||'Pot fee not accepted.',lastAction:'matchmaking.start.error'});return null;}
       const requiredCoins = resolveEntryFee(selectedTable);
       const availableCoins = numericWalletAmount(gameData.wallet?.coins);
       const usesExternalWallet = Boolean(
@@ -2570,7 +2594,6 @@ export default function App() {
         matchmaking: buildMatchmakingUi(selectedTable, {}, null, null),
       }));
 
-      const isBotsMode = isBotsModeSettings(selectedTable);
       setBackendStatus({ loading: true, error: null, lastAction: isBotsMode ? 'bots.start' : 'matchmaking.start' });
 
       if (isBotsMode) {
@@ -2600,7 +2623,7 @@ export default function App() {
       }
 
       try {
-        const result = await startSocketMatchmaking(selectedTable, {
+        const result = await startSocketMatchmaking({...selectedTable,rtpConsent}, {
           onQueueUpdate: (socketPayload) => applySocketMatchmakingPayload(socketPayload, 'matchmaking.queue_update'),
           onMatchFound: (socketPayload) => applySocketMatchmakingPayload(socketPayload, 'matchmaking.match_found'),
           onMatchCountdown: (socketPayload) => applySocketMatchmakingPayload(socketPayload, 'matchmaking.countdown'),
