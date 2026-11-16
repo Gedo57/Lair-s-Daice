@@ -250,6 +250,7 @@ export default function RoomLobby({ navigation, data, backendActions, backendSta
             <div className="room-lobby-info"><span>{tx('READY')}</span><strong>{(room.readyPlayers || []).length} / {room.maxPlayers || 4}</strong></div>
             <div className="room-lobby-info"><span>{tx('TIMER')}</span><strong>{room.turnTimer || room.selectedTimer || '30s'}</strong></div>
             <div className="room-lobby-info"><span>{tx('BUY-IN')}</span><strong>{formatAmount(getRoomBuyInAmount(room || {}))}</strong></div>
+            {room.rtpConsent&&room.walletProvider?.startsWith('provider:')?<div className="room-lobby-info"><span>{tx('POT FEE')}</span><strong>{((10000-room.rtpConsent.targetRtpBps)/100).toFixed(2)}%</strong></div>:null}
             <div className="room-lobby-info"><span>{tx('PER GAME')}</span><strong>{tx(perGameSummary)}</strong></div>
             <div className="room-lobby-info"><span>{tx('PEK / SLAM')}</span><strong>{pekInfo.enabled ? `${pekInfo.percentage}% / ${formatAmount(pekInfo.finalAmount)}` : tx('OFF')}</strong></div>
           </div>
