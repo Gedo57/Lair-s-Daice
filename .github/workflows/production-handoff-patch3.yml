@@ -1,0 +1,20 @@
+name: Production Patch3 Browser Handoff
+on:
+  push:
+    branches: ['feature/production-patch3-signed-handoff-20261116']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-one-time-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npm run test:provider:qa
+      - run: npm run build
