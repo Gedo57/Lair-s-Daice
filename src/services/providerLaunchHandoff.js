@@ -16,7 +16,7 @@ export function consumeProviderHandoff(win){
  const good=[...p.keys()].length===2 &&
   p.getAll('provider_launch_token').length===1 &&
   p.getAll('provider_launch_id').length===1 &&
-  /^[A-Za-z0-9_-]{43}$/.test(launchToken) &&
+  /^(?:gph_)?[A-Za-z0-9_-]{43}$/.test(launchToken) &&
   /^[A-Za-z0-9_.:-]{8,128}$/.test(launchId);
  if(!good){
   const e=Error('Invalid Game Provider launch. Return to G Provider for a new ticket.');
