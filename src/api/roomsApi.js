@@ -273,22 +273,25 @@ function normalizeCreateRoomPayload(settings = {}) {
   };
 
   if (bidCoinStep !== undefined) payload.bidCoinStep = bidCoinStep;
+  if(settings.rtpConsent)payload.rtpConsent=settings.rtpConsent;
 
   return payload;
 }
 
 function normalizeJoinPayload(room = {}) {
+  const consent=typeof room==='object'&&room?.rtpConsent?{rtpConsent:room.rtpConsent}:{};
   if (typeof room === 'string') {
     return looksLikeRoomCode(room) ? { roomCode: room } : { roomId: room };
   }
 
-  if (room?.roomCode || room?.code) return { roomCode: room.roomCode || room.code };
-  if (room?.roomId || room?.id) return { roomId: room.roomId || room.id };
-  if (room?.tableId || room?.tierId || room?.key) return { tableId: room.tableId || room.tierId || room.key };
+  if (room?.roomCode || room?.code) return { roomCode: room.roomCode || room.code,...consent };
+  if (room?.roomId || room?.id) return { roomId: room.roomId || room.id,...consent };
+  if (room?.tableId || room?.tierId || room?.key) return { tableId: room.tableId || room.tierId || room.key,...consent };
 
   throw new Error('roomCode, roomId, or tableId is required');
 }
 
+export const getPvpTerms = () => apiRequest('/api/rooms/rtp/terms');
 export const getRooms = () => apiRequest(API_ENDPOINTS.rooms.list);
 export const getRoomTiers = ({ includePrivate = true } = {}) => apiRequest(
   withQuery(API_ENDPOINTS.rooms.tiers, { includePrivate }),
@@ -365,7 +368,7 @@ export const joinRoomById = (room) => {
   if (!roomId) throw new Error('roomId is required');
   return apiRequest(API_ENDPOINTS.rooms.joinById(roomId), {
     method: 'POST',
-    body: {},
+    body: room?.rtpConsent?{rtpConsent:room.rtpConsent}:{},
   });
 };
 
