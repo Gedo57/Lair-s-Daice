@@ -102,6 +102,7 @@ export const backendBridge = {
 
   refreshGameData: () => loadGameData().then((gameDataPayloads) => ({ success: true, gameDataPayloads })),
 
+  getPvpTerms: () => roomsApi.getPvpTerms(),
   refreshRooms: () => collectSettledPayloads([
     () => roomsApi.getRooms(),
     () => roomsApi.getActiveRooms(),
